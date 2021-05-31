@@ -52,6 +52,8 @@ class C1Driver;
 %token BLANK 290 CONST 291 BREAK 292 CONTINUE 293 NOT 294
 %token AND 295 OR 296 MOD 297
 %token FLOAT 298
+%token LOGICAND 299
+%token LOGICOR 300
 
 // Use variant-based semantic values: %type and %token expect genuine types
 
@@ -60,6 +62,7 @@ class C1Driver;
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>ConstDecl
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>ConstDefList
 %type <SyntaxTree::Type>DefType
+%type <SyntaxTree::Type>BType
 %type <SyntaxTree::VarDef*>ConstDef
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>VarDecl
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>VarDefList
@@ -76,6 +79,8 @@ class C1Driver;
 %type <SyntaxTree::LVal*>LVal
 %type <SyntaxTree::Expr*>Exp
 %type <SyntaxTree::Literal*>Number
+%type <SyntaxTree::FuncParam*>FuncFParam
+%type <SyntaxTree::FuncFParamList*>FuncFParams
 
 // No %destructors are needed, since memory will be reclaimed by the
 // regular destructors.
@@ -116,7 +121,7 @@ GlobalDecl:ConstDecl{
   }
 	;
 
-ConstDecl:CONST DefType ConstDefList SEMICOLON{
+ConstDecl:CONST BType ConstDefList SEMICOLON{
     $$=$3;
     for (auto &node : $$) {
       node->btype = $2;
@@ -132,19 +137,20 @@ ConstDefList:ConstDefList COMMA ConstDef{
     $$.push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>($1));
   }
 	;
+BType:INT{
+  $$=SyntaxTree::Type::INT;
+}
+;
 
-DefType:INT{
-    $$=SyntaxTree::Type::INT;
-  }
-  | FLOAT{
-    $$=SyntaxTree::Type::FLOAT;
+DefType:BType{
+    $$=$1;
   }
   | VOID{
     $$ = SyntaxTree::Type::VOID;
   }
   ;
 
-ConstDef:IDENTIFIER ASSIGN Exp{
+ConstDef:IDENTIFIER ASSIGN Exp{//TODO:ADD ARRAY SUPPORT
     $$=new SyntaxTree::VarDef();
     $$->is_constant = true;
     $$->is_inited = true;
@@ -154,7 +160,7 @@ ConstDef:IDENTIFIER ASSIGN Exp{
   }
 	;
 
-VarDecl:DefType VarDefList SEMICOLON{
+VarDecl:BType VarDefList SEMICOLON{
     $$=$2;
     for (auto &node : $$) {
       node->btype = $1;
@@ -198,7 +204,7 @@ ArrayExpList:ArrayExpList LBRACKET Exp RBRACKET{
   }
   ;
 
-InitVal: Exp{
+InitVal: Exp{//TODO:CHECK?
     $$=SyntaxTree::PtrList<SyntaxTree::Expr>();
     $$.push_back(SyntaxTree::Ptr<SyntaxTree::Expr>($1));
   }
@@ -220,7 +226,23 @@ ExpList:ExpList COMMA Exp{
   }
 	;
 
-FuncDef:DefType IDENTIFIER LPARENTHESE RPARENTHESE Block{
+FuncFParam:BType IDENTIFIER ArrayExpList{
+//TODO:finsih ast
+}
+;
+
+FuncFParams:FuncFParams COMMA FuncFParam {
+  //TODO:finish ast
+}
+| FuncFParam{
+  //TODO:finish ast
+}
+| %empty{
+  //TODO:finish ast
+}
+;
+
+FuncDef:DefType IDENTIFIER LPARENTHESE FuncFParams RPARENTHESE Block{
     $$ = new SyntaxTree::FuncDef();
     $$->ret_type = $1;
     $$->name = $2;
@@ -303,7 +325,7 @@ LVal:IDENTIFIER ArrayExpList{
 %left MULTIPLY DIVIDE MODULO;
 %precedence UPLUS UMINUS;
 
-Exp:PLUS Exp %prec UPLUS{
+Exp:PLUS Exp %prec UPLUS{//FIXME:LOGIC
     auto temp = new SyntaxTree::UnaryExpr();
     temp->op = SyntaxTree::UnaryOp::PLUS;
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($2);
@@ -374,13 +396,7 @@ Exp:PLUS Exp %prec UPLUS{
   }
   ;
 
-Number: FLOATCONST {
-    $$ = new SyntaxTree::Literal();
-    $$->is_int = false;
-    $$->float_const = $1;
-    $$->loc = @$;
-  }
-  | INTCONST {
+Number: INTCONST {
     $$ = new SyntaxTree::Literal();
     $$->is_int = true;
     $$->int_const = $1;

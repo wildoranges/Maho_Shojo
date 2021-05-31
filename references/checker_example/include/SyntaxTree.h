@@ -193,6 +193,20 @@ struct FuncCallStmt : Expr
     virtual void accept(Visitor &visitor) override final;
 };
 
+struct FuncParam : Node
+{
+    std::string name;
+    Type param_type;
+    PtrList<Expr> array_index; // nullptr if not indexed as array
+    virtual void accept(Visitor &visitor) = 0;
+};
+
+struct FuncFParamList : FuncParam
+{
+    PtrList<FuncParam> params;
+    virtual void accept(Visitor &visitor) override final;
+};
+
 // Visitor base type
 class Visitor
 {

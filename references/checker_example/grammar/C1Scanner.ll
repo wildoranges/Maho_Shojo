@@ -99,6 +99,8 @@ return 	{return yy::C1Parser::make_RETURN(loc);}
 void 		{return yy::C1Parser::make_VOID(loc);}
 const		{return yy::C1Parser::make_CONST(loc);}
 
+[&&]    {return yy::C1Parser::make_LOGICAND(loc);}
+[||]    {return yy::C1Parser::make_LOGICOR(loc);}
 [+] 		{return yy::C1Parser::make_PLUS(loc);}
 [-] 		{return yy::C1Parser::make_MINUS(loc);}
 [*] 		{return yy::C1Parser::make_MULTIPLY(loc);}
