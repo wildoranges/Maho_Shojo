@@ -166,3 +166,13 @@ void SyntaxTreePrinter::visit(ExprStmt &node)
     node.exp->accept(*this);
     std::cout << ";" << std::endl;
 }
+
+void SyntaxTreePrinter::visit(FuncParam &node)
+{
+    return;//TODO:FINISH THIS
+}
+
+void SyntaxTreePrinter::visit(FuncFParamList &node)
+{
+    return;//TODO:FINISH THIS
+}

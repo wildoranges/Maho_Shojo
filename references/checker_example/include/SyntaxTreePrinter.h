@@ -19,7 +19,8 @@ public:
     virtual void visit(SyntaxTree::BlockStmt &node) override;
     virtual void visit(SyntaxTree::EmptyStmt &node) override;
     virtual void visit(SyntaxTree::ExprStmt &node) override;
-
+    virtual void visit(SyntaxTree::FuncParam &node) override;
+    virtual void visit(SyntaxTree::FuncFParamList &node) override;
     void print_indent();
 private:
     int indent = 0;

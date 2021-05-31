@@ -62,6 +62,9 @@ struct ReturnStmt;
 struct BlockStmt;
 struct EmptyStmt;
 
+struct FuncParam;
+struct FuncFParamList;
+
 struct Visitor;
 
 // Virtual base of all kinds of syntax tree nodes.
@@ -89,6 +92,7 @@ struct GlobalDef : virtual Node
 struct FuncDef : GlobalDef
 {
     Type ret_type;
+    Ptr<FuncFParamList> param_list;
     std::string name;
     Ptr<BlockStmt> body;
     virtual void accept(Visitor &visitor) override final;
@@ -198,10 +202,10 @@ struct FuncParam : Node
     std::string name;
     Type param_type;
     PtrList<Expr> array_index; // nullptr if not indexed as array
-    virtual void accept(Visitor &visitor) = 0;
+    virtual void accept(Visitor &visitor) override final;
 };
 
-struct FuncFParamList : FuncParam
+struct FuncFParamList : Node
 {
     PtrList<FuncParam> params;
     virtual void accept(Visitor &visitor) override final;
@@ -224,6 +228,8 @@ public:
     virtual void visit(BlockStmt &node) = 0;
     virtual void visit(EmptyStmt &node) = 0;
     virtual void visit(ExprStmt &node) = 0;
+    virtual void visit(FuncParam &node) = 0;
+    virtual void visit(FuncFParamList &node) = 0;
 };
 } // end namespace SyntaxTree
 

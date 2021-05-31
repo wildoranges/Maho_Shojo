@@ -718,4 +718,12 @@ void SyntaxTreeChecker::visit(ExprStmt &node)
     node.exp->accept(*this);
 }
 
+void SyntaxTreeChecker::visit(FuncParam &node) 
+{
+    return;//TODO:FINISH THIS;
+}
 
+void SyntaxTreeChecker::visit(FuncFParamList &node)
+{
+    return;//TODO:FINISH THIS;
+}
