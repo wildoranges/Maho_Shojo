@@ -42,6 +42,21 @@ enum class UnaryOp
     MINUS
 };
 
+enum class UnaryCondOp
+{
+    NOT = 0
+};
+
+enum class BinaryCondOp
+{
+    LT = 0,
+    LTE,
+    GT,
+    GTE,
+    EQ,
+    NEQ
+};
+
 // Forward declaration
 struct Node;
 struct Assembly;
@@ -64,6 +79,8 @@ struct EmptyStmt;
 
 struct FuncParam;
 struct FuncFParamList;
+struct UnaryCondExpr;
+struct BinaryCondExpr;
 
 struct Visitor;
 
@@ -157,6 +174,19 @@ struct Expr : Node
     virtual void accept(Visitor &visitor) = 0;
 };
 
+/*
+struct UnaryCondExpr : Expr{
+    UnaryCondOp op;
+    Ptr<Expr> rhs;
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct BinaryCondExpr : Expr{
+    BinaryCondOp op;
+    Ptr<Expr> lhs,rhs;
+    virtual void accept(Visitor &visitor) override final;
+};*/
+
 // Expression like `lhs op rhs`.
 struct BinaryExpr : Expr
 {
@@ -194,6 +224,7 @@ struct Literal : Expr
 struct FuncCallStmt : Expr
 {
     std::string name;
+    PtrList<Expr> params;
     virtual void accept(Visitor &visitor) override final;
 };
 

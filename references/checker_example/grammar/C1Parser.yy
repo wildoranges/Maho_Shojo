@@ -55,6 +55,7 @@ class C1Driver;
 %token FLOAT 298
 %token LOGICAND 299
 %token LOGICOR 300
+%token LT 301
 
 // Use variant-based semantic values: %type and %token expect genuine types
 
@@ -83,6 +84,12 @@ class C1Driver;
 
 %type <SyntaxTree::FuncParam*>FuncFParam
 %type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>FParamList
+%type <SyntaxTree::Expr*>RelExp
+%type <SyntaxTree::Expr*>EqExp
+%type <SyntaxTree::Expr*>LAndExp
+%type <SyntaxTree::Expr*>LOrExp
+%type <SyntaxTree::Expr*>CondExp
+%type <SyntaxTree::Stmt*>IfStmt
 //%type <SyntaxTree::FuncFParamList*>FuncFParams
 
 // No %destructors are needed, since memory will be reclaimed by the
@@ -315,9 +322,29 @@ Stmt:LVal ASSIGN Exp SEMICOLON{
   | Block{
     $$ = $1;
   }
+  | WHILE LPARENTHESE CondExp RPARENTHESE Stmt{//TODO:IF WHILE BREAK CONTINUE;
+
+  }
+  | IfStmt {
+    
+  }
+  | BREAK SEMICOLON {
+
+  }
+  | CONTINUE SEMICOLON {
+
+  }
   | SEMICOLON{
     $$ = new SyntaxTree::EmptyStmt();
     $$->loc = @$;
+  }
+  ;
+
+IfStmt:IF LPARENTHESE CondExp RPARENTHESE stmt {
+
+  }
+  |IfStmt ELSE stmt {
+
   }
   ;
 
@@ -398,9 +425,10 @@ Exp:PLUS Exp %prec UPLUS{//FIXME:LOGIC
   | LPARENTHESE Exp RPARENTHESE{
     $$ = $2;
   }
-  | IDENTIFIER LPARENTHESE RPARENTHESE {
+  | IDENTIFIER LPARENTHESE ExpList RPARENTHESE {
     auto temp = new SyntaxTree::FuncCallStmt();
     temp->name = $1;
+    temp->params = $3;
     $$ = temp;
     $$->loc = @$;
   }
@@ -409,6 +437,55 @@ Exp:PLUS Exp %prec UPLUS{//FIXME:LOGIC
   }
   | Number{
     $$ = $1;
+  }
+  ;
+
+RelExp:RelExp LT Exp{//TODO:finish this
+
+  }
+  |RelExp LTE Exp{
+
+  }
+  |RelExp GT Exp{
+
+  }
+  |RelExp GTE Exp{
+
+  }
+  |Exp {
+    $$ = $1;
+  }
+  ;
+
+EqExp:EqExp EQ RelExp{//TODO:finish thiss
+
+  }
+  |EqExp NEQ RelExp{
+
+  }
+  |RelExp {
+
+  }
+  ;
+
+LAndExp:LAndExp LOGICAND EqExp {//TODO:finish this
+
+  }
+  |EqExp{
+
+  }
+  ;
+
+LOrExp:LOrExp LOGICOR LAndExp {//TODO:finish this
+
+  }
+  |LAndExp{
+
+  }
+  ;
+
+CondExp:LOrExp{//TODO:finish this
+
   }
   ;
 
