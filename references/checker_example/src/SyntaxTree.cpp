@@ -16,3 +16,5 @@ void FuncCallStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void BlockStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void EmptyStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void ExprStmt::accept(Visitor &visitor) { visitor.visit(*this); }
+void FuncParam::accept(Visitor &visitor) { visitor.visit(*this); }
+void FuncFParamList::accept(Visitor &visitor) { visitor.visit(*this); }

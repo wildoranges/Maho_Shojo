@@ -60,6 +60,8 @@ public:
     virtual void visit(SyntaxTree::BlockStmt &node) override;
     virtual void visit(SyntaxTree::EmptyStmt &node) override;
     virtual void visit(SyntaxTree::ExprStmt &node) override;
+    virtual void visit(SyntaxTree::FuncParam &node) override;
+    virtual void visit(SyntaxTree::FuncFParamList &node) override;
 private:
     bool haserror = false;
     using Type = SyntaxTree::Type;

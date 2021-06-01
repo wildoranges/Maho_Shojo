@@ -42,6 +42,21 @@ enum class UnaryOp
     MINUS
 };
 
+enum class UnaryCondOp
+{
+    NOT = 0
+};
+
+enum class BinaryCondOp
+{
+    LT = 0,
+    LTE,
+    GT,
+    GTE,
+    EQ,
+    NEQ
+};
+
 // Forward declaration
 struct Node;
 struct Assembly;
@@ -61,6 +76,11 @@ struct FuncCallStmt;
 struct ReturnStmt;
 struct BlockStmt;
 struct EmptyStmt;
+
+struct FuncParam;
+struct FuncFParamList;
+struct UnaryCondExpr;
+struct BinaryCondExpr;
 
 struct Visitor;
 
@@ -89,6 +109,7 @@ struct GlobalDef : virtual Node
 struct FuncDef : GlobalDef
 {
     Type ret_type;
+    Ptr<FuncFParamList> param_list;
     std::string name;
     Ptr<BlockStmt> body;
     virtual void accept(Visitor &visitor) override final;
@@ -153,6 +174,19 @@ struct Expr : Node
     virtual void accept(Visitor &visitor) = 0;
 };
 
+/*
+struct UnaryCondExpr : Expr{
+    UnaryCondOp op;
+    Ptr<Expr> rhs;
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct BinaryCondExpr : Expr{
+    BinaryCondOp op;
+    Ptr<Expr> lhs,rhs;
+    virtual void accept(Visitor &visitor) override final;
+};*/
+
 // Expression like `lhs op rhs`.
 struct BinaryExpr : Expr
 {
@@ -190,6 +224,7 @@ struct Literal : Expr
 struct FuncCallStmt : Expr
 {
     std::string name;
+    PtrList<Expr> params;
     virtual void accept(Visitor &visitor) override final;
 };
 
@@ -198,10 +233,10 @@ struct FuncParam : Node
     std::string name;
     Type param_type;
     PtrList<Expr> array_index; // nullptr if not indexed as array
-    virtual void accept(Visitor &visitor) = 0;
+    virtual void accept(Visitor &visitor) override final;
 };
 
-struct FuncFParamList : FuncParam
+struct FuncFParamList : Node
 {
     PtrList<FuncParam> params;
     virtual void accept(Visitor &visitor) override final;
@@ -224,6 +259,8 @@ public:
     virtual void visit(BlockStmt &node) = 0;
     virtual void visit(EmptyStmt &node) = 0;
     virtual void visit(ExprStmt &node) = 0;
+    virtual void visit(FuncParam &node) = 0;
+    virtual void visit(FuncFParamList &node) = 0;
 };
 } // end namespace SyntaxTree
 
