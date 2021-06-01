@@ -343,7 +343,7 @@ Stmt:LVal ASSIGN Exp SEMICOLON{
 IfStmt:IF LPARENTHESE CondExp RPARENTHESE stmt {
 
   }
-  |IfStmt ELSE stmt {
+  | IF LPARENTHESE CondExp RPARENTHESE stmt ELSE stmt {
 
   }
   ;
@@ -381,6 +381,9 @@ Exp:PLUS Exp %prec UPLUS{//FIXME:LOGIC
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($2);
     $$ = temp;
     $$->loc = @$;
+  }
+  | NOT Exp {
+    
   }
   | Exp PLUS Exp{
     auto temp = new SyntaxTree::BinaryExpr();
