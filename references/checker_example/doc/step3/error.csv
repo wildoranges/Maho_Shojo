@@ -1,0 +1,17 @@
+00, ReDefVal, 00_ReDefVal.c1
+02, ReDefFunc, 02_ReDefFunc.c1
+04, ERetType, 04_ERetType.c1
+06, DivZero, 06_DivZero.c1
+07, InValidOperands, 07_InValidOperands.c1
+08, ImproperArrayDef, 08_ImproperArrayDef.c1
+09, IncompatibleVarInit, 09_IncompatibleVarInit.c1
+10, IncompatibleArrayInit, 10_IncompatibleArrayInit.c1
+11, VarNotDefined, 11_VarNotDefined.c1
+12, ArrayOutOfRange, 12_ArrayOutOfRange.c1
+13, ArrayIndexErr, 13_ArrayIndexErr.c1
+14, AssignErr, 14_AssignErr.c1
+15, FuncNotDefined, 15_FuncNotDefined.c1
+16, ValDefinedVoid, 16_ValDefinedVoid.c1
+17, TypeVoid, 17_TypeVoid.c1
+18, WMainFunc, 18_WMainFunc.c1
+54, NoMainFunc, 54_NoMainFunc.c1

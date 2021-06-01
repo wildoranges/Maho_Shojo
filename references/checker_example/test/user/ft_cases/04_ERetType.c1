@@ -1,0 +1,17 @@
+//case1:
+void f()
+{
+    return 1;
+}
+//case2:
+int main()
+{
+    return;
+}
+/*
+case3:
+int main()
+{
+    return f();
+}
+*/

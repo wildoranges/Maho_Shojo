@@ -1,0 +1,3 @@
+/run/media/cjb/1C84BA5284BA2DE0/shared/learn/compiler/lab05-t3-backup/v9kbje8zyf20201202205919/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/run/media/cjb/1C84BA5284BA2DE0/shared/learn/compiler/lab05-t3-backup/v9kbje8zyf20201202205919/cmake-build-debug/CMakeFiles/edit_cache.dir
+/run/media/cjb/1C84BA5284BA2DE0/shared/learn/compiler/lab05-t3-backup/v9kbje8zyf20201202205919/cmake-build-debug/CMakeFiles/c1checker.dir

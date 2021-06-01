@@ -1,0 +1,10 @@
+float b = 2.1 % 1.1;
+void f()
+{
+    return;
+}
+int main()
+{
+    -f();
+    return 0;
+}
