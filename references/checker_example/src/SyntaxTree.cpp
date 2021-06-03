@@ -22,3 +22,5 @@ void IFStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void WhileStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void BreakStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void ContinueStmt::accept(Visitor &visitor) { visitor.visit(*this); }
+void UnaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
+void BinaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
