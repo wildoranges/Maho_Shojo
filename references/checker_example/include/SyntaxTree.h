@@ -174,21 +174,31 @@ struct Expr : Node
     virtual void accept(Visitor &visitor) = 0;
 };
 
-/*
-struct UnaryCondExpr : Expr{//FIXME:FINISH THIS
+struct CondExpr : Expr
+{
+    virtual void accept(Visitor &visitor) = 0;
+};
+
+struct AddExpr : Expr
+{
+    virtual void accept(Visitor &visitor) = 0;
+};
+
+
+struct UnaryCondExpr : CondExpr{//FIXME:FINISH THIS
     UnaryCondOp op;
     Ptr<Expr> rhs;
     virtual void accept(Visitor &visitor) override final;
 };
 
-struct BinaryCondExpr : Expr{
+struct BinaryCondExpr : CondExpr{
     BinaryCondOp op;
     Ptr<Expr> lhs,rhs;
     virtual void accept(Visitor &visitor) override final;
-};*/
+};
 
 // Expression like `lhs op rhs`.
-struct BinaryExpr : Expr
+struct BinaryExpr : AddExpr
 {
     BinOp op;
     Ptr<Expr> lhs, rhs;
@@ -196,7 +206,7 @@ struct BinaryExpr : Expr
 };
 
 // Expression like `op rhs`.
-struct UnaryExpr : Expr
+struct UnaryExpr : AddExpr
 {
     UnaryOp op;
     Ptr<Expr> rhs;
@@ -204,7 +214,7 @@ struct UnaryExpr : Expr
 };
 
 // Expression like `ident` or `ident[exp]`.
-struct LVal : Expr
+struct LVal : AddExpr
 {
     std::string name;
     PtrList<Expr> array_index; // nullptr if not indexed as array
@@ -212,7 +222,7 @@ struct LVal : Expr
 };
 
 // Expression constructed by a literal number.
-struct Literal : Expr
+struct Literal : AddExpr
 {
     bool is_int;
     int int_const;
@@ -221,7 +231,7 @@ struct Literal : Expr
 };
 
 // Function call statement.
-struct FuncCallStmt : Expr
+struct FuncCallStmt : AddExpr
 {
     std::string name;
     PtrList<Expr> params;
@@ -261,6 +271,8 @@ public:
     virtual void visit(ExprStmt &node) = 0;
     virtual void visit(FuncParam &node) = 0;
     virtual void visit(FuncFParamList &node) = 0;
+    virtual void visit(UnaryCondExpr &node) = 0;
+    virtual void visit(BinaryCondExpr &node) = 0;
 };
 } // end namespace SyntaxTree
 

@@ -18,3 +18,5 @@ void EmptyStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void ExprStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void FuncParam::accept(Visitor &visitor) { visitor.visit(*this); }
 void FuncFParamList::accept(Visitor &visitor) { visitor.visit(*this); }
+void UnaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
+void BinaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
