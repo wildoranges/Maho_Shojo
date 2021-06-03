@@ -176,3 +176,62 @@ void SyntaxTreePrinter::visit(FuncFParamList &node)
 {
     return;//TODO:FINISH THIS
 }
+
+void SyntaxTreePrinter::visit(IFStmt &node)
+{
+    //FIXME:FINISH THIS
+    print_indent();
+    std::cout << "if";
+    std::cout << " ";
+    std::cout << "(";
+    node.cond_exp->accept(*this);
+    std::cout << ")";
+    std::cout << " ";
+    std::cout << "{" << std::endl;
+    indent += 4;
+    node.if_statement->accept(*this);
+    indent -= 4;
+    std::cout << "}" << std::endl;
+    if (node.else_statement != nullptr) {
+        std::cout << "else";
+        std::cout << " ";
+        std::cout << "{" << std::endl;
+        indent += 4;
+        node.else_statement->accept(*this);
+        indent -= 4;
+        std::cout << "}" << std::endl;
+    }
+}
+
+void SyntaxTreePrinter::visit(WhileStmt &node)
+{
+    //FIXME:FINISH THIS
+    print_indent();
+    std::cout << "while";
+    std::cout << " ";
+    std::cout << "(";
+    node.cond_exp->accept(*this);
+    std::cout << ")";
+    std::cout << " ";
+    std::cout << "{" << std::endl;
+    indent += 4;
+    node.statement->accept(*this);
+    indent -= 4;
+    std::cout << "}" << std::endl;
+}
+
+void SyntaxTreePrinter::visit(BreakStmt &node)
+{
+    //FIXME:FINISH THIS
+    print_indent();
+    std::cout << "break";
+    std::cout << ";" << std::endl;
+}
+
+void SyntaxTreePrinter::visit(ContinueStmt &node)
+{
+    //FIXME:FINISH THIS
+    print_indent();
+    std::cout << "continue";
+    std::cout << ";" << std::endl;
+}
