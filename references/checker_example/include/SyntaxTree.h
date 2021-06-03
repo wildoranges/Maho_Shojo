@@ -54,7 +54,9 @@ enum class BinaryCondOp
     GT,
     GTE,
     EQ,
-    NEQ
+    NEQ,
+    LAND,
+    LOR
 };
 
 // Forward declaration
