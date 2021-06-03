@@ -82,6 +82,11 @@ struct FuncFParamList;
 struct UnaryCondExpr;
 struct BinaryCondExpr;
 
+struct IFStmt;
+struct WhileStmt;
+struct BreakStmt;
+struct ContinueStmt;
+
 struct Visitor;
 
 // Virtual base of all kinds of syntax tree nodes.
@@ -242,6 +247,31 @@ struct FuncFParamList : Node
     virtual void accept(Visitor &visitor) override final;
 };
 
+struct IFStmt : Stmt
+{
+    Ptr<Expr> cond_exp;
+    Ptr<Stmt> if_statement;
+    Ptr<Stmt> else_statement;
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct WhileStmt : Stmt
+{
+    Ptr<Expr> cond_exp;
+    Ptr<Stmt> statement;
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct BreakStmt : Stmt
+{
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct ContinueStmt : Stmt
+{
+    virtual void accept(Visitor &visitor) override final;
+};
+
 // Visitor base type
 class Visitor
 {
@@ -261,6 +291,10 @@ public:
     virtual void visit(ExprStmt &node) = 0;
     virtual void visit(FuncParam &node) = 0;
     virtual void visit(FuncFParamList &node) = 0;
+    virtual void visit(IFStmt &node) = 0;
+    virtual void visit(WhileStmt &node) = 0;
+    virtual void visit(BreakStmt &node) = 0;
+    virtual void visit(ContinueStmt &node) = 0;
 };
 } // end namespace SyntaxTree
 

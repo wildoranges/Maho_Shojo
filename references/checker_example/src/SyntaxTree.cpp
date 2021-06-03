@@ -18,3 +18,7 @@ void EmptyStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void ExprStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void FuncParam::accept(Visitor &visitor) { visitor.visit(*this); }
 void FuncFParamList::accept(Visitor &visitor) { visitor.visit(*this); }
+void IFStmt::accept(Visitor &visitor) { visitor.visit(*this); }
+void WhileStmt::accept(Visitor &visitor) { visitor.visit(*this); }
+void BreakStmt::accept(Visitor &visitor) { visitor.visit(*this); }
+void ContinueStmt::accept(Visitor &visitor) { visitor.visit(*this); }
