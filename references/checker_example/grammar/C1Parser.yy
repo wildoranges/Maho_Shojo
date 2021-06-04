@@ -303,6 +303,10 @@ BlockItem:VarDecl{
     $$ = SyntaxTree::PtrList<SyntaxTree::Stmt>();
     $$.insert($$.end(), $1.begin(), $1.end());
   }
+  | ConstDecl{
+    $$ = SyntaxTree::PtrList<SyntaxTree::Stmt>();
+    $$.insert($$.end(), $1.begin(), $1.end());
+  }
   | Stmt{
     $$ = SyntaxTree::PtrList<SyntaxTree::Stmt>();
     $$.push_back(SyntaxTree::Ptr<SyntaxTree::Stmt>($1));
