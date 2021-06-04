@@ -468,39 +468,35 @@ Exp:PLUS Exp %prec UPLUS{
     $$ = $1;
   }
   ;
-<<<<<<< HEAD
-
-=======
-//FIXME:CondExpr?Expr new error
->>>>>>> efc6c0fdafa1e7515e730389416aff3ebe8dc86e
+  
 RelExp:RelExp LT Exp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LT;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
   |RelExp LTE Exp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LTE;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
   |RelExp GT Exp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::GT;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
   |RelExp GTE Exp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::GTE;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
@@ -511,18 +507,18 @@ RelExp:RelExp LT Exp{
   ;
 
 EqExp:EqExp EQ RelExp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::EQ;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
-    temp->rhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($3);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
   |EqExp NEQ RelExp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::NEQ;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
-    temp->rhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($3);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
@@ -532,10 +528,10 @@ EqExp:EqExp EQ RelExp{
   ;
 
 LAndExp:LAndExp LOGICAND EqExp {
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LAND;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
-    temp->rhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($3);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
@@ -545,10 +541,10 @@ LAndExp:LAndExp LOGICAND EqExp {
   ;
 
 LOrExp:LOrExp LOGICOR LAndExp {
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LOR;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
-    temp->rhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($3);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
