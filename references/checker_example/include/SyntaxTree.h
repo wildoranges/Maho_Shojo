@@ -233,7 +233,7 @@ struct Literal : AddExpr
 {
     bool is_int;
     int int_const;
-    double float_const;
+    //double float_const;
     virtual void accept(Visitor &visitor) override final;
 };
 
