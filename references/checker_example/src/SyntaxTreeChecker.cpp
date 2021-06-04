@@ -31,12 +31,6 @@ void SyntaxTreeChecker::visit(Assembly &node)
 
 void SyntaxTreeChecker::visit(FuncDef &node) 
 {
-    if(inFunc)
-    {
-        /*haserror = true;
-        err.error(node.loc,node.name+" : FuncDefInFunc"+",err_code : "+err_code["FuncDefInFunc"]+" cannot define function in function");
-        return;*/
-    }
     if(declare_function(node.name,node.ret_type,node.body))
         ;
     else
@@ -45,7 +39,6 @@ void SyntaxTreeChecker::visit(FuncDef &node)
         err.error(node.loc,node.name+" : ReDefFunc"+",err_code : "+err_code["ReDefFunc"]+" this function has been defined");
         return;
     }
-    inFunc = true;
     FuncType = node.ret_type;
     hasRet = false;
     node.body->accept(*this);

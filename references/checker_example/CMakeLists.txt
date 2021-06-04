@@ -12,7 +12,7 @@ find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
 BISON_TARGET(C1Parser ${CMAKE_CURRENT_SOURCE_DIR}/grammar/C1Parser.yy ${CMAKE_CURRENT_BINARY_DIR}/C1Parser.cpp
-             COMPILE_FLAGS "-Wall --defines=${CMAKE_CURRENT_BINARY_DIR}/C1Parser.h")
+             COMPILE_FLAGS "-Wall -Wcounterexamples --defines=${CMAKE_CURRENT_BINARY_DIR}/C1Parser.h")
 FLEX_TARGET(C1Scanner ${CMAKE_CURRENT_SOURCE_DIR}/grammar/C1Scanner.ll  ${CMAKE_CURRENT_BINARY_DIR}/C1Scanner.cpp
             COMPILE_FLAGS "--debug --c++")
 ADD_FLEX_BISON_DEPENDENCY(C1Scanner C1Parser)

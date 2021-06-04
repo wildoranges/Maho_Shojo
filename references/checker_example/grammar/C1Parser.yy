@@ -395,7 +395,7 @@ LVal:IDENTIFIER ArrayExpList{
 
 %left PLUS MINUS;
 %left MULTIPLY DIVIDE MODULO;
-%precedence UPLUS UMINUS;
+%precedence UPLUS UMINUS UNOT;
 
 Exp:PLUS Exp %prec UPLUS{
     auto temp = new SyntaxTree::UnaryExpr();
@@ -411,7 +411,7 @@ Exp:PLUS Exp %prec UPLUS{
     $$ = temp;
     $$->loc = @$;
   }
-  | NOT Exp {
+  | NOT Exp %prec UNOT{
     auto temp = new SyntaxTree::UnaryCondExpr();
     temp->op = SyntaxTree::UnaryCondOp::NOT;
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($2);

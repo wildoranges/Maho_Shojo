@@ -93,11 +93,15 @@ NewLine             [\n]
 
 %%
  /* keyword */
-float   {return yy::C1Parser::make_FLOAT(loc);}
 int 		{return yy::C1Parser::make_INT(loc);}
-return 	{return yy::C1Parser::make_RETURN(loc);}
+return 	    {return yy::C1Parser::make_RETURN(loc);}
 void 		{return yy::C1Parser::make_VOID(loc);}
 const		{return yy::C1Parser::make_CONST(loc);}
+break       {return yy::C1Parser::make_BREAK(loc);}
+continue    {return yy::C1Parser::make_CONTINUE(loc);}
+while       {return yy::C1Parser::make_WHILE(loc);}
+if          {return yy::C1Parser::make_IF(loc);}
+else        {return yy::C1Parser::make_ELSE(loc);}
 
 [<]     {return yy::C1Parser::make_LT(loc);}
 "<="    {return yy::C1Parser::make_LTE(loc);}
