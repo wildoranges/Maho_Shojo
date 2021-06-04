@@ -24,3 +24,4 @@ void BreakStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void ContinueStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void UnaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
 void BinaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
+void InitVal::accept(Visitor &visitor) { visitor.visit(*this); }

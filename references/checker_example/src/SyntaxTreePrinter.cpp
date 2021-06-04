@@ -93,20 +93,39 @@ void SyntaxTreePrinter::visit(VarDef &node)
         int tmp = indent;
         indent = 0;
         std::cout << " = ";
-        if (is_array)
-            std::cout << "{";
-        size_t num = 0;
-        for (auto init : node.initializers) {
-            init->accept(*this);
-            if (num < node.initializers.size() - 1)
-                std::cout << ", ";
-            num++;
-        }
-        if (is_array)
-            std::cout << "}";
+        // if (is_array)
+        //     std::cout << "{";
+        // size_t num = 0;
+        // for (auto init : node.initializers) {
+        //     init->accept(*this);
+        //     if (num < node.initializers.size() - 1)
+        //         std::cout << ", ";
+        //     num++;
+        // }
+        // if (is_array)
+        //     std::cout << "}";
+        node.initializers->accept(*this);
         indent = tmp;
     }
     std::cout << ";" << std::endl;
+}
+
+void SyntaxTreePrinter::visit(InitVal &node){
+    if(node.isExp){
+        node.expr->accept(*this);
+    }
+    else{
+        std::cout << "{";
+        int i = 0;
+        int num = node.elementList.size();
+        for(auto item: node.elementList){
+            item->accept(*this);
+            i++;
+            if(i < num) std::cout << ", ";
+        }
+        std::cout << "}";
+    }
+    return;
 }
 
 void SyntaxTreePrinter::visit(BinaryExpr &node)

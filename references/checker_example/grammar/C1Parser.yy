@@ -69,7 +69,9 @@ class C1Driver;
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>VarDefList
 %type <SyntaxTree::VarDef*>VarDef
 %type <SyntaxTree::PtrList<SyntaxTree::Expr>>ArrayExpList
-%type <SyntaxTree::PtrList<SyntaxTree::Expr>>InitVal
+%type <SyntaxTree::InitVal*>InitVal
+%type <SyntaxTree::InitVal*>InitValList
+%type <SyntaxTree::InitVal*>CommaInitValList
 %type <SyntaxTree::PtrList<SyntaxTree::Expr>>ExpList
 %type <SyntaxTree::PtrList<SyntaxTree::Expr>>CommaExpList
 %type <SyntaxTree::FuncDef*>FuncDef
@@ -161,7 +163,7 @@ ConstDef:IDENTIFIER ArrayExpList ASSIGN InitVal{//TODO:ADD ARRAY SUPPORT
     $$->is_inited = true;
     $$->name=$1;
     $$->array_length = $2;
-    $$->initializers = $4;
+    $$->initializers = SyntaxTree::Ptr<SyntaxTree::InitVal>($4);
     $$->loc = @$;
   }
 	;
@@ -195,7 +197,7 @@ VarDef:IDENTIFIER ArrayExpList{
     $$ = new SyntaxTree::VarDef();
     $$->name = $1;
     $$->array_length = $2;
-    $$->initializers = $4;
+    $$->initializers = SyntaxTree::Ptr<SyntaxTree::InitVal>($4);
     $$->is_inited = true;
     $$->loc = @$;
   }
@@ -211,11 +213,38 @@ ArrayExpList:ArrayExpList LBRACKET Exp RBRACKET{
   ;
 
 InitVal: Exp{//TODO:CHECK?
-    $$=SyntaxTree::PtrList<SyntaxTree::Expr>();
-    $$.push_back(SyntaxTree::Ptr<SyntaxTree::Expr>($1));
+    //TODO:Initializer cheking for scalar to array
+    $$ = new SyntaxTree::InitVal;
+    $$->isExp = true;
+    $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
+    $$->expr = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
   }
-  | LBRACE ExpList RBRACE{
+  | LBRACE InitValList RBRACE{
     $$ = $2;
+  }
+  ;
+
+InitValList: CommaInitValList InitVal{
+    $1->elementList.push_back(SyntaxTree::Ptr<SyntaxTree::InitVal>($2));
+    $$ = $1;
+  }
+  | %empty{
+    $$ = new SyntaxTree::InitVal;
+    $$->isExp = false;
+    $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
+    $$->expr = nullptr;
+  }
+  ;
+
+CommaInitValList: CommaInitValList InitVal COMMA{
+    $1->elementList.push_back(SyntaxTree::Ptr<SyntaxTree::InitVal>($2));
+    $$ = $1;
+  }
+  | %empty{
+    $$ = new SyntaxTree::InitVal;
+    $$->isExp = false;
+    $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
+    $$->expr = nullptr;
   }
   ;
 

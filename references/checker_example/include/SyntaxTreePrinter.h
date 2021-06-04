@@ -27,6 +27,7 @@ public:
     virtual void visit(SyntaxTree::WhileStmt &node) override;
     virtual void visit(SyntaxTree::BreakStmt &node) override;
     virtual void visit(SyntaxTree::ContinueStmt &node) override;
+    virtual void visit(SyntaxTree::InitVal &node) override;
     void print_indent();
 private:
     int indent = 0;

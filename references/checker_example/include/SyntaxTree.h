@@ -87,6 +87,7 @@ struct IfStmt;
 struct WhileStmt;
 struct BreakStmt;
 struct ContinueStmt;
+struct InitVal;
 
 struct Visitor;
 
@@ -96,6 +97,14 @@ struct Node
     Position loc;
     // Used in Visitor. Irrelevant to syntax tree generation.
     virtual void accept(Visitor &visitor) = 0;
+};
+
+//node for initial value
+struct InitVal: Node{
+    bool isExp;
+    std::vector<Ptr<InitVal>> elementList;
+    Ptr<Expr> expr;
+    virtual void accept(Visitor &visitor) override final;
 };
 
 // Root node of an ordinary syntax tree.
@@ -136,7 +145,7 @@ struct VarDef : Stmt, GlobalDef
     std::string name;
     bool is_inited; // This is used to verify `{}`
     PtrList<Expr> array_length; // empty for non-array variables
-    PtrList<Expr> initializers;
+    Ptr<InitVal> initializers;
     virtual void accept(Visitor &visitor) override final;
 };
 
@@ -308,6 +317,7 @@ public:
     virtual void visit(ContinueStmt &node) = 0;
     virtual void visit(UnaryCondExpr &node) = 0;
     virtual void visit(BinaryCondExpr &node) = 0;
+    virtual void visit(InitVal &node) = 0;
 };
 } // end namespace SyntaxTree
 
