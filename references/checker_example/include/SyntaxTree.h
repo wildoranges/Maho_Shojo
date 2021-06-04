@@ -83,7 +83,7 @@ struct FuncFParamList;
 struct UnaryCondExpr;
 struct BinaryCondExpr;
 
-struct IFStmt;
+struct IfStmt;
 struct WhileStmt;
 struct BreakStmt;
 struct ContinueStmt;
@@ -258,7 +258,7 @@ struct FuncFParamList : Node
     virtual void accept(Visitor &visitor) override final;
 };
 
-struct IFStmt : Stmt
+struct IfStmt : Stmt
 {
     Ptr<Expr> cond_exp;
     Ptr<Stmt> if_statement;
@@ -302,7 +302,7 @@ public:
     virtual void visit(ExprStmt &node) = 0;
     virtual void visit(FuncParam &node) = 0;
     virtual void visit(FuncFParamList &node) = 0;
-    virtual void visit(IFStmt &node) = 0;
+    virtual void visit(IfStmt &node) = 0;
     virtual void visit(WhileStmt &node) = 0;
     virtual void visit(BreakStmt &node) = 0;
     virtual void visit(ContinueStmt &node) = 0;

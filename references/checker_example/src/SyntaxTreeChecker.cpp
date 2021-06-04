@@ -81,10 +81,10 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
     {
         int_l_val = INTConstVal;
     }
-    else if(ltype==Type::FLOAT&&lconst)
+    /*else if(ltype==Type::FLOAT&&lconst)
     {
         flt_l_val = FLTConstVal;
-    }
+    }*/
     node.rhs->accept(*this);
     rtype = ExprType;
     rconst = isConst;
@@ -99,16 +99,16 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
     {
         int_r_val = INTConstVal;
     }
-    else if(rtype==Type::FLOAT&&rconst)
+    /*else if(rtype==Type::FLOAT&&rconst)
     {
         flt_r_val = FLTConstVal;
-    }
+    }*/
     bool BinExprConst = lconst&&rconst;
     isConst = BinExprConst;
     int INTBinExprVal;
     double FLTBinExprval;
     Type BinExprType;
-    if((ltype==Type::FLOAT||rtype==Type::FLOAT)&&BinExprConst)
+    /*if((ltype==Type::FLOAT||rtype==Type::FLOAT)&&BinExprConst)
     {
         if(ltype==Type::INT)
         {
@@ -118,7 +118,7 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
         {
             flt_r_val = (double)int_r_val;
         }
-    }
+    }*/
     if(ltype==Type::INT&&rtype==Type::INT)
     {
         BinExprType = Type::INT;
@@ -170,7 +170,7 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
             }
             INTConstVal = INTBinExprVal;
         }
-    }
+    }/*
     else
     {
         BinExprType = Type::FLOAT;
@@ -193,13 +193,6 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
                 }break;
                 case(BinOp::MODULO):
                 {
-                    /*if(flt_r_val==0.0)
-                    {
-                        haserror = true;
-                        err.error(node.loc,"DivZero,err_code : "+err_code["DivZero"]+" cannot divide 0");
-                        exit(1);
-                    }
-                    */
                     isConst = false;
                     haserror = true;
                     err.error(node.loc,"InValidOperands,err_code : "+err_code["InValidOperands"]+" invalid operands between '%' ");
@@ -222,7 +215,7 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
             }
             FLTConstVal = FLTBinExprval;
         }
-    }
+    }*/
     ExprType = BinExprType;
     isConst = BinExprConst;
 }
@@ -260,6 +253,7 @@ void SyntaxTreeChecker::visit(UnaryExpr &node)
             INTConstVal = INTUnExprVal;
         }
     }
+    /*
     else if(rtype==Type::FLOAT)
     {
         UnExprType = Type::FLOAT;
@@ -279,7 +273,7 @@ void SyntaxTreeChecker::visit(UnaryExpr &node)
             }
             FLTConstVal = FLTUnExprVal;
         }
-    }
+    }*/
     else
     {
         ExprType = Type::VOID;
@@ -390,7 +384,7 @@ void SyntaxTreeChecker::visit(LVal &node)
                 return;
             }
         }
-    }
+    }/*
     else
     {
         LvalType = Valptr->btype;
@@ -431,7 +425,7 @@ void SyntaxTreeChecker::visit(LVal &node)
         }
     }
     ExprType = LvalType;
-    isConst = LvalConst;
+    isConst = LvalConst;*/
 }
 void SyntaxTreeChecker::visit(Literal &node)
 {
@@ -440,12 +434,12 @@ void SyntaxTreeChecker::visit(Literal &node)
     {
         ExprType = Type::INT;
         INTConstVal = node.int_const;
-    }
+    }/*
     else
     {
         ExprType = Type::FLOAT;
         FLTConstVal = node.float_const;
-    }
+    }*/
 }
 void SyntaxTreeChecker::visit(ReturnStmt &node)
 {
@@ -468,12 +462,12 @@ void SyntaxTreeChecker::visit(ReturnStmt &node)
     hasRet = true;
     if(rettype==Type::VOID)
     {
-        if(FuncType==Type::FLOAT||FuncType==Type::INT)
+        /*if(FuncType==Type::FLOAT||FuncType==Type::INT)
         {
             haserror = true;
             err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" no return value in function");
             return;
-        }
+        }*/
     }
     else if(rettype==Type::INT)
     {
@@ -482,11 +476,11 @@ void SyntaxTreeChecker::visit(ReturnStmt &node)
             haserror = true;
             err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" cannot return value in function typed void");
             return;
-        }
+        }/*
         else if(FuncType==Type::FLOAT)
         {
             err.warn(node.loc,"WRetType,warn_code : "+warn_code["WRetType"]+" convert int to float");
-        }
+        }*/
     }
     else
     {

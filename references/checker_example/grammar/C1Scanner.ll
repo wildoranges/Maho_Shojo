@@ -100,14 +100,14 @@ void 		{return yy::C1Parser::make_VOID(loc);}
 const		{return yy::C1Parser::make_CONST(loc);}
 
 [<]     {return yy::C1Parser::make_LT(loc);}
-[<=]    {return yy::C1Parser::make_LTE(loc);}
+"<="    {return yy::C1Parser::make_LTE(loc);}
 [>]     {return yy::C1Parser::make_GT(loc);}
-[>=]    {return yy::C1Parser::make_GTE(loc);}
-[==]    {return yy::C1Parser::make_EQ(loc);}
-[!=]    {return yy::C1Parser::make_NEQ(loc);}
+">="    {return yy::C1Parser::make_GTE(loc);}
+"=="    {return yy::C1Parser::make_EQ(loc);}
+"!="    {return yy::C1Parser::make_NEQ(loc);}
 [!]     {return yy::C1Parser::make_NOT(loc);}
-[&&]    {return yy::C1Parser::make_LOGICAND(loc);}
-[||]    {return yy::C1Parser::make_LOGICOR(loc);}
+"&&"    {return yy::C1Parser::make_LOGICAND(loc);}
+"||"    {return yy::C1Parser::make_LOGICOR(loc);}
 [+] 		{return yy::C1Parser::make_PLUS(loc);}
 [-] 		{return yy::C1Parser::make_MINUS(loc);}
 [*] 		{return yy::C1Parser::make_MULTIPLY(loc);}

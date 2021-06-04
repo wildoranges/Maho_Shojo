@@ -237,7 +237,7 @@ void SyntaxTreePrinter::visit(UnaryCondExpr &node)
     std::cout << ")";
 }
 
-void SyntaxTreePrinter::visit(IFStmt &node)
+void SyntaxTreePrinter::visit(IfStmt &node)
 {
     print_indent();
     std::cout << "if";
