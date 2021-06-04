@@ -23,7 +23,6 @@ using Position = yy::location;
 enum class Type
 {
     INT = 0,
-    FLOAT,
     VOID
 };
 

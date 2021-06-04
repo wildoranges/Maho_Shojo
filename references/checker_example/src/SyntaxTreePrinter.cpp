@@ -7,7 +7,7 @@ using namespace SyntaxTree;
 
 std::map<Type, std::string> type2str = {
     {Type::INT, "int"},
-    {Type::FLOAT, "float"},
+    //{Type::FLOAT, "float"},
     {Type::VOID, "void"}
 };
 
@@ -222,17 +222,23 @@ void SyntaxTreePrinter::visit(FuncFParamList &node)
 
 void SyntaxTreePrinter::visit(BinaryCondExpr &node)
 {
-    //TODO:FINISH
+    std::cout << "(";
+    node.lhs->accept(*this);
+    std::cout << bincondop2str[node.op];
+    node.rhs->accept(*this);
+    std::cout << ")";
 }
 
 void SyntaxTreePrinter::visit(UnaryCondExpr &node)
 {
-    //TODO:FINISH
+    std::cout <<"(";
+    std::cout << unarycondop2str[node.op];
+    node.rhs->accept(*this);
+    std::cout << ")";
 }
 
 void SyntaxTreePrinter::visit(IFStmt &node)
 {
-    //FIXME:FINISH THIS
     print_indent();
     std::cout << "if";
     std::cout << " ";
@@ -258,7 +264,6 @@ void SyntaxTreePrinter::visit(IFStmt &node)
 
 void SyntaxTreePrinter::visit(WhileStmt &node)
 {
-    //FIXME:FINISH THIS
     print_indent();
     std::cout << "while";
     std::cout << " ";
@@ -275,14 +280,12 @@ void SyntaxTreePrinter::visit(WhileStmt &node)
 
 void SyntaxTreePrinter::visit(BreakStmt &node)
 {
-    //FIXME:FINISH THIS
     print_indent();
     std::cout << "break";
 }
 
 void SyntaxTreePrinter::visit(ContinueStmt &node)
 {
-    //FIXME:FINISH THIS
     print_indent();
     std::cout << "continue";
 }
