@@ -725,10 +725,6 @@ void SyntaxTreeChecker::visit(FuncFParamList &node)
 void SyntaxTreeChecker::visit(IfStmt &node)
 {
     //FIXME:FINISH THIS;
-    if (node.cond_exp == nullptr) {
-        haserror = true;
-        err.error(node.loc,"NoCondExp,err_code : "+err_code["NoCondExp"])
-    }
     node.cond_exp->accept(*this);
     enter_scope();
     node.if_statement->accept(*this);
@@ -746,17 +742,24 @@ void SyntaxTreeChecker::visit(WhileStmt &node)
     node.cond_exp->accept(*this);
     enter_scope();
     node.statement->accept(*this);
+    StmtStack.back() = node.statement;
     exit_scope();
 }
 
 void SyntaxTreeChecker::visit(BreakStmt &node)
 {
     //FIXME:FINISH THIS;
-    return;
+    if (StmtStack.back() == nullptr) {
+        haserror = true;
+        err.error(node.loc,"UnmatchedBreak,err_code : "+err_code["UnmatchedBreak"]);
+    }
 }
 
 void SyntaxTreeChecker::visit(ContinueStmt &node)
 {
     //FIXME:FINISH THIS;
-    return;
+    if (StmtStack.back() == nullptr) {
+        haserror = true;
+        err.error(node.loc,"UnmatchedContinue,err_code : "+err_code["UnmatchedContinue"]);
+    }
 }

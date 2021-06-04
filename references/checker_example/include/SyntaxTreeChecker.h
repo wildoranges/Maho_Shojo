@@ -37,8 +37,10 @@ public:
         err_code["FuncNotDefined"] = std::string("15");
         err_code["ValDefinedVoid"] = std::string("16");
         err_code["TypeVoid"] = std::string("17");
+        err_code["UnmatchedBreak"] = std::string("18");
+        err_code["UnmatchedContinue"] = std::string("19");
 
-        warn_code["WMainFunc"] = std::string("18");
+        warn_code["WMainFunc"] = std::string("49");
         warn_code["WRetType"] = std::string("50");
         warn_code["IncompatibleArrayInit"] = std::string("51");
         warn_code["IncompatibleVarInit"] = std::string("52");
@@ -63,7 +65,7 @@ public:
     virtual void visit(SyntaxTree::ExprStmt &node) override;
     virtual void visit(SyntaxTree::FuncParam &node) override;
     virtual void visit(SyntaxTree::FuncFParamList &node) override;
-    virtual void visit(SyntaxTree::IFStmt &node) override;
+    virtual void visit(SyntaxTree::IfStmt &node) override;
     virtual void visit(SyntaxTree::WhileStmt &node) override;
     virtual void visit(SyntaxTree::BreakStmt &node) override;
     virtual void visit(SyntaxTree::ContinueStmt &node) override;
