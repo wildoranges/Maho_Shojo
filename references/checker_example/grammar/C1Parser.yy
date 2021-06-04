@@ -72,6 +72,7 @@ class C1Driver;
 %type <SyntaxTree::PtrList<SyntaxTree::Expr>>ArrayExpList
 %type <SyntaxTree::PtrList<SyntaxTree::Expr>>InitVal
 %type <SyntaxTree::PtrList<SyntaxTree::Expr>>ExpList
+%type <SyntaxTree::PtrList<SyntaxTree::Expr>>CommaExpList
 %type <SyntaxTree::FuncDef*>FuncDef
 %type <SyntaxTree::BlockStmt*>Block
 %type <SyntaxTree::PtrList<SyntaxTree::Stmt>>BlockItemList
@@ -161,12 +162,13 @@ DefType:BType{
   }
   ;
 
-ConstDef:IDENTIFIER ASSIGN Exp{//TODO:ADD ARRAY SUPPORT
+ConstDef:IDENTIFIER ArrayExpList ASSIGN InitVal{//TODO:ADD ARRAY SUPPORT
     $$=new SyntaxTree::VarDef();
     $$->is_constant = true;
     $$->is_inited = true;
     $$->name=$1;
-    $$->initializers.push_back(SyntaxTree::Ptr<SyntaxTree::Expr>($3));
+    $$->array_length = $2;
+    $$->initializers = $4;
     $$->loc = @$;
   }
 	;
@@ -224,18 +226,22 @@ InitVal: Exp{//TODO:CHECK?
   }
   ;
 
-ExpList:ExpList COMMA Exp{
-    $1.push_back(SyntaxTree::Ptr<SyntaxTree::Expr>($3));
+ExpList:CommaExpList Exp{
+    $1.push_back(SyntaxTree::Ptr<SyntaxTree::Expr>($2));
     $$ = $1;
-  }
-  | Exp{
-    $$ = SyntaxTree::PtrList<SyntaxTree::Expr>();
-    $$.push_back(SyntaxTree::Ptr<SyntaxTree::Expr>($1));
   }
   | %empty{
     $$ = SyntaxTree::PtrList<SyntaxTree::Expr>();
   }
 	;
+
+CommaExpList:CommaExpList Exp COMMA{
+    $1.push_back(SyntaxTree::Ptr<SyntaxTree::Expr>($2));
+    $$ = $1;
+  }
+  | %empty{
+    $$ = SyntaxTree::PtrList<SyntaxTree::Expr>();
+  }
 
 FuncFParam:BType IDENTIFIER ArrayExpList{
 //TODO:finsih ast
@@ -462,7 +468,11 @@ Exp:PLUS Exp %prec UPLUS{
     $$ = $1;
   }
   ;
+<<<<<<< HEAD
 
+=======
+//FIXME:CondExpr?Expr new error
+>>>>>>> efc6c0fdafa1e7515e730389416aff3ebe8dc86e
 RelExp:RelExp LT Exp{
     auto temp = new SyntaxTree::BinaryCondExpr;
     temp->op = SyntaxTree::BinaryCondOp::LT;
