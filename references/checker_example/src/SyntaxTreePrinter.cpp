@@ -245,14 +245,24 @@ void SyntaxTreePrinter::visit(IfStmt &node)
     std::cout << "(";
     node.cond_exp->accept(*this);
     std::cout << ")" << std::endl;
-    indent += 4;
-    node.if_statement->accept(*this);
-    indent -= 4;
+    if(dynamic_cast<BlockStmt*>(node.if_statement.get())){
+        node.if_statement->accept(*this);
+    }
+    else{
+        indent+=4;
+        node.if_statement->accept(*this);
+        indent-=4;
+    }
     if (node.else_statement != nullptr) {
+        print_indent();
         std::cout << "else" << std::endl;
-        indent += 4;
-        node.else_statement->accept(*this);
-        indent -= 4;
+        if(dynamic_cast<BlockStmt*>(node.else_statement.get())){
+            node.else_statement->accept(*this);
+        }else {
+            indent+=4;
+            node.else_statement->accept(*this);
+            indent-=4;
+        }
     }
 }
 
@@ -264,9 +274,14 @@ void SyntaxTreePrinter::visit(WhileStmt &node)
     std::cout << "(";
     node.cond_exp->accept(*this);
     std::cout << ")"<< std::endl;
-    indent += 4;
-    node.statement->accept(*this);
-    indent -= 4;
+    if(dynamic_cast<BlockStmt*>(node.statement.get())){
+        node.statement->accept(*this);
+    }
+    else{
+        indent+=4;
+        node.statement->accept(*this);
+        indent-=4;
+    }
 }
 
 void SyntaxTreePrinter::visit(BreakStmt &node)
