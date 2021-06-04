@@ -727,3 +727,42 @@ void SyntaxTreeChecker::visit(FuncFParamList &node)
 {
     return;//TODO:FINISH THIS;
 }
+
+void SyntaxTreeChecker::visit(IfStmt &node)
+{
+    //FIXME:FINISH THIS;
+    if (node.cond_exp == nullptr) {
+        haserror = true;
+        err.error(node.loc,"NoCondExp,err_code : "+err_code["NoCondExp"])
+    }
+    node.cond_exp->accept(*this);
+    enter_scope();
+    node.if_statement->accept(*this);
+    exit_scope();
+    if (node.else_statement != nullptr) {
+        enter_scope();
+        node.else_statement->accept(*this);
+        exit_scope();
+    }
+}
+
+void SyntaxTreeChecker::visit(WhileStmt &node)
+{
+    //FIXME:FINISH THIS;
+    node.cond_exp->accept(*this);
+    enter_scope();
+    node.statement->accept(*this);
+    exit_scope();
+}
+
+void SyntaxTreeChecker::visit(BreakStmt &node)
+{
+    //FIXME:FINISH THIS;
+    return;
+}
+
+void SyntaxTreeChecker::visit(ContinueStmt &node)
+{
+    //FIXME:FINISH THIS;
+    return;
+}
