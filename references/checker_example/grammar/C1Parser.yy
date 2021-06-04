@@ -333,7 +333,7 @@ Stmt:LVal ASSIGN Exp SEMICOLON{
   }
   | WHILE LPARENTHESE CondExp RPARENTHESE Stmt{
     auto temp = new SyntaxTree::WhileStmt();
-    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::CondExp>($3);
+    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     temp->statement = SyntaxTree::Ptr<SyntaxTree::Stmt>($5);
     $$ = temp;
     $$->loc = @$;
@@ -357,7 +357,7 @@ Stmt:LVal ASSIGN Exp SEMICOLON{
 
 IfStmt:IF LPARENTHESE CondExp RPARENTHESE Stmt {
     auto temp = new SyntaxTree::IfStmt();
-    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::CondExp>($3);
+    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     temp->if_statement = SyntaxTree::Ptr<SyntaxTree::Stmt>($5);
     temp->else_statement = nullptr;
     $$ = temp;
@@ -365,7 +365,7 @@ IfStmt:IF LPARENTHESE CondExp RPARENTHESE Stmt {
   }
   | IF LPARENTHESE CondExp RPARENTHESE Stmt ELSE Stmt {
     auto temp = new SyntaxTree::IfStmt();
-    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::CondExp>($3);
+    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     temp->if_statement = SyntaxTree::Ptr<SyntaxTree::Stmt>($5);
     temp->else_statement = SyntaxTree::Ptr<SyntaxTree::Stmt>($7);
     $$ = temp;
