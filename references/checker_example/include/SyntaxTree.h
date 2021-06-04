@@ -23,7 +23,6 @@ using Position = yy::location;
 enum class Type
 {
     INT = 0,
-    FLOAT,
     VOID
 };
 
@@ -54,7 +53,9 @@ enum class BinaryCondOp
     GT,
     GTE,
     EQ,
-    NEQ
+    NEQ,
+    LAND,
+    LOR
 };
 
 // Forward declaration
@@ -81,6 +82,11 @@ struct FuncParam;
 struct FuncFParamList;
 struct UnaryCondExpr;
 struct BinaryCondExpr;
+
+struct IFStmt;
+struct WhileStmt;
+struct BreakStmt;
+struct ContinueStmt;
 
 struct Visitor;
 
@@ -174,21 +180,31 @@ struct Expr : Node
     virtual void accept(Visitor &visitor) = 0;
 };
 
-/*
-struct UnaryCondExpr : Expr{//FIXME:FINISH THIS
+struct CondExpr : Expr
+{
+    virtual void accept(Visitor &visitor) = 0;
+};
+
+struct AddExpr : Expr
+{
+    virtual void accept(Visitor &visitor) = 0;
+};
+
+
+struct UnaryCondExpr : CondExpr{//FIXME:FINISH THIS
     UnaryCondOp op;
     Ptr<Expr> rhs;
     virtual void accept(Visitor &visitor) override final;
 };
 
-struct BinaryCondExpr : Expr{
+struct BinaryCondExpr : CondExpr{
     BinaryCondOp op;
     Ptr<Expr> lhs,rhs;
     virtual void accept(Visitor &visitor) override final;
-};*/
+};
 
 // Expression like `lhs op rhs`.
-struct BinaryExpr : Expr
+struct BinaryExpr : AddExpr
 {
     BinOp op;
     Ptr<Expr> lhs, rhs;
@@ -196,7 +212,7 @@ struct BinaryExpr : Expr
 };
 
 // Expression like `op rhs`.
-struct UnaryExpr : Expr
+struct UnaryExpr : AddExpr
 {
     UnaryOp op;
     Ptr<Expr> rhs;
@@ -204,7 +220,7 @@ struct UnaryExpr : Expr
 };
 
 // Expression like `ident` or `ident[exp]`.
-struct LVal : Expr
+struct LVal : AddExpr
 {
     std::string name;
     PtrList<Expr> array_index; // nullptr if not indexed as array
@@ -212,16 +228,16 @@ struct LVal : Expr
 };
 
 // Expression constructed by a literal number.
-struct Literal : Expr
+struct Literal : AddExpr
 {
     bool is_int;
     int int_const;
-    double float_const;
+    //double float_const;
     virtual void accept(Visitor &visitor) override final;
 };
 
 // Function call statement.
-struct FuncCallStmt : Expr
+struct FuncCallStmt : AddExpr
 {
     std::string name;
     PtrList<Expr> params;
@@ -239,6 +255,31 @@ struct FuncParam : Node
 struct FuncFParamList : Node
 {
     PtrList<FuncParam> params;
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct IFStmt : Stmt
+{
+    Ptr<Expr> cond_exp;
+    Ptr<Stmt> if_statement;
+    Ptr<Stmt> else_statement;
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct WhileStmt : Stmt
+{
+    Ptr<Expr> cond_exp;
+    Ptr<Stmt> statement;
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct BreakStmt : Stmt
+{
+    virtual void accept(Visitor &visitor) override final;
+};
+
+struct ContinueStmt : Stmt
+{
     virtual void accept(Visitor &visitor) override final;
 };
 
@@ -261,6 +302,12 @@ public:
     virtual void visit(ExprStmt &node) = 0;
     virtual void visit(FuncParam &node) = 0;
     virtual void visit(FuncFParamList &node) = 0;
+    virtual void visit(IFStmt &node) = 0;
+    virtual void visit(WhileStmt &node) = 0;
+    virtual void visit(BreakStmt &node) = 0;
+    virtual void visit(ContinueStmt &node) = 0;
+    virtual void visit(UnaryCondExpr &node) = 0;
+    virtual void visit(BinaryCondExpr &node) = 0;
 };
 } // end namespace SyntaxTree
 

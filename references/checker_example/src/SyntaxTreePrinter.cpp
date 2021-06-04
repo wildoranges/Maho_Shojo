@@ -7,8 +7,19 @@ using namespace SyntaxTree;
 
 std::map<Type, std::string> type2str = {
     {Type::INT, "int"},
-    {Type::FLOAT, "float"},
+    //{Type::FLOAT, "float"},
     {Type::VOID, "void"}
+};
+
+std::map<BinaryCondOp,std::string> bincondop2str = {
+        {BinaryCondOp::EQ,"=="},
+        {BinaryCondOp::NEQ,"!="},
+        {BinaryCondOp::GT,">"},
+        {BinaryCondOp::GTE,">="},
+        {BinaryCondOp::LT,"<"},
+        {BinaryCondOp::LTE,"<="},
+        {BinaryCondOp::LAND,"&&"},
+        {BinaryCondOp::LOR,"||"}
 };
 
 std::map<BinOp, std::string> binop2str = {
@@ -17,6 +28,10 @@ std::map<BinOp, std::string> binop2str = {
     {BinOp::MULTIPLY, "*"},
     {BinOp::DIVIDE, "/"},
     {BinOp::MODULO, "%"}
+};
+
+std::map<UnaryCondOp,std::string> unarycondop2str = {
+        {UnaryCondOp::NOT,"!"}
 };
 
 std::map<UnaryOp, std::string> unaryop2str = {
@@ -41,7 +56,9 @@ void SyntaxTreePrinter::visit(Assembly &node)
 void SyntaxTreePrinter::visit(FuncDef &node)
 {
     std::cout << type2str[node.ret_type] << " " 
-        << node.name << "()" << std::endl;
+        << node.name << "(";
+    node.param_list->accept(*this);
+    std::cout << ")" << std::endl;
     node.body->accept(*this);
     indent = 0;
 }
@@ -123,15 +140,15 @@ void SyntaxTreePrinter::visit(Literal &node)
 {
     if (node.is_int)
         std::cout << node.int_const;
-    else
-        std::cout << node.float_const;
+    /*else
+        std::cout << node.float_const;*/
 }
 
 void SyntaxTreePrinter::visit(ReturnStmt &node)
 {
     print_indent();
     std::cout << "return";
-    indent = 0;
+    //indent = 0;
     if (node.ret.get()) {
         std::cout << " ";
         node.ret->accept(*this);
@@ -151,7 +168,18 @@ void SyntaxTreePrinter::visit(AssignStmt &node)
 void SyntaxTreePrinter::visit(FuncCallStmt &node)
 {
     //print_indent();
-    std::cout << node.name << "()";
+    std::cout << node.name << "(";
+    size_t num = 0;
+    for(auto exp:node.params)
+    {
+        exp->accept(*this);
+        if(num < node.params.size() - 1)
+        {
+            std::cout <<", ";
+        }
+        num++;
+    }
+    std::cout <<")";
 }
 
 void SyntaxTreePrinter::visit(EmptyStmt &)
@@ -169,10 +197,95 @@ void SyntaxTreePrinter::visit(ExprStmt &node)
 
 void SyntaxTreePrinter::visit(FuncParam &node)
 {
-    return;//TODO:FINISH THIS
+    std::cout << type2str[node.param_type] << " " << node.name;
+    for(auto exp:node.array_index)
+    {
+        std::cout << "[";
+        exp->accept(*this);
+        std::cout << "]";
+    }
 }
 
 void SyntaxTreePrinter::visit(FuncFParamList &node)
 {
-    return;//TODO:FINISH THIS
+    size_t num = 0;
+    for(auto param:node.params)
+    {
+        param->accept(*this);
+        if(num < node.params.size() - 1)
+        {
+            std::cout << ", ";
+        }
+        num++;
+    }
+}
+
+void SyntaxTreePrinter::visit(BinaryCondExpr &node)
+{
+    std::cout << "(";
+    node.lhs->accept(*this);
+    std::cout << bincondop2str[node.op];
+    node.rhs->accept(*this);
+    std::cout << ")";
+}
+
+void SyntaxTreePrinter::visit(UnaryCondExpr &node)
+{
+    std::cout <<"(";
+    std::cout << unarycondop2str[node.op];
+    node.rhs->accept(*this);
+    std::cout << ")";
+}
+
+void SyntaxTreePrinter::visit(IFStmt &node)
+{
+    print_indent();
+    std::cout << "if";
+    std::cout << " ";
+    std::cout << "(";
+    node.cond_exp->accept(*this);
+    std::cout << ")";
+    std::cout << " ";
+    std::cout << "{" << std::endl;
+    indent += 4;
+    node.if_statement->accept(*this);
+    indent -= 4;
+    std::cout << "}" << std::endl;
+    if (node.else_statement != nullptr) {
+        std::cout << "else";
+        std::cout << " ";
+        std::cout << "{" << std::endl;
+        indent += 4;
+        node.else_statement->accept(*this);
+        indent -= 4;
+        std::cout << "}" << std::endl;
+    }
+}
+
+void SyntaxTreePrinter::visit(WhileStmt &node)
+{
+    print_indent();
+    std::cout << "while";
+    std::cout << " ";
+    std::cout << "(";
+    node.cond_exp->accept(*this);
+    std::cout << ")";
+    std::cout << " ";
+    std::cout << "{" << std::endl;
+    indent += 4;
+    node.statement->accept(*this);
+    indent -= 4;
+    std::cout << "}" << std::endl;
+}
+
+void SyntaxTreePrinter::visit(BreakStmt &node)
+{
+    print_indent();
+    std::cout << "break";
+}
+
+void SyntaxTreePrinter::visit(ContinueStmt &node)
+{
+    print_indent();
+    std::cout << "continue";
 }
