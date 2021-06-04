@@ -11,12 +11,27 @@ std::map<Type, std::string> type2str = {
     {Type::VOID, "void"}
 };
 
+std::map<BinaryCondOp,std::string> bincondop2str = {
+        {BinaryCondOp::EQ,"=="},
+        {BinaryCondOp::NEQ,"!="},
+        {BinaryCondOp::GT,">"},
+        {BinaryCondOp::GTE,">="},
+        {BinaryCondOp::LT,"<"},
+        {BinaryCondOp::LTE,"<="},
+        {BinaryCondOp::LAND,"&&"},
+        {BinaryCondOp::LOR,"||"}
+};
+
 std::map<BinOp, std::string> binop2str = {
     {BinOp::PLUS, "+"},
     {BinOp::MINUS, "-"},
     {BinOp::MULTIPLY, "*"},
     {BinOp::DIVIDE, "/"},
     {BinOp::MODULO, "%"}
+};
+
+std::map<UnaryCondOp,std::string> unarycondop2str = {
+        {UnaryCondOp::NOT,"!"}
 };
 
 std::map<UnaryOp, std::string> unaryop2str = {
@@ -41,7 +56,9 @@ void SyntaxTreePrinter::visit(Assembly &node)
 void SyntaxTreePrinter::visit(FuncDef &node)
 {
     std::cout << type2str[node.ret_type] << " " 
-        << node.name << "()" << std::endl;
+        << node.name << "(";
+    node.param_list->accept(*this);
+    std::cout << ")" << std::endl;
     node.body->accept(*this);
     indent = 0;
 }
@@ -123,15 +140,15 @@ void SyntaxTreePrinter::visit(Literal &node)
 {
     if (node.is_int)
         std::cout << node.int_const;
-    else
-        std::cout << node.float_const;
+    /*else
+        std::cout << node.float_const;*/
 }
 
 void SyntaxTreePrinter::visit(ReturnStmt &node)
 {
     print_indent();
     std::cout << "return";
-    indent = 0;
+    //indent = 0;
     if (node.ret.get()) {
         std::cout << " ";
         node.ret->accept(*this);
@@ -151,7 +168,18 @@ void SyntaxTreePrinter::visit(AssignStmt &node)
 void SyntaxTreePrinter::visit(FuncCallStmt &node)
 {
     //print_indent();
-    std::cout << node.name << "()";
+    std::cout << node.name << "(";
+    size_t num = 0;
+    for(auto exp:node.params)
+    {
+        exp->accept(*this);
+        if(num < node.params.size() - 1)
+        {
+            std::cout <<", ";
+        }
+        num++;
+    }
+    std::cout <<")";
 }
 
 void SyntaxTreePrinter::visit(EmptyStmt &)
@@ -169,12 +197,37 @@ void SyntaxTreePrinter::visit(ExprStmt &node)
 
 void SyntaxTreePrinter::visit(FuncParam &node)
 {
-    return;//TODO:FINISH THIS
+    std::cout << type2str[node.param_type] << " " << node.name;
+    for(auto exp:node.array_index)
+    {
+        std::cout << "[";
+        exp->accept(*this);
+        std::cout << "]";
+    }
 }
 
 void SyntaxTreePrinter::visit(FuncFParamList &node)
 {
-    return;//TODO:FINISH THIS
+    size_t num = 0;
+    for(auto param:node.params)
+    {
+        param->accept(*this);
+        if(num < node.params.size() - 1)
+        {
+            std::cout << ", ";
+        }
+        num++;
+    }
+}
+
+void SyntaxTreePrinter::visit(BinaryCondExpr &node)
+{
+    //TODO:FINISH
+}
+
+void SyntaxTreePrinter::visit(UnaryCondExpr &node)
+{
+    //TODO:FINISH
 }
 
 void SyntaxTreePrinter::visit(IFStmt &node)
@@ -225,13 +278,7 @@ void SyntaxTreePrinter::visit(BreakStmt &node)
     //FIXME:FINISH THIS
     print_indent();
     std::cout << "break";
-    std::cout << ";" << std::endl;
 }
-
-void SyntaxTreePrinter::visit(ContinueStmt &node)
-{
     //FIXME:FINISH THIS
     print_indent();
     std::cout << "continue";
-    std::cout << ";" << std::endl;
-}

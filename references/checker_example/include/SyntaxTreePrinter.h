@@ -21,6 +21,8 @@ public:
     virtual void visit(SyntaxTree::ExprStmt &node) override;
     virtual void visit(SyntaxTree::FuncParam &node) override;
     virtual void visit(SyntaxTree::FuncFParamList &node) override;
+    virtual void visit(SyntaxTree::BinaryCondExpr &node) override;
+    virtual void visit(SyntaxTree::UnaryCondExpr &node) override;
     virtual void visit(SyntaxTree::IFStmt &node) override;
     virtual void visit(SyntaxTree::WhileStmt &node) override;
     virtual void visit(SyntaxTree::BreakStmt &node) override;
