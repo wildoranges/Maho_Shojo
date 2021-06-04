@@ -279,6 +279,10 @@ void SyntaxTreePrinter::visit(BreakStmt &node)
     print_indent();
     std::cout << "break";
 }
+
+void SyntaxTreePrinter::visit(ContinueStmt &node)
+{
     //FIXME:FINISH THIS
     print_indent();
     std::cout << "continue";
+}
