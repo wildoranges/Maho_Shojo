@@ -63,7 +63,6 @@ class C1Driver;
 %type <SyntaxTree::PtrList<SyntaxTree::GlobalDef>>GlobalDecl
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>ConstDecl
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>ConstDefList
-%type <SyntaxTree::Type>DefType
 %type <SyntaxTree::Type>BType
 %type <SyntaxTree::VarDef*>ConstDef
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>VarDecl
@@ -85,6 +84,7 @@ class C1Driver;
 
 %type <SyntaxTree::FuncParam*>FuncFParam
 %type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>FParamList
+%type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>CommaFParamList
 %type <SyntaxTree::Expr*>RelExp
 %type <SyntaxTree::Expr*>EqExp
 %type <SyntaxTree::Expr*>LAndExp
@@ -154,13 +154,6 @@ BType:INT{
 }
 ;
 
-DefType:BType{
-    $$=$1;
-  }
-  | VOID{
-    $$ = SyntaxTree::Type::VOID;
-  }
-  ;
 
 ConstDef:IDENTIFIER ArrayExpList ASSIGN InitVal{//TODO:ADD ARRAY SUPPORT
     $$=new SyntaxTree::VarDef();
@@ -244,7 +237,6 @@ CommaExpList:CommaExpList Exp COMMA{
   }
 
 FuncFParam:BType IDENTIFIER ArrayExpList{
-//TODO:finsih ast
   $$ = new SyntaxTree::FuncParam();
   $$->param_type = $1;
   $$->name = $2;
@@ -252,25 +244,36 @@ FuncFParam:BType IDENTIFIER ArrayExpList{
 }
 ;
 
-FParamList:FParamList COMMA FuncFParam {
-  //TODO:finish ast
-  $1.push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>($3));
+FParamList: CommaFParamList FuncFParam{
+  $1.push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>($2));
   $$ = $1;
 }
-| FuncFParam{
-  //TODO:finish ast
-  $$ = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
-  $$.push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>($1));
-}
 | %empty{
-  //TODO:finish ast
   $$ = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
 }
 ;
 
-FuncDef:DefType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block{
+CommaFParamList:CommaFParamList FuncFParam COMMA{
+  $1.push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>($2));
+  $$ = $1;
+}
+| %empty{
+  $$ = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
+}
+
+FuncDef:BType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block{
     $$ = new SyntaxTree::FuncDef();
     $$->ret_type = $1;
+    $$->name = $2;
+    auto tmp = new SyntaxTree::FuncFParamList();
+    tmp->params = $4;
+    $$->param_list = SyntaxTree::Ptr<SyntaxTree::FuncFParamList>(tmp);
+    $$->body = SyntaxTree::Ptr<SyntaxTree::BlockStmt>($6);
+    $$->loc = @$;
+  }
+  | VOID IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block{
+    $$ = new SyntaxTree::FuncDef();
+    $$->ret_type = SyntaxTree::Type::VOID;
     $$->name = $2;
     auto tmp = new SyntaxTree::FuncFParamList();
     tmp->params = $4;
@@ -330,7 +333,7 @@ Stmt:LVal ASSIGN Exp SEMICOLON{
   }
   | WHILE LPARENTHESE CondExp RPARENTHESE Stmt{
     auto temp = new SyntaxTree::WhileStmt();
-    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::CondExp>($3);
+    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     temp->statement = SyntaxTree::Ptr<SyntaxTree::Stmt>($5);
     $$ = temp;
     $$->loc = @$;
@@ -354,7 +357,7 @@ Stmt:LVal ASSIGN Exp SEMICOLON{
 
 IfStmt:IF LPARENTHESE CondExp RPARENTHESE Stmt {
     auto temp = new SyntaxTree::IfStmt();
-    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::CondExp>($3);
+    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     temp->if_statement = SyntaxTree::Ptr<SyntaxTree::Stmt>($5);
     temp->else_statement = nullptr;
     $$ = temp;
@@ -362,7 +365,7 @@ IfStmt:IF LPARENTHESE CondExp RPARENTHESE Stmt {
   }
   | IF LPARENTHESE CondExp RPARENTHESE Stmt ELSE Stmt {
     auto temp = new SyntaxTree::IfStmt();
-    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::CondExp>($3);
+    temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     temp->if_statement = SyntaxTree::Ptr<SyntaxTree::Stmt>($5);
     temp->else_statement = SyntaxTree::Ptr<SyntaxTree::Stmt>($7);
     $$ = temp;
@@ -468,35 +471,35 @@ Exp:PLUS Exp %prec UPLUS{
     $$ = $1;
   }
   ;
-//FIXME:CondExpr?Expr new error
+
 RelExp:RelExp LT Exp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LT;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
   |RelExp LTE Exp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LTE;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
   |RelExp GT Exp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::GT;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
   |RelExp GTE Exp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::GTE;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
@@ -507,18 +510,18 @@ RelExp:RelExp LT Exp{
   ;
 
 EqExp:EqExp EQ RelExp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::EQ;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
-    temp->rhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($3);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
   |EqExp NEQ RelExp{
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::NEQ;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
-    temp->rhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($3);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
@@ -528,10 +531,10 @@ EqExp:EqExp EQ RelExp{
   ;
 
 LAndExp:LAndExp LOGICAND EqExp {
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LAND;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
-    temp->rhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($3);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }
@@ -541,10 +544,10 @@ LAndExp:LAndExp LOGICAND EqExp {
   ;
 
 LOrExp:LOrExp LOGICOR LAndExp {
-    auto temp = new SyntaxTree::BinaryCondExpr;
+    auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LOR;
-    temp->lhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($1);
-    temp->rhs = SyntaxTree::Ptr<SyntaxTree::BinaryCondExpr>($3);
+    temp->lhs = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    temp->rhs = SyntaxTree::Ptr<SyntaxTree::Expr>($3);
     $$ = temp;
     $$->loc = @$;
   }

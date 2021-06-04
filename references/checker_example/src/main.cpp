@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     C1Driver driver;
     SyntaxTreePrinter printer;
     ErrorReporter reporter(std::cerr);
-    SyntaxTreeChecker checker(reporter);
+    //SyntaxTreeChecker checker(reporter);
 
     bool print = false;
     std::string filename;
@@ -38,12 +38,12 @@ int main(int argc, char *argv[])
     auto root = driver.parse(filename);
     if (print)
         root->accept(printer);
-    root->accept(checker);
+    /*root->accept(checker);
     if(checker.is_err())
     {
         std::cout<<"The file has semantic errors\n";
         exit(1);
-    }
+    }*/
     std::cout<<"pass\n";
     return 0;
 }
