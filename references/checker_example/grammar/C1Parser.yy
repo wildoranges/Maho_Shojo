@@ -63,7 +63,6 @@ class C1Driver;
 %type <SyntaxTree::PtrList<SyntaxTree::GlobalDef>>GlobalDecl
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>ConstDecl
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>ConstDefList
-%type <SyntaxTree::Type>DefType
 %type <SyntaxTree::Type>BType
 %type <SyntaxTree::VarDef*>ConstDef
 %type <SyntaxTree::PtrList<SyntaxTree::VarDef>>VarDecl
@@ -155,13 +154,6 @@ BType:INT{
 }
 ;
 
-DefType:BType{
-    $$=$1;
-  }
-  | VOID{
-    $$ = SyntaxTree::Type::VOID;
-  }
-  ;
 
 ConstDef:IDENTIFIER ArrayExpList ASSIGN InitVal{//TODO:ADD ARRAY SUPPORT
     $$=new SyntaxTree::VarDef();
@@ -269,9 +261,19 @@ CommaFParamList:CommaFParamList FuncFParam COMMA{
   $$ = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
 }
 
-FuncDef:DefType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block{
+FuncDef:BType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block{
     $$ = new SyntaxTree::FuncDef();
     $$->ret_type = $1;
+    $$->name = $2;
+    auto tmp = new SyntaxTree::FuncFParamList();
+    tmp->params = $4;
+    $$->param_list = SyntaxTree::Ptr<SyntaxTree::FuncFParamList>(tmp);
+    $$->body = SyntaxTree::Ptr<SyntaxTree::BlockStmt>($6);
+    $$->loc = @$;
+  }
+  | VOID IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block{
+    $$ = new SyntaxTree::FuncDef();
+    $$->ret_type = SyntaxTree::Type::VOID;
     $$->name = $2;
     auto tmp = new SyntaxTree::FuncFParamList();
     tmp->params = $4;
@@ -469,7 +471,7 @@ Exp:PLUS Exp %prec UPLUS{
     $$ = $1;
   }
   ;
-  
+
 RelExp:RelExp LT Exp{
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LT;
