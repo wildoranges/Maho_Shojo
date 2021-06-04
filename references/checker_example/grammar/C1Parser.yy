@@ -85,6 +85,7 @@ class C1Driver;
 
 %type <SyntaxTree::FuncParam*>FuncFParam
 %type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>FParamList
+%type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>CommaFParamList
 %type <SyntaxTree::Expr*>RelExp
 %type <SyntaxTree::Expr*>EqExp
 %type <SyntaxTree::Expr*>LAndExp
@@ -244,7 +245,6 @@ CommaExpList:CommaExpList Exp COMMA{
   }
 
 FuncFParam:BType IDENTIFIER ArrayExpList{
-//TODO:finsih ast
   $$ = new SyntaxTree::FuncParam();
   $$->param_type = $1;
   $$->name = $2;
@@ -252,21 +252,22 @@ FuncFParam:BType IDENTIFIER ArrayExpList{
 }
 ;
 
-FParamList:FParamList COMMA FuncFParam {
-  //TODO:finish ast
-  $1.push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>($3));
+FParamList: CommaFParamList FuncFParam{
+  $1.push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>($2));
   $$ = $1;
 }
-| FuncFParam{
-  //TODO:finish ast
-  $$ = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
-  $$.push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>($1));
-}
 | %empty{
-  //TODO:finish ast
   $$ = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
 }
 ;
+
+CommaFParamList:CommaFParamList FuncFParam COMMA{
+  $1.push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>($2));
+  $$ = $1;
+}
+| %empty{
+  $$ = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
+}
 
 FuncDef:DefType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block{
     $$ = new SyntaxTree::FuncDef();
