@@ -1,5 +1,6 @@
 #include "SyntaxTreeChecker.h"
 #include <system_error>
+#include <map>
 
 using namespace SyntaxTree;
 
@@ -13,25 +14,48 @@ void SyntaxTreeChecker::visit(Assembly &node)
     {
         haserror = true;
         std::cout<<"error,NoMainFunc,err_code : "<<warn_code["NoMainFunc"]<<std::endl;
-        //err.warn(node.loc,"NoMainFunc,warn_code : "+warn_code["NoMainFunc"]);
     }
     else
     {
         auto Funcname = std::string("main");
         auto FuncP = lookup_function(Funcname);
-        if(FuncP->ret_type!=Type::INT)
+        if(FuncP->func_def->ret_type !=Type::INT)
         {
-            haserror = true;
-            std::cout<<"error,WMainFunc,err_code: "<<warn_code["WMainFunc"]<<" expect return int\n";
+            //haserror = true;
+            std::cout<<"warning,WMainFunc,err_code: "<<warn_code["WMainFunc"]<<" expect return int\n";
         }
     }
     exit_scope();
 }
 
+void SyntaxTreeChecker::visit(FuncParam &node)
+{
+    return;
+}
+
+void SyntaxTreeChecker::visit(FuncFParamList &node)
+{
+    std::map<std::string,Ptr<FuncParam>> param_map;
+    for(auto param:node.params)
+    {
+        if(param_map.count(param->name))
+        {
+            haserror = true;
+            err.error(node.loc,"error,redeclare function parameter");
+        }
+        param_map[param->name] = param;
+        if(param->param_type == Type::VOID)
+        {
+            haserror = true;
+            err.error(node.loc,"error,void function parameter");
+        }
+    }
+
+}
 
 void SyntaxTreeChecker::visit(FuncDef &node) 
 {
-    if(declare_function(node.name,node.ret_type,node.body))
+    if(declare_function(&node))
         ;
     else
     {
@@ -39,8 +63,9 @@ void SyntaxTreeChecker::visit(FuncDef &node)
         err.error(node.loc,node.name+" : ReDefFunc"+",err_code : "+err_code["ReDefFunc"]+" this function has been defined");
         return;
     }
-    FuncType = node.ret_type;
+    node.param_list->accept(*this);
     hasRet = false;
+    cur_func = lookup_function(node.name);
     node.body->accept(*this);
     if(!hasRet&&node.ret_type!=Type::VOID&&(node.name!=std::string("main")))
     {
@@ -48,9 +73,8 @@ void SyntaxTreeChecker::visit(FuncDef &node)
         err.warn(node.loc,node.name+" : NoRet,warn_code : "+warn_code["NoRet"]+" no return in this function");
         //return;
     }
-    inFunc = false;
-    FuncType = SyntaxTree::Type::VOID;
     hasRet = false;
+    cur_func = nullptr;
 }
 void SyntaxTreeChecker::visit(BinaryExpr &node)
 {
@@ -58,391 +82,137 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
     Type rtype;
     bool lconst;
     bool rconst;
-    int int_l_val,int_r_val;
-    double flt_l_val,flt_r_val;
+    bool lcond;
+    bool rcond;
     node.lhs->accept(*this);
     ltype = ExprType;
     lconst = isConst;
+    lcond = isCond;
     if(ltype==Type::VOID)
     {
         haserror = true;
         err.error(node.loc,"type void");
         isConst = false;
-        return;
+        exit(-1);
     }
-    if(ltype==Type::INT&&lconst)
+    if(lcond)
     {
-        int_l_val = INTConstVal;
+        haserror = true;
+        err.error(node.loc,"cannot use cond expr with add expr");
+        isConst = false;
+        exit(-1);
     }
-    /*else if(ltype==Type::FLOAT&&lconst)
-    {
-        flt_l_val = FLTConstVal;
-    }*/
     node.rhs->accept(*this);
     rtype = ExprType;
     rconst = isConst;
+    rcond = isCond;
     if(rtype==Type::VOID)
     {
         haserror = true;
         err.error(node.loc,"type void");
         isConst = false;
-        return;
+        exit(-1);
     }
-    if(rtype==Type::INT&&rconst)
+    if(rcond)
     {
-        int_r_val = INTConstVal;
+        haserror = true;
+        err.error(node.loc,"cannot use cond expr as add expr");
+        isConst = false;
+        exit(-1);
     }
-    /*else if(rtype==Type::FLOAT&&rconst)
-    {
-        flt_r_val = FLTConstVal;
-    }*/
     bool BinExprConst = lconst&&rconst;
     isConst = BinExprConst;
-    int INTBinExprVal;
-    double FLTBinExprval;
-    Type BinExprType;
-    /*if((ltype==Type::FLOAT||rtype==Type::FLOAT)&&BinExprConst)
-    {
-        if(ltype==Type::INT)
-        {
-            flt_l_val = (double)int_l_val;
-        }
-        if(rtype==Type::INT)
-        {
-            flt_r_val = (double)int_r_val;
-        }
-    }*/
-    if(ltype==Type::INT&&rtype==Type::INT)
-    {
-        BinExprType = Type::INT;
-        ExprType = BinExprType;
-        if(BinExprConst)
-        {
-            switch (node.op)
-            {
-                case (BinOp::PLUS):
-                {
-                    INTBinExprVal = int_l_val + int_r_val;
-                }break;
-                case (BinOp::DIVIDE):
-                {
-                    if(int_r_val==0)
-                    {
-                        isConst = false;
-                        haserror = true;
-                        err.error(node.loc,"DivZero,err_code : "+err_code["DivZero"]+" cannot divide 0");
-                        return;
-                    }
-                    else
-                    {
-                        INTBinExprVal = int_l_val / int_r_val;
-                    }
-                }break;
-                case (BinOp::MINUS):
-                {
-                    INTBinExprVal = int_l_val - int_r_val;
-                }break;
-                case(BinOp::MODULO):
-                {
-                    if(int_r_val==0)
-                    {
-                        isConst = false;
-                        haserror = true;
-                        err.error(node.loc,"DivZero,err_code : "+err_code["DivZero"]+" cannot divide 0");
-                        return;
-                    }
-                    else
-                    {
-                        INTBinExprVal = int_l_val % int_r_val;
-                    }
-                }break;
-                case(BinOp::MULTIPLY):
-                {
-                    INTBinExprVal = int_l_val * int_r_val;
-                }break;
-            }
-            INTConstVal = INTBinExprVal;
-        }
-    }/*
-    else
-    {
-        BinExprType = Type::FLOAT;
-        ExprType = BinExprType;
-        if(BinExprConst)
-        {
-            switch (node.op)
-            {
-                case(BinOp::PLUS):
-                {
-                    FLTBinExprval = flt_l_val + flt_r_val;
-                }break;
-                case(BinOp::MINUS):
-                {
-                    FLTBinExprval = flt_l_val - flt_r_val;
-                }break;
-                case(BinOp::MULTIPLY):
-                {
-                    FLTBinExprval = flt_l_val * flt_r_val;
-                }break;
-                case(BinOp::MODULO):
-                {
-                    isConst = false;
-                    haserror = true;
-                    err.error(node.loc,"InValidOperands,err_code : "+err_code["InValidOperands"]+" invalid operands between '%' ");
-                    return;
-                }break;
-                case(BinOp::DIVIDE):
-                {
-                    if(flt_r_val==0.0)
-                    {
-                        isConst = false;
-                        haserror = true;
-                        err.error(node.loc,"DivZero,err_code : "+err_code["DivZero"]+" cannot divide 0");
-                        return;
-                    }
-                    else
-                    {
-                        FLTBinExprval = flt_l_val / flt_r_val;
-                    }
-                }break;
-            }
-            FLTConstVal = FLTBinExprval;
-        }
-    }*/
-    ExprType = BinExprType;
-    isConst = BinExprConst;
+    ExprType = Type::INT;
+    isCond = false;
 }
 void SyntaxTreeChecker::visit(UnaryExpr &node)
 {
     Type rtype;
     bool rconst;
-    //int int_r_val;
-    //double flt_r_val;
+    bool rcond;
     node.rhs->accept(*this);
     rtype = ExprType;
     rconst = isConst;
-    int INTUnExprVal;
-    double FLTUnExprVal;
-    bool UnExprConst = rconst;
-    isConst = UnExprConst;
-    Type UnExprType;
-    if(rtype==Type::INT)
+    rcond = isCond;
+    if(rtype==Type::VOID)
     {
-        UnExprType = Type::INT;
-        ExprType = UnExprType;
-        if(UnExprConst)
-        {
-            switch (node.op)
-            {
-                case(UnaryOp::PLUS):
-                {
-                    INTUnExprVal = INTConstVal;
-                }break;
-                case(UnaryOp::MINUS):
-                {
-                    INTUnExprVal = - INTConstVal;
-                }break;
-            }
-            INTConstVal = INTUnExprVal;
-        }
-    }
-    /*
-    else if(rtype==Type::FLOAT)
-    {
-        UnExprType = Type::FLOAT;
-        ExprType = UnExprType;
-        if(UnExprConst)
-        {
-            switch (node.op)
-            {
-                case(UnaryOp::PLUS):
-                {
-                    FLTUnExprVal = FLTConstVal;
-                }break;
-                case(UnaryOp::MINUS):
-                {
-                    FLTUnExprVal = - FLTConstVal;
-                }break;
-            }
-            FLTConstVal = FLTUnExprVal;
-        }
-    }*/
-    else
-    {
-        ExprType = Type::VOID;
-        isConst = false;
         haserror = true;
-        err.error(node.loc,"InValidOperands,err_code : "+err_code["InValidOperands"]+" not expected type void");
-        return;
+        err.error(node.loc,"type void");
+        isConst = false;
+        exit(-1);
     }
-    isConst = UnExprConst;
-    ExprType = UnExprType;
+    if(rcond)
+    {
+        haserror = true;
+        err.error(node.loc,"cannot use cond expr with add expr");
+        isConst = false;
+        exit(-1);
+    }
+    isCond = false;
 }
 void SyntaxTreeChecker::visit(LVal &node)
 {
     auto Valptr = lookup_variable(node.name);
-    bool LvalConst;
     Type LvalType;
-    //int int_Lval;
-    //double flt_Lval;
+    bool LvalConst;
     if(Valptr==nullptr)
     {
         ExprType = Type::VOID;
         isConst = false;
         haserror = true;
         err.error(node.loc,"VarNotDefined,err_code : "+err_code["VarNotDefined"]+" variable not found");
-        return;
+        exit(-1);
     }
-    else if(!Valptr->isconst())
-    {
-        LvalType = Valptr->btype;
-        LvalConst = false;
-        Valptr->isused = true;
-        if(!node.array_index.empty())
-        {
-            if(Valptr->array_length.size()!=node.array_index.size())
-            {
-                ExprType = LvalType;
-                isConst = false;
-                haserror = true;
-                err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" imcompatible index");   
-                return;
-            }
-            std::vector<int>::iterator lenbeg = Valptr->array_length.begin();
-            std::vector<Ptr<Expr>>::iterator expbeg = node.array_index.begin();
-            for(;lenbeg!=Valptr->array_length.end();lenbeg++)
-            {
-                if(expbeg==node.array_index.end())
-                {
-                    break;
-                }
-                int maxlen = *lenbeg;
-                auto expr = *expbeg;
-                expr->accept(*this);
-                if(isConst)
-                {
-                    if(ExprType==Type::INT)
-                    {
-                        if(INTConstVal>=maxlen||INTConstVal<0)
-                        {
-                            ExprType = LvalType;
-                            isConst = false;
-                            haserror = true;
-                            err.error(node.loc,"ArrayOutOfRange,err_code : "+err_code["ArrayOutOfRange"]);
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        ExprType = LvalType;
-                        isConst = false;
-                        haserror = true;
-                        err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" expect int");   
-                        return;
-                    }
-                }
-                else
-                {
-                    if(ExprType!=Type::INT)
-                    {
-                        ExprType = LvalType;
-                        isConst = false;
-                        haserror = true;
-                        err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" expect int");   
-                        return;
-                    }
-                }
-                expbeg++;
-            }
-            /*if(expbeg!=node.array_index.end())
-            {
-                ExprType = LvalType;
-                isConst = false;
-                err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" out of range");
-                return;
-            }*/
-        }
-        else
-        {
-            if(Valptr->array_length.empty())
-            {
-                LvalType = Valptr->btype;
-            }
-            else
-            {
-                ExprType = LvalType;
-                isConst = false;
-                haserror = true;
-                err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" incompatible index");
-                return;
-            }
-        }
-    }/*
     else
     {
-        LvalType = Valptr->btype;
+        LvalConst = Valptr->var_def->is_constant;
+        LvalType = Valptr->var_def->btype;
         Valptr->isused = true;
-        LvalConst = true;
-        for(auto expr:Valptr->initializers)
+        if(Valptr->var_def->array_length.size()!=node.array_index.size())
         {
-            expr->accept(*this);
-            Type inittype = ExprType;
-            //ExprType = Valptr->btype;
-            if(inittype==Type::INT)
+            ExprType = LvalType;
+            isConst = false;
+            haserror = true;
+            isCond = false;
+            err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" imcompatible index");
+            exit(-1);
+        }
+        for(auto exp:node.array_index)
+        {
+            exp->accept(*this);
+            if(isCond)
             {
-                if(Valptr->btype==Type::INT)
-                {
-
-                }
-                else
-                {
-                    FLTConstVal = (double)INTConstVal;
-                }
+                err.error(node.loc,"cannot use cond expr as add expr");
+                exit(-1);
             }
-            else if(inittype==Type::FLOAT)
+            if(ExprType==Type::VOID)
             {
-                if(Valptr->btype==Type::FLOAT)
-                {
-
-                }
-                else
-                {
-                    INTConstVal = (int)FLTConstVal;
-                }
+                err.error(node.loc,"cannot use cond expr as add expr");
+                exit(-1);
             }
-            else
-            {
-                haserror = true;
-                exit(1);
-            }
+            LvalConst = LvalConst & isConst;
         }
     }
     ExprType = LvalType;
-    isConst = LvalConst;*/
+    isConst = LvalConst;
+    isCond = false;
 }
 void SyntaxTreeChecker::visit(Literal &node)
 {
+    isCond = false;
     isConst = true;
-    if(node.is_int)
-    {
-        ExprType = Type::INT;
-        INTConstVal = node.int_const;
-    }/*
-    else
-    {
-        ExprType = Type::FLOAT;
-        FLTConstVal = node.float_const;
-    }*/
+    ExprType = Type::INT;
 }
 void SyntaxTreeChecker::visit(ReturnStmt &node)
 {
-    /*if(!inFunc)
+    if(cur_func==nullptr)
     {
         haserror = true;
-        err.error(node.loc,"RetNotInFunc,err_code : "+err_code["RetNotInFunc"]+" keyword 'return' must be used in a function");
-        return;
-    }*/
+        err.error(node.loc,"RetNotInFunc");
+        exit(-1);
+    }
     Type rettype;
+    hasRet = true;
     if(node.ret==nullptr)
     {
         rettype = Type::VOID;
@@ -452,222 +222,52 @@ void SyntaxTreeChecker::visit(ReturnStmt &node)
         node.ret->accept(*this);
         rettype = ExprType;
     }
-    hasRet = true;
     if(rettype==Type::VOID)
     {
-        /*if(FuncType==Type::FLOAT||FuncType==Type::INT)
+        if(cur_func->func_def->ret_type==Type::INT)
         {
             haserror = true;
             err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" no return value in function");
             return;
-        }*/
+        }
     }
     else if(rettype==Type::INT)
     {
-        if(FuncType==Type::VOID)
+        if(cur_func->func_def->ret_type==Type::VOID)
         {
             haserror = true;
             err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" cannot return value in function typed void");
             return;
-        }/*
-        else if(FuncType==Type::FLOAT)
-        {
-            err.warn(node.loc,"WRetType,warn_code : "+warn_code["WRetType"]+" convert int to float");
-        }*/
-    }
-    else
-    {
-        if(FuncType==Type::VOID)
-        {
-            haserror = true;
-            err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" cannot return value in function typed void");
-            return;
-        }
-        else if(FuncType==Type::INT)
-        {
-            err.warn(node.loc,"WRetType,warn_code : "+warn_code["WRetType"]+" convert float to int");
         }
     }
 }
-void SyntaxTreeChecker::visit(VarDef &node)
+void SyntaxTreeChecker::visit(VarDef &node)//TODO:array support
 {
-    if (variables.front().count(node.name))
-    {
-        haserror = true;
-        err.error(node.loc,node.name+" : ReDefVal"+",err_code : "+err_code["ReDefVal"]+" this variable has been defined");
-        //exit(1);
-        return;
-    }
-    if(node.btype == Type::VOID)
-    {
-        haserror = true;
-        err.error(node.loc,node.name+" : ValDefinedVoid,err_code : "+err_code["ValDefinedVoid"]);
-        return;
-    }
-    else {
-        //isConst = node.is_constant;
-        auto parray = new std::vector<int>;
-        parray->clear();
-        if(!node.array_length.empty())
-        {
-            int arrlen = 1;
-            for (auto exp : node.array_length) {
-                exp->accept(*this);
-                if(!isConst)
-                {
-                    haserror = true;
-                    err.error(node.loc," : ImproperArrayDef,err_code : "+err_code["ImproperArrayDef"]+" Expr must be const");
-                    return;
-                }
-                else
-                {
-                    if(ExprType!=Type::INT||INTConstVal<0)
-                    {
-                        haserror = true;
-                        err.error(node.loc," : ImproperArrayDef,err_code : "+err_code["ImproperArrayDef"]+" Expr must be int(>=0)");
-                        return;
-                    }
-                    else
-                    {
-                        parray->push_back(INTConstVal);
-                        arrlen *= INTConstVal;
-                    }
-                }
-            }
-            int initlen = node.initializers.size();
-            if(initlen>0&&initlen>arrlen)
-            {
-                haserror = true;
-                err.error(node.loc," : IncompatibleArrayInit,err_code : "+err_code["IncompatibleArrayInit"]+" init length dismatch array length");
-                return;
-            }
-            for (auto exp : node.initializers) {
-                exp->accept(*this);
-                /*if(!isConst&&node.is_constant)
-                {
-                    
-                    haserror = true;
-                    err.error(node.loc," : ImproperArrayDef,err_code : "+err_code["ImproperArrayDef"]+" Expr must be const");
-                    return;
-                }
-                else*/
-                {
-                    if(ExprType!=node.btype&&ExprType!=Type::VOID)
-                    {
-                        //haserror = true;
-                        err.warn(node.loc," : TypeConvert,warn_code : "+warn_code["TypeConvert"]+" init type dismatch the array type");
-                        //return;
-                    }
-                    else if(ExprType==Type::VOID)
-                    {
-                        haserror = true;
-                        err.error(node.loc," : AssignErr,err_code : "+err_code["AssignErr"]);
-                        return;
-                    }   
-                }
-            }
-            declare_variable(node.name,node.is_constant,node.btype,*parray,node.initializers);
-        }
-        else 
-        {
-            int initlen = node.initializers.size();
-            if(initlen>1)
-            {
-                haserror = true;
-                err.error(node.loc," : IncompatibleVarInit,err_code : "+err_code["IncompatibleVarInit"]+" at most 1 expr");
-                return;
-            }
-            else
-            {
-                //int constint;
-                //double constflt;
-                for(auto exp:node.initializers)
-                {
-                    exp->accept(*this);
-                    if(!isConst&&node.is_constant)
-                    {
-                        haserror = true;
-                        err.error(node.loc," : IncompatibleVarInit,err_code : "+err_code["IncompatibleVarInit"]+" not a const");
-                        return;
-                    }
-                    else
-                    {
-                        if(ExprType!=node.btype&&ExprType!=Type::VOID)
-                        {
-                            //haserror = true;
-                            err.warn(node.loc," : TypeConvert,warn_code : "+warn_code["TypeConvert"]+" init type dismatch the array type");
-                            //return;
-                        }
-                        if(ExprType==Type::VOID)
-                        {
-                            haserror = true;
-                            err.error(node.loc," : AssignErr,err_code : "+err_code["AssignErr"]);
-                            return;
-                        }
-                    }
-                    /*else
-                    {
-                        if(ExprType!=node.btype&&ExprType!=Type::VOID)
-                        {
-                        //haserror = true;
-                            err.warn(node.loc," : TypeConvert,warn_code : "+warn_code["TypeConvert"]+" init type dismatch the array type");
-                        //return;
-                        }
-                        else if(ExprType==Type::VOID)
-                        {
-                            haserror = true;
-                            err.error(node.loc," : AssignErr,err_code : "+err_code["AssignErr"]);
-                            return;
-                        }
-                    }*/
-                }
-                declare_variable(node.name,node.is_constant,node.btype,*parray,node.initializers);
-            }
-            /*else
-            {
-                for(auto exp:node.initializers)
-                {
-                    exp->accept(*this);
-                    if(ExprType!=node.btype)
-                    {
-                        haserror = true;
-                        err.error(node.loc," : IncompatibleVarInit,err_code : "+err_code["IncompatibleVarInit"]+" init type dismatch the var type");
-                        return;
-                    }
-                }
-                declare_variable(node.name,node.is_constant,node.btype,*parray,node.initializers);
-            }*/
-        }
-    }
+    return;
 }
+
 void SyntaxTreeChecker::visit(AssignStmt &node)
 {
     node.target->accept(*this);
     auto lhs = lookup_variable(node.target->name);
     if(lhs!=nullptr)
     {
-        if(lhs->isconst())
+        if(lhs->var_def->is_constant)
         {
             haserror = true;
             err.error(node.loc,"AssignErr,err_code : "+err_code["AssignErr"]+" read only");
-            return;
+            exit(-1);
         }
         else
         {
-            auto ltype = lhs->btype;
+            auto ltype = lhs->var_def->btype;
             node.value->accept(*this);   
             auto rtype = ExprType;
-            if(ltype!=rtype&&rtype!=Type::VOID)
-            {
-                //haserror = true;
-                err.warn(node.loc,"TypeConvert,warn_code : "+warn_code["TypeConvert"]+" type between '=' not match");
-                //return;
-            }
-            else if(rtype==Type::VOID)
+            if(rtype==Type::VOID||ltype==Type::VOID)
             {
                 haserror = true;
                 err.error(node.loc,"AssignErr,err_code : "+err_code["AssignErr"]);
-                return;
+                exit(-1);
             }
         }
     }
@@ -675,17 +275,36 @@ void SyntaxTreeChecker::visit(AssignStmt &node)
 void SyntaxTreeChecker::visit(FuncCallStmt &node) 
 {
     auto FuncPtr = lookup_function(node.name);
-    isConst = false;
     if(FuncPtr==nullptr)
     {
         haserror = true;
         ExprType = Type::INT;
         err.error(node.loc,"FuncNotDefined,err_code : "+err_code["FuncNotDefined"]);
+        exit(-1);
     }
-    else
+    if(FuncPtr->func_def->param_list->params.size()!=node.params.size())
     {
-        ExprType = FuncPtr->ret_type;   
+        //TODO:ERROR?OR NOT ERROR?
+        err.error(node.loc,"params not match");
+    }else
+    {
+        Type Rtype;
+        auto Fparam = FuncPtr->func_def->param_list->params.begin();
+        auto Rparam = node.params.begin();
+        for(;Rparam!=node.params.end()&&Fparam!=FuncPtr->func_def->param_list->params.end();Fparam++,Rparam++)
+        {
+            Rparam->get()->accept(*this);
+            Rtype = ExprType;
+            if(Fparam->get()->param_type!=Rtype)
+            {
+                err.error(node.loc,"incompatible type");
+                exit(-1);
+            }
+        }
     }
+    isConst = false;
+    isCond = false;
+    ExprType = FuncPtr->func_def->ret_type;
 }
 void SyntaxTreeChecker::visit(BlockStmt &node)
 {
@@ -703,16 +322,6 @@ void SyntaxTreeChecker::visit(EmptyStmt &node)
 void SyntaxTreeChecker::visit(ExprStmt &node)
 {
     node.exp->accept(*this);
-}
-
-void SyntaxTreeChecker::visit(FuncParam &node) 
-{
-    return;//TODO:FINISH THIS;
-}
-
-void SyntaxTreeChecker::visit(FuncFParamList &node)
-{
-    return;//TODO:FINISH THIS;
 }
 
 void SyntaxTreeChecker::visit(IfStmt &node)
@@ -755,4 +364,60 @@ void SyntaxTreeChecker::visit(ContinueStmt &node)
         haserror = true;
         err.error(node.loc,"UnmatchedContinue,err_code : "+err_code["UnmatchedContinue"]);
     }
+}
+
+void SyntaxTreeChecker::visit(BinaryCondExpr &node)
+{
+    node.lhs->accept(*this);
+    Type ltype = ExprType;
+    bool lcond = isCond;
+    node.rhs->accept(*this);
+    Type rtype = ExprType;
+    bool rcond = isCond;
+    if(node.op==BinaryCondOp::LOR||node.op==BinaryCondOp::LAND)
+    {
+        if(ltype==Type::VOID||rtype==Type::VOID)
+        {
+            err.error(node.loc,"type void");
+            exit(-1);
+        }
+    }else{
+        if(lcond||rcond)
+        {
+            err.error(node.loc,"cannot use CondExp in EqExp");
+            exit(-1);
+        }
+        if(ltype==Type::VOID||rtype==Type::VOID)
+        {
+            err.error(node.loc,"type void");
+            exit(-1);
+        }
+    }
+    isCond = true;
+    isConst = false;
+}
+
+void SyntaxTreeChecker::visit(UnaryCondExpr &node)
+{
+    node.rhs->accept(*this);
+    Type rtype = ExprType;
+    bool rcond = isCond;
+    if(!rcond)
+    {
+        err.error(node.loc,"NOT can only be used in CondExp");
+        exit(-1);
+    }
+    if(rtype==Type::VOID)
+    {
+        err.error(node.loc,"type void");
+        exit(-1);
+    }
+    isCond = true;
+    isConst = false;
+}
+
+void SyntaxTreeChecker::visit(InitVal &node)
+{
+    return;
+    //TODO:FINISH THIS;
 }

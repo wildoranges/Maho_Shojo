@@ -27,7 +27,7 @@ add_executable(c1checker
   ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/SyntaxTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/SyntaxTreePrinter.cpp
-  # ${CMAKE_CURRENT_SOURCE_DIR}/src/SyntaxTreeChecker.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/SyntaxTreeChecker.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/ErrorReporter.cpp
   ${BISON_C1Parser_OUTPUTS}
   ${FLEX_C1Scanner_OUTPUTS})

@@ -10,6 +10,9 @@ using SyntaxTree::Ptr;
 using SyntaxTree::PtrList;
 using SyntaxTree::BlockStmt;
 using SyntaxTree::Expr;
+using SyntaxTree::FuncFParamList;
+using SyntaxTree::VarDef;
+using SyntaxTree::FuncDef;
 
 class SyntaxTreeChecker : public SyntaxTree::Visitor
 {
@@ -69,65 +72,48 @@ public:
     virtual void visit(SyntaxTree::WhileStmt &node) override;
     virtual void visit(SyntaxTree::BreakStmt &node) override;
     virtual void visit(SyntaxTree::ContinueStmt &node) override;
+    virtual void visit(SyntaxTree::BinaryCondExpr &node)override;
+    virtual void visit(SyntaxTree::UnaryCondExpr &node)override;
+    virtual void visit(SyntaxTree::InitVal &node) override;
 private:
     std::vector<Ptr<SyntaxTree::Stmt>> StmtStack;//used for WhileStmt
     bool haserror = false;
     using Type = SyntaxTree::Type;
-    bool inFunc = false;//useless,ignore this
     bool hasRet = false;
     bool isConst = false;
-    int INTConstVal = 0;
-    double FLTConstVal = 0.0;
-    Type FuncType = SyntaxTree::Type::VOID;
+    bool isCond = false;
     Type ExprType = SyntaxTree::Type::VOID;
     class Variable
     {
     public:
-        const bool is_const = false;
         bool isused = false;
-        Type btype;
-        std::vector<int> array_length;
-        PtrList<Expr> initializers;
+        Ptr<VarDef> var_def;
 
         Variable() = default;
-        Variable(Type type, std::vector<int>& array,PtrList<Expr>& init)
+        Variable(VarDef* def)
         {
-            btype = type;
-            array_length = array;
-            initializers = init;
-        }
-        virtual bool isconst()
-        {
-            return false;
+            var_def = Ptr<VarDef>(def);
         }
     };
 
-    class ConstVar: public Variable
+    class Function
     {
     public:
-        const bool is_const = true;
-        ConstVar(Type type, std::vector<int>& array,PtrList<Expr>& init)
-        {
-            btype = type;
-            array_length = array;
-            initializers = init;
-        }
-        bool isconst() override
-        {
-            return true;
-        }
-    };
+        bool isused = false;
+        Ptr<FuncDef> func_def;
 
-    struct Function
-    {
-        Type ret_type;
-        Ptr<BlockStmt> body;
-        Function(Type t,Ptr<BlockStmt>& b):ret_type(t),body(b) {}
+        Function() = default;
+        Function(FuncDef* def)
+        {
+            func_def = Ptr<FuncDef>(def);
+        }
     };
 
     using PtrFunction = std::shared_ptr<Function>;
 
     using PtrVariable = std::shared_ptr<Variable>;
+
+    PtrFunction cur_func = nullptr;
     
     void enter_scope() 
     { 
@@ -165,28 +151,20 @@ private:
         return nullptr;
     }
 
-    bool declare_variable(std::string& name, bool is_const, Type type, std::vector<int>& array,PtrList<Expr>& init)
+    bool declare_variable(VarDef* var_def)
     {
         assert(!variables.empty());
-        if (variables.front().count(name))
+        if (variables.front().count(var_def->name))
             return false;
-        //variables.front()[name] = PtrVariable(new Variable(is_const, btype, array_length));
-        if(is_const)
-        {
-            variables.front()[name] = PtrVariable(new ConstVar(type,array,init));
-        }
-        else
-        {
-            variables.front()[name] = PtrVariable(new Variable(type,array,init));
-        }
+        variables.front()[var_def->name] = PtrVariable(new Variable(var_def));
         return true;
     }
 
-    bool declare_function(std::string& name,SyntaxTree::Type t ,Ptr<BlockStmt> b)
+    bool declare_function(FuncDef* func_def)
     {
-        if(functions.count(name))
+        if(functions.count(func_def->name))
             return false;
-        functions[name] = PtrFunction(new Function(t,b));
+        functions[func_def->name] = PtrFunction(new Function(func_def));
         return true;
     }
     std::deque<std::unordered_map<std::string, PtrVariable>> variables;
