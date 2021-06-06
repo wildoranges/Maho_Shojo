@@ -1,0 +1,13 @@
+int a[2.1];
+int b;
+int c[b];
+int f()
+{
+
+}
+int main()
+{
+    int d[f()];
+    int e[-1];
+    return 0;
+}
