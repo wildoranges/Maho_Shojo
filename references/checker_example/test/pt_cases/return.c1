@@ -1,6 +1,0 @@
-int i = 0;
-void main()
-{
-    i = 1;
-    return; // for void, return is optional
-}
