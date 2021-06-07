@@ -455,9 +455,9 @@ void SyntaxTreeChecker::visit(InitVal &node)
 {
     if(node.isExp){
         node.expr->accept(*this);
-        if(ExprType==Type::VOID)
+        if(ExprType!=Type::INT)
         {
-            err.error(node.loc,"type void");
+            err.error(node.loc,"invalid type");
             exit(-1);
         }
     }else{

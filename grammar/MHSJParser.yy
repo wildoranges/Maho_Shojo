@@ -216,10 +216,11 @@ ArrayExpList:ArrayExpList LBRACKET Exp RBRACKET{
 
 InitVal: Exp{//TODO:CHECK?
     //TODO:Initializer cheking for scalar to array
-    $$ = new SyntaxTree::InitVal;
+    $$ = new SyntaxTree::InitVal();
     $$->isExp = true;
     $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
     $$->expr = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
+    $$->loc = @$;
   }
   | LBRACE InitValList RBRACE{
     $$ = $2;
@@ -231,10 +232,11 @@ InitValList: CommaInitValList InitVal{
     $$ = $1;
   }
   | %empty{
-    $$ = new SyntaxTree::InitVal;
+    $$ = new SyntaxTree::InitVal();
     $$->isExp = false;
     $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
     $$->expr = nullptr;
+    $$->loc = @$;
   }
   ;
 
@@ -243,10 +245,11 @@ CommaInitValList: CommaInitValList InitVal COMMA{
     $$ = $1;
   }
   | %empty{
-    $$ = new SyntaxTree::InitVal;
+    $$ = new SyntaxTree::InitVal();
     $$->isExp = false;
     $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
     $$->expr = nullptr;
+    $$->loc = @$;
   }
   ;
 
@@ -273,6 +276,7 @@ FuncFParam:BType IDENTIFIER ArrayExpList{
   $$->param_type = $1;
   $$->name = $2;
   $$->array_index = $3;
+  $$->loc = @$;
 }
 ;
 
