@@ -1,3 +1,0 @@
-/home/cjb/compile_contest/Maho_Shojo/build/CMakeFiles/rebuild_cache.dir
-/home/cjb/compile_contest/Maho_Shojo/build/CMakeFiles/edit_cache.dir
-/home/cjb/compile_contest/Maho_Shojo/build/CMakeFiles/MHSJchecker.dir
