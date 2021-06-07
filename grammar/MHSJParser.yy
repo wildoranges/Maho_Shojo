@@ -56,6 +56,7 @@ class MHSJDriver;
 %token LOGICAND 299
 %token LOGICOR 300
 %token LT 301
+%token <std::string>STRINGCONST 302
 
 // Use variant-based semantic values: %type and %token expect genuine types
 
@@ -83,6 +84,7 @@ class MHSJDriver;
 %type <SyntaxTree::LVal*>LVal
 %type <SyntaxTree::Expr*>Exp
 %type <SyntaxTree::Literal*>Number
+%type <SyntaxTree::Literal*>String
 
 %type <SyntaxTree::FuncParam*>FuncFParam
 %type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>FParamList
@@ -264,6 +266,7 @@ CommaExpList:CommaExpList Exp COMMA{
   | %empty{
     $$ = SyntaxTree::PtrList<SyntaxTree::Expr>();
   }
+  ;
 
 FuncFParam:BType IDENTIFIER ArrayExpList{
   $$ = new SyntaxTree::FuncParam();
@@ -289,7 +292,7 @@ CommaFParamList:CommaFParamList FuncFParam COMMA{
 | %empty{
   $$ = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
 }
-
+;
 FuncDef:BType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block{
     $$ = new SyntaxTree::FuncDef();
     $$->ret_type = $1;
@@ -503,6 +506,9 @@ Exp:PLUS Exp %prec UPLUS{
   | Number{
     $$ = $1;
   }
+  | String{
+    $$ = $1;
+  }
   ;
 
 RelExp:RelExp LT Exp{
@@ -601,6 +607,14 @@ Number: INTCONST {
     $$->loc = @$;
   }
   ;
+
+String: STRINGCONST {
+  $$ = new SyntaxTree::Literal();
+  $$->is_int = false;
+  $$->str = $1;
+  $$->loc = @$;
+}
+;
 
 %%
 

@@ -90,6 +90,7 @@ IntConst            (("0"[0-7]*)|([1-9][0-9]*)|("0"[xX][0-9a-fA-F]+))
 FloatConst          ((([0-9]*[.][0-9]+)|([0-9]+[.]))([eE][-+]?[0-9]+)?)|([0-9]+[eE][-+]?[0-9]+)
 Blank               [ \t\r]
 NewLine             [\n]
+STRING              \"([^\"]*(\\\")?)*\"
 
 %%
  /* keyword */
@@ -136,7 +137,7 @@ else        {return yy::MHSJParser::make_ELSE(loc);}
 {IntConst} 							  {return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);}
 {FloatConst}							{return yy::MHSJParser::make_FLOATCONST(std::stod(yytext),loc);}
 {Identifier} 					    {return yy::MHSJParser::make_IDENTIFIER(yytext, loc);}
-
+{STRING}                  {return yy::MHSJParser::make_STRINGCONST(yytext,loc);}
 <<EOF>>                   {return yy::MHSJParser::make_END(loc);}
 .			                    {std::cout << "Error in scanner!" << '\n'; exit(1);}
 %%

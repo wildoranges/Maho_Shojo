@@ -88,10 +88,10 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
     ltype = ExprType;
     lconst = isConst;
     lcond = isCond;
-    if(ltype==Type::VOID)
+    if(ltype!=Type::INT)
     {
         haserror = true;
-        err.error(node.loc,"type void");
+        err.error(node.loc,"not type int");
         isConst = false;
         exit(-1);
     }
@@ -106,10 +106,10 @@ void SyntaxTreeChecker::visit(BinaryExpr &node)
     rtype = ExprType;
     rconst = isConst;
     rcond = isCond;
-    if(rtype==Type::VOID)
+    if(rtype!=Type::INT)
     {
         haserror = true;
-        err.error(node.loc,"type void");
+        err.error(node.loc,"not type int");
         isConst = false;
         exit(-1);
     }
@@ -134,10 +134,10 @@ void SyntaxTreeChecker::visit(UnaryExpr &node)
     rtype = ExprType;
     rconst = isConst;
     rcond = isCond;
-    if(rtype==Type::VOID)
+    if(rtype!=Type::INT)
     {
         haserror = true;
-        err.error(node.loc,"type void");
+        err.error(node.loc,"not type int");
         isConst = false;
         exit(-1);
     }
@@ -149,6 +149,8 @@ void SyntaxTreeChecker::visit(UnaryExpr &node)
         exit(-1);
     }
     isCond = false;
+    isConst = rconst;
+    ExprType = rtype;
 }
 void SyntaxTreeChecker::visit(LVal &node)
 {
@@ -185,9 +187,9 @@ void SyntaxTreeChecker::visit(LVal &node)
                 err.error(node.loc,"cannot use cond expr as add expr");
                 exit(-1);
             }
-            if(ExprType==Type::VOID)
+            if(ExprType!=Type::INT)
             {
-                err.error(node.loc,"cannot use cond expr as add expr");
+                err.error(node.loc,"not type int");
                 exit(-1);
             }
             LvalConst = LvalConst & isConst;
@@ -201,7 +203,12 @@ void SyntaxTreeChecker::visit(Literal &node)
 {
     isCond = false;
     isConst = true;
-    ExprType = Type::INT;
+    if(node.is_int) {
+        ExprType = Type::INT;
+    }
+    else {
+        ExprType = Type::STRING;
+    }
 }
 void SyntaxTreeChecker::visit(ReturnStmt &node)
 {
@@ -224,21 +231,27 @@ void SyntaxTreeChecker::visit(ReturnStmt &node)
     }
     if(rettype==Type::VOID)
     {
-        if(cur_func->func_def->ret_type==Type::INT)
+        if(cur_func->func_def->ret_type!=Type::VOID)
         {
             haserror = true;
-            err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" no return value in function");
+            err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" return type not match");
             return;
         }
     }
     else if(rettype==Type::INT)
     {
-        if(cur_func->func_def->ret_type==Type::VOID)
+        if(cur_func->func_def->ret_type!=Type::INT)
         {
             haserror = true;
-            err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" cannot return value in function typed void");
+            err.error(node.loc,"ERetType,err_code : "+warn_code["ERetType"]+" return type not match");
             return;
         }
+    }
+    else
+    {
+        haserror = true;
+        err.error(node.loc,"unsupported return type");
+        exit(-1);
     }
 }
 void SyntaxTreeChecker::visit(VarDef &node)//TODO:array support
@@ -283,10 +296,10 @@ void SyntaxTreeChecker::visit(AssignStmt &node)
             auto ltype = lhs->var_def->btype;
             node.value->accept(*this);   
             auto rtype = ExprType;
-            if(rtype==Type::VOID||ltype==Type::VOID)
+            if(rtype!=Type::INT||ltype!=Type::INT)
             {
                 haserror = true;
-                err.error(node.loc,"AssignErr,err_code : "+err_code["AssignErr"]);
+                err.error(node.loc,"invalid type");
                 exit(-1);
             }
         }
@@ -297,15 +310,17 @@ void SyntaxTreeChecker::visit(FuncCallStmt &node)
     auto FuncPtr = lookup_function(node.name);
     if(FuncPtr==nullptr)
     {
-        haserror = true;
         ExprType = Type::INT;
-        err.error(node.loc,"FuncNotDefined,err_code : "+err_code["FuncNotDefined"]);
-        exit(-1);
+        isCond = false;
+        isConst = false;
+        err.warn(node.loc,"FuncNotDefined");
+        return;
     }
     if(FuncPtr->func_def->param_list->params.size()!=node.params.size())
     {
         //TODO:ERROR?OR NOT ERROR?
-        err.error(node.loc,"params not match");
+        err.warn(node.loc,"params not match");
+        return;
     }else
     {
         Type Rtype;
@@ -370,7 +385,6 @@ void SyntaxTreeChecker::visit(WhileStmt &node)
 
 void SyntaxTreeChecker::visit(BreakStmt &node)
 {
-    //FIXME:FINISH THIS;
     if (StmtStack.back() == nullptr) {
         haserror = true;
         err.error(node.loc,"UnmatchedBreak,err_code : "+err_code["UnmatchedBreak"]);
@@ -379,7 +393,6 @@ void SyntaxTreeChecker::visit(BreakStmt &node)
 
 void SyntaxTreeChecker::visit(ContinueStmt &node)
 {
-    //FIXME:FINISH THIS;
     if (StmtStack.back() == nullptr) {
         haserror = true;
         err.error(node.loc,"UnmatchedContinue,err_code : "+err_code["UnmatchedContinue"]);
@@ -396,9 +409,9 @@ void SyntaxTreeChecker::visit(BinaryCondExpr &node)
     bool rcond = isCond;
     if(node.op==BinaryCondOp::LOR||node.op==BinaryCondOp::LAND)
     {
-        if(ltype==Type::VOID||rtype==Type::VOID)
+        if(ltype==Type::VOID||rtype==Type::VOID||ltype==Type::STRING||rtype==Type::STRING)
         {
-            err.error(node.loc,"type void");
+            err.error(node.loc,"invalid type");
             exit(-1);
         }
     }else{
@@ -407,14 +420,15 @@ void SyntaxTreeChecker::visit(BinaryCondExpr &node)
             err.error(node.loc,"cannot use CondExp in EqExp");
             exit(-1);
         }
-        if(ltype==Type::VOID||rtype==Type::VOID)
+        if(ltype==Type::VOID||rtype==Type::VOID||ltype==Type::STRING||rtype==Type::STRING)
         {
-            err.error(node.loc,"type void");
+            err.error(node.loc,"invalid type");
             exit(-1);
         }
     }
     isCond = true;
     isConst = false;
+    ExprType = Type::BOOL;
 }
 
 void SyntaxTreeChecker::visit(UnaryCondExpr &node)
@@ -427,13 +441,14 @@ void SyntaxTreeChecker::visit(UnaryCondExpr &node)
         err.error(node.loc,"NOT can only be used in CondExp");
         exit(-1);
     }
-    if(rtype==Type::VOID)
+    if(rtype==Type::VOID||rtype==Type::STRING)
     {
-        err.error(node.loc,"type void");
+        err.error(node.loc,"invalid type");
         exit(-1);
     }
     isCond = true;
     isConst = false;
+    ExprType = Type::BOOL;
 }
 
 void SyntaxTreeChecker::visit(InitVal &node)

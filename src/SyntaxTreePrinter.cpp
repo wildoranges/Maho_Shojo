@@ -159,8 +159,8 @@ void SyntaxTreePrinter::visit(Literal &node)
 {
     if (node.is_int)
         std::cout << node.int_const;
-    /*else
-        std::cout << node.float_const;*/
+    else
+        std::cout << node.str;
 }
 
 void SyntaxTreePrinter::visit(ReturnStmt &node)

@@ -23,7 +23,9 @@ using Position = yy::location;
 enum class Type
 {
     INT = 0,
-    VOID
+    VOID,
+    STRING,
+    BOOL
 };
 
 enum class BinOp
@@ -241,6 +243,7 @@ struct Literal : AddExpr
 {
     bool is_int;
     int int_const;
+    std::string str;
     //double float_const;
     virtual void accept(Visitor &visitor) override final;
 };

@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+175079b78e49f99e7bce5f096e50e222 MHSJParser.cpp
+53be1f8a51c07bf7defdd2a00a1c72a6 MHSJScanner.cpp
