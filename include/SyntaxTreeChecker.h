@@ -4,6 +4,7 @@
 #include "SyntaxTree.h"
 #include "ErrorReporter.h"
 #include <cassert>
+#include <memory>
 #include <vector>
 
 using SyntaxTree::Ptr;
@@ -13,15 +14,16 @@ using SyntaxTree::Expr;
 using SyntaxTree::FuncFParamList;
 using SyntaxTree::VarDef;
 using SyntaxTree::FuncDef;
+using SyntaxTree::FuncParam;
 
 class SyntaxTreeChecker : public SyntaxTree::Visitor
 {
 public:
-    bool is_err()
+    bool is_err() const
     {
         return haserror;
     }
-    SyntaxTreeChecker(ErrorReporter &e) :err(e) {
+    explicit SyntaxTreeChecker(ErrorReporter &e) :err(e) {
         err_code["ReDefVal"] = std::string("00");
         err_code["FuncDefInFunc"] = std::string("01");
         err_code["ReDefFunc"] = std::string("02");
@@ -53,28 +55,28 @@ public:
         warn_code["TypeConvert"] = std::string("56");
         warn_code["NoRet"] = std::string("57");
     }
-    virtual void visit(SyntaxTree::Assembly &node) override;
-    virtual void visit(SyntaxTree::FuncDef &node) override;
-    virtual void visit(SyntaxTree::BinaryExpr &node) override;
-    virtual void visit(SyntaxTree::UnaryExpr &node) override;
-    virtual void visit(SyntaxTree::LVal &node) override;
-    virtual void visit(SyntaxTree::Literal &node) override;
-    virtual void visit(SyntaxTree::ReturnStmt &node) override;
-    virtual void visit(SyntaxTree::VarDef &node) override;
-    virtual void visit(SyntaxTree::AssignStmt &node) override;
-    virtual void visit(SyntaxTree::FuncCallStmt &node) override;
-    virtual void visit(SyntaxTree::BlockStmt &node) override;
-    virtual void visit(SyntaxTree::EmptyStmt &node) override;
-    virtual void visit(SyntaxTree::ExprStmt &node) override;
-    virtual void visit(SyntaxTree::FuncParam &node) override;
-    virtual void visit(SyntaxTree::FuncFParamList &node) override;
-    virtual void visit(SyntaxTree::IfStmt &node) override;
-    virtual void visit(SyntaxTree::WhileStmt &node) override;
-    virtual void visit(SyntaxTree::BreakStmt &node) override;
-    virtual void visit(SyntaxTree::ContinueStmt &node) override;
-    virtual void visit(SyntaxTree::BinaryCondExpr &node)override;
-    virtual void visit(SyntaxTree::UnaryCondExpr &node)override;
-    virtual void visit(SyntaxTree::InitVal &node) override;
+    void visit(SyntaxTree::Assembly &node) override;
+    void visit(SyntaxTree::FuncDef &node) override;
+    void visit(SyntaxTree::BinaryExpr &node) override;
+    void visit(SyntaxTree::UnaryExpr &node) override;
+    void visit(SyntaxTree::LVal &node) override;
+    void visit(SyntaxTree::Literal &node) override;
+    void visit(SyntaxTree::ReturnStmt &node) override;
+    void visit(SyntaxTree::VarDef &node) override;
+    void visit(SyntaxTree::AssignStmt &node) override;
+    void visit(SyntaxTree::FuncCallStmt &node) override;
+    void visit(SyntaxTree::BlockStmt &node) override;
+    void visit(SyntaxTree::EmptyStmt &node) override;
+    void visit(SyntaxTree::ExprStmt &node) override;
+    void visit(SyntaxTree::FuncParam &node) override;
+    void visit(SyntaxTree::FuncFParamList &node) override;
+    void visit(SyntaxTree::IfStmt &node) override;
+    void visit(SyntaxTree::WhileStmt &node) override;
+    void visit(SyntaxTree::BreakStmt &node) override;
+    void visit(SyntaxTree::ContinueStmt &node) override;
+    void visit(SyntaxTree::BinaryCondExpr &node)override;
+    void visit(SyntaxTree::UnaryCondExpr &node)override;
+    void visit(SyntaxTree::InitVal &node) override;
 private:
     std::vector<Ptr<SyntaxTree::Stmt>> StmtStack;//used for WhileStmt
     bool haserror = false;
@@ -90,7 +92,7 @@ private:
         Ptr<VarDef> var_def;
 
         Variable() = default;
-        Variable(VarDef* def)
+        explicit Variable(VarDef* def)
         {
             var_def = Ptr<VarDef>(def);
         }
@@ -103,7 +105,7 @@ private:
         Ptr<FuncDef> func_def;
 
         Function() = default;
-        Function(FuncDef* def)
+        explicit Function(FuncDef* def)
         {
             func_def = Ptr<FuncDef>(def);
         }
@@ -123,11 +125,11 @@ private:
 
     void exit_scope() 
     { 
-        for(auto var:variables.front())
+        for(const auto& var:variables.front())
         {
-            if(var.second->isused == false)
+            if(!var.second->isused)
             {
-                std::cout << " warning: variable '"<<var.first<<"' not used,warn_code : "<<warn_code["UnusedVar"]<<std::endl;
+                err.warn(var.second->var_def->loc," warning: variable '"+var.first+"' not used,warn_code : "+warn_code["UnusedVar"]);
             }
         }
         variables.pop_front(); 
@@ -136,10 +138,12 @@ private:
 
     PtrVariable lookup_variable(std::string& name)
     {
-        for (auto m : variables)
+        PtrVariable ret_ptr = nullptr;
+        for (auto m : variables) {
             if (m.count(name))
-                return m[name];
-        return nullptr;
+                ret_ptr = m[name];
+        }
+        return ret_ptr;
     }
 
     PtrFunction lookup_function(std::string& name)
@@ -156,15 +160,18 @@ private:
         assert(!variables.empty());
         if (variables.front().count(var_def->name))
             return false;
-        variables.front()[var_def->name] = PtrVariable(new Variable(var_def));
+        auto tmp = new SyntaxTree::VarDef(*var_def);
+        variables.front()[var_def->name] = std::make_shared<Variable>(tmp);
         return true;
     }
+
 
     bool declare_function(FuncDef* func_def)
     {
         if(functions.count(func_def->name))
             return false;
-        functions[func_def->name] = PtrFunction(new Function(func_def));
+        auto tmp = new SyntaxTree::FuncDef(*func_def);
+        functions[func_def->name] = std::make_shared<Function>(tmp);
         return true;
     }
     std::deque<std::unordered_map<std::string, PtrVariable>> variables;

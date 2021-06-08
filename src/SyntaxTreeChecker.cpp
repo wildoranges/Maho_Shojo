@@ -7,13 +7,13 @@ using namespace SyntaxTree;
 void SyntaxTreeChecker::visit(Assembly &node)
 {
     enter_scope();
-    for (auto def : node.global_defs) {
+    for (const auto& def : node.global_defs) {
         def->accept(*this);
     }
     if(!functions.count(std::string("main")))
     {
         haserror = true;
-        std::cout<<"error,NoMainFunc,err_code : "<<warn_code["NoMainFunc"]<<std::endl;
+        err.warn(node.loc,"NoMainFunc,warn_code : "+warn_code["NoMainFunc"]);
     }
     else
     {
@@ -21,8 +21,7 @@ void SyntaxTreeChecker::visit(Assembly &node)
         auto FuncP = lookup_function(Funcname);
         if(FuncP->func_def->ret_type !=Type::INT)
         {
-            //haserror = true;
-            std::cout<<"warning,WMainFunc,err_code: "<<warn_code["WMainFunc"]<<" expect return int\n";
+            err.warn(node.loc,"WMainFunc,err_code: "+ warn_code["WMainFunc"]+" expect return int");
         }
     }
     exit_scope();
@@ -30,14 +29,14 @@ void SyntaxTreeChecker::visit(Assembly &node)
 
 void SyntaxTreeChecker::visit(FuncParam &node)
 {
-    return;
 }
 
 void SyntaxTreeChecker::visit(FuncFParamList &node)
 {
     std::map<std::string,Ptr<FuncParam>> param_map;
-    for(auto param:node.params)
+    for(const auto& param:node.params)
     {
+
         if(param_map.count(param->name))
         {
             haserror = true;
@@ -63,9 +62,10 @@ void SyntaxTreeChecker::visit(FuncDef &node)
         err.error(node.loc,node.name+" : ReDefFunc"+",err_code : "+err_code["ReDefFunc"]+" this function has been defined");
         return;
     }
-    node.param_list->accept(*this);
-    hasRet = false;
     cur_func = lookup_function(node.name);
+    hasRet = false;
+    //enter_scope();
+    node.param_list->accept(*this);
     node.body->accept(*this);
     if(!hasRet&&node.ret_type!=Type::VOID&&(node.name!=std::string("main")))
     {
@@ -74,6 +74,7 @@ void SyntaxTreeChecker::visit(FuncDef &node)
         //return;
     }
     hasRet = false;
+    //exit_scope();
     cur_func = nullptr;
 }
 void SyntaxTreeChecker::visit(BinaryExpr &node)
@@ -159,11 +160,51 @@ void SyntaxTreeChecker::visit(LVal &node)
     bool LvalConst;
     if(Valptr==nullptr)
     {
-        ExprType = Type::VOID;
-        isConst = false;
-        haserror = true;
-        err.error(node.loc,"VarNotDefined,err_code : "+err_code["VarNotDefined"]+" variable not found");
-        exit(-1);
+        if(cur_func != nullptr){
+            auto Fparam = cur_func->func_def->param_list->params.begin();
+            for(;Fparam!=cur_func->func_def->param_list->params.end();Fparam++)
+            {
+                if(Fparam->get()->name==node.name){
+                    LvalConst = false;
+                    LvalType = Fparam->get()->param_type;
+                    if(Fparam->get()->array_index.size()!=node.array_index.size())
+                    {
+                        ExprType = LvalType;
+                        isConst = false;
+                        haserror = true;
+                        isCond = false;
+                        err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" imcompatible index");
+                        exit(-1);
+                    }
+                    for(const auto& exp:node.array_index)
+                    {
+                        exp->accept(*this);
+                        if(isCond)
+                        {
+                            err.error(node.loc,"cannot use cond expr as add expr");
+                            exit(-1);
+                        }
+                        if(ExprType!=Type::INT)
+                        {
+                            err.error(node.loc,"not type int");
+                            exit(-1);
+                        }
+                    }
+                    ExprType = LvalType;
+                    isConst = LvalConst;
+                    isCond = false;
+                    return;
+                }
+            }
+            haserror = true;
+            err.error(node.loc,"variable not declared");
+            exit(-1);
+        }else{
+            haserror = true;
+            err.error(node.loc,"variable not declared");
+            exit(-1);
+        }
+
     }
     else
     {
@@ -179,7 +220,7 @@ void SyntaxTreeChecker::visit(LVal &node)
             err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" imcompatible index");
             exit(-1);
         }
-        for(auto exp:node.array_index)
+        for(const auto& exp:node.array_index)
         {
             exp->accept(*this);
             if(isCond)
@@ -256,17 +297,18 @@ void SyntaxTreeChecker::visit(ReturnStmt &node)
 }
 void SyntaxTreeChecker::visit(VarDef &node)//TODO:array support
 {
-    if(declare_variable(&node));
+    if(declare_variable(&node)){
+    }
     else{
         err.error(node.loc,"re def variable");
         exit(-1);
     }
     if(node.is_inited)
     {
-        if(node.array_length.size()>0&&node.initializers->isExp){
+        if(!node.array_length.empty()&&node.initializers->isExp){
             err.warn(node.loc,"assign exp to array var");
         }
-        if(node.array_length.size()==0&&!node.initializers->isExp){
+        if(node.array_length.empty()&&!node.initializers->isExp){
             err.warn(node.loc,"assign array to non-array var");
         }
         node.initializers->accept(*this);
@@ -344,7 +386,7 @@ void SyntaxTreeChecker::visit(FuncCallStmt &node)
 void SyntaxTreeChecker::visit(BlockStmt &node)
 {
     enter_scope();
-    for(auto exp:node.body)
+    for(const auto& exp:node.body)
     {
         exp->accept(*this);
     }
@@ -352,7 +394,6 @@ void SyntaxTreeChecker::visit(BlockStmt &node)
 }
 void SyntaxTreeChecker::visit(EmptyStmt &node) 
 {
-    return;
 }
 void SyntaxTreeChecker::visit(ExprStmt &node)
 {
@@ -383,7 +424,7 @@ void SyntaxTreeChecker::visit(WhileStmt &node)
     exit_scope();
 }
 
-void SyntaxTreeChecker::visit(BreakStmt &node)
+void SyntaxTreeChecker::visit(BreakStmt &node)//FIXME:unmatched break;
 {
     if (StmtStack.back() == nullptr) {
         haserror = true;
@@ -391,7 +432,7 @@ void SyntaxTreeChecker::visit(BreakStmt &node)
     }
 }
 
-void SyntaxTreeChecker::visit(ContinueStmt &node)
+void SyntaxTreeChecker::visit(ContinueStmt &node)//FIXME:unmathed break;
 {
     if (StmtStack.back() == nullptr) {
         haserror = true;
@@ -461,7 +502,7 @@ void SyntaxTreeChecker::visit(InitVal &node)
             exit(-1);
         }
     }else{
-        for(auto init:node.elementList)
+        for(const auto& init:node.elementList)
         {
             init->accept(*this);
         }

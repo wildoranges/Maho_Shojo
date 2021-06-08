@@ -5,7 +5,7 @@
 
 void print_help(std::string exe_name) {
   std::cout << "Usage: " << exe_name
-            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -e | --emit_syntax ] "
+            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -e | --emit_syntax ] [--nocheck] "
             << "<input-file>"
             << std::endl;
 }
@@ -18,7 +18,8 @@ int main(int argc, char *argv[])
     SyntaxTreeChecker checker(reporter);
 
     bool print = false;
-    std::string filename;
+    bool check = true;
+    std::string filename = "test.sysy";
     for (int i = 1; i < argc; ++i) {
         if (argv[i] == std::string("-h") || argv[i] == std::string("--help")) {
             print_help(argv[0]);
@@ -30,7 +31,9 @@ int main(int argc, char *argv[])
             driver.trace_scanning = true;
         else if (argv[i] == std::string("-e") || argv[i] == std::string("--emit_syntax"))
             print = true;
-        else {
+        else if (argv[i] == std::string("--nocheck"))
+            check = false;
+        else{
             filename = argv[i];
         }
     }
@@ -38,12 +41,13 @@ int main(int argc, char *argv[])
     auto root = driver.parse(filename);
     if (print)
         root->accept(printer);
-    root->accept(checker);
-    if(checker.is_err())
-    {
-        std::cout<<"The file has semantic errors\n";
-        exit(-1);
+    if(check){
+        root->accept(checker);
+        if(checker.is_err())
+        {
+            std::cout<<"The file has semantic errors\n";
+            exit(-1);
+        }
     }
-    std::cout<<"pass\n";
     return 0;
 }

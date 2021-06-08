@@ -91,7 +91,7 @@ struct BreakStmt;
 struct ContinueStmt;
 struct InitVal;
 
-struct Visitor;
+class Visitor;
 
 // Virtual base of all kinds of syntax tree nodes.
 struct Node
@@ -106,20 +106,20 @@ struct InitVal: Node{
     bool isExp;
     std::vector<Ptr<InitVal>> elementList;
     Ptr<Expr> expr;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Root node of an ordinary syntax tree.
 struct Assembly : Node
 {
     PtrList<GlobalDef> global_defs;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Virtual base of global definitions, function or variable one.
 struct GlobalDef : virtual Node
 {
-    virtual void accept(Visitor &visitor) override = 0;
+    void accept(Visitor &visitor) override = 0;
 };
 
 // Function definition.
@@ -129,13 +129,13 @@ struct FuncDef : GlobalDef
     Ptr<FuncFParamList> param_list;
     std::string name;
     Ptr<BlockStmt> body;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Virtual base for statements.
 struct Stmt : virtual Node
 {
-    virtual void accept(Visitor &visitor) = 0;
+    void accept(Visitor &visitor) override = 0;
 };
 
 // Variable definition. Multiple of this would be both a statement and a global definition; however, itself only
@@ -148,7 +148,7 @@ struct VarDef : Stmt, GlobalDef
     bool is_inited; // This is used to verify `{}`
     PtrList<Expr> array_length; // empty for non-array variables
     Ptr<InitVal> initializers;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Assignment statement.
@@ -156,62 +156,62 @@ struct AssignStmt : Stmt
 {
     Ptr<LVal> target;
     Ptr<Expr> value;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Return statement.
 struct ReturnStmt : Stmt
 {
     Ptr<Expr> ret;  // nullptr for void return
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // BlockStmt statement.
 struct BlockStmt : Stmt
 {
     PtrList<Stmt> body;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Empty statement (aka a single ';').
 struct EmptyStmt : Stmt
 {
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 struct ExprStmt : Stmt
 {
     Ptr<Expr> exp;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Virtual base of expressions.
 struct Expr : Node
 {
-    virtual void accept(Visitor &visitor) = 0;
+    void accept(Visitor &visitor) override = 0;
 };
 
 struct CondExpr : Expr
 {
-    virtual void accept(Visitor &visitor) = 0;
+    void accept(Visitor &visitor) override = 0;
 };
 
 struct AddExpr : Expr
 {
-    virtual void accept(Visitor &visitor) = 0;
+    void accept(Visitor &visitor) override = 0;
 };
 
 
 struct UnaryCondExpr : CondExpr{//FIXME:FINISH THIS
     UnaryCondOp op;
     Ptr<Expr> rhs;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 struct BinaryCondExpr : CondExpr{
     BinaryCondOp op;
     Ptr<Expr> lhs,rhs;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Expression like `lhs op rhs`.
@@ -219,7 +219,7 @@ struct BinaryExpr : AddExpr
 {
     BinOp op;
     Ptr<Expr> lhs, rhs;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Expression like `op rhs`.
@@ -227,7 +227,7 @@ struct UnaryExpr : AddExpr
 {
     UnaryOp op;
     Ptr<Expr> rhs;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Expression like `ident` or `ident[exp]`.
@@ -235,7 +235,7 @@ struct LVal : AddExpr
 {
     std::string name;
     PtrList<Expr> array_index; // nullptr if not indexed as array
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Expression constructed by a literal number.
@@ -245,7 +245,7 @@ struct Literal : AddExpr
     int int_const;
     std::string str;
     //double float_const;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Function call statement.
@@ -253,7 +253,7 @@ struct FuncCallStmt : AddExpr
 {
     std::string name;
     PtrList<Expr> params;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 struct FuncParam : Node
@@ -261,13 +261,13 @@ struct FuncParam : Node
     std::string name;
     Type param_type;
     PtrList<Expr> array_index; // nullptr if not indexed as array
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 struct FuncFParamList : Node
 {
     PtrList<FuncParam> params;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 struct IfStmt : Stmt
@@ -275,24 +275,24 @@ struct IfStmt : Stmt
     Ptr<Expr> cond_exp;
     Ptr<Stmt> if_statement;
     Ptr<Stmt> else_statement;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 struct WhileStmt : Stmt
 {
     Ptr<Expr> cond_exp;
     Ptr<Stmt> statement;
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 struct BreakStmt : Stmt
 {
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 struct ContinueStmt : Stmt
 {
-    virtual void accept(Visitor &visitor) override final;
+    void accept(Visitor &visitor) final;
 };
 
 // Visitor base type

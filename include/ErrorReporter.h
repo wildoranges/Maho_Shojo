@@ -12,7 +12,7 @@ class ErrorReporter
 {
 public:
     using Position = SyntaxTree::Position;
-    ErrorReporter(std::ostream &error_stream);
+    explicit ErrorReporter(std::ostream &error_stream);
 
     void error(Position pos, const std::string &msg);
     void warn(Position pos, const std::string &msg);
