@@ -202,7 +202,7 @@ struct AddExpr : Expr
 };
 
 
-struct UnaryCondExpr : CondExpr{//FIXME:FINISH THIS
+struct UnaryCondExpr : CondExpr{
     UnaryCondOp op;
     Ptr<Expr> rhs;
     void accept(Visitor &visitor) final;
