@@ -1,0 +1,15 @@
+void main(void){
+    int x;
+    int y;
+    x = 2.0;
+    y = 15;
+    if(x){
+        while(x < y){
+            x = x + 1;
+            y = y - 1;
+        }
+    }
+    output(x);
+    output(y);
+    return;
+}

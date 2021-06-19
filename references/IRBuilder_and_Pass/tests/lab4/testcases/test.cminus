@@ -1,0 +1,14 @@
+int x;
+
+int f(int y){
+    int x;
+    x = y;
+    if (x<=1)return 1;
+    return x*f(x-1);
+}
+
+void main(void){
+    int x;
+    output(f(f(x)));
+    return;
+}

@@ -1,0 +1,22 @@
+int f(int x){
+    if(x > 3){
+        return 1.0;
+    }else{
+        return 0;
+    }
+}
+void main(void){
+    int x;
+    int y;
+    x = 2;
+    y = 15;
+    if(x){
+        while(f(x)==0){
+            x = x + 1;
+            y = y - 1;
+        }
+    }
+    output(x);
+    output(y);
+    return;
+}
