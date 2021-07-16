@@ -234,7 +234,7 @@ BranchInst *BranchInst::create_br(BasicBlock *if_true, BasicBlock *bb)
 {
     if_true->add_pre_basic_block(bb);
     bb->add_succ_basic_block(if_true);
- 
+
     return new BranchInst(if_true, bb);
 }
 
@@ -455,6 +455,38 @@ std::string AllocaInst::print()
     instr_ir += " ";
     instr_ir += get_alloca_type()->print();
     return instr_ir;    
+}
+
+ZextInst::ZextInst(OpID op, Value *val, Type *ty, BasicBlock *bb)
+    : Instruction(ty, op, 1, bb), dest_ty_(ty)
+{
+    set_operand(0, val);
+}
+
+ZextInst *ZextInst::create_zext(Value *val, Type *ty, BasicBlock *bb)
+{
+    return new ZextInst(Instruction::zext, val, ty, bb);
+}
+
+Type *ZextInst::get_dest_type() const
+{
+    return dest_ty_;
+}
+
+std::string ZextInst::print()
+{
+    std::string instr_ir;
+    instr_ir += "%";
+    instr_ir += this->get_name();
+    instr_ir += " = ";
+    instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
+    instr_ir += " ";
+    instr_ir += this->get_operand(0)->get_type()->print();
+    instr_ir += " ";
+    instr_ir += print_as_op(this->get_operand(0), false);
+    instr_ir += " to ";
+    instr_ir += this->get_dest_type()->print();
+    return instr_ir; 
 }
 
 PhiInst::PhiInst(OpID op, std::vector<Value *> vals, std::vector<BasicBlock *> val_bbs, Type *ty, BasicBlock *bb)
