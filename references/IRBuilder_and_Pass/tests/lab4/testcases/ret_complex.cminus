@@ -1,0 +1,16 @@
+int f(void){
+    return 1;
+}
+float g(void){
+    return 2.0;
+}
+float h(float x){
+    return (x);
+}
+void main(void){
+    int x;
+    x = 2;
+    x = h((x+f()*2+g()/2+6+4.3));
+    output(x);
+    return ;
+}

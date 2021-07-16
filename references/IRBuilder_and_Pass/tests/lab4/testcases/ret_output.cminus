@@ -1,0 +1,9 @@
+int f(void){
+    return 1;
+}
+void main(void){
+    int x;
+    x = 2;
+    output(x+f()*26);
+    return;
+}

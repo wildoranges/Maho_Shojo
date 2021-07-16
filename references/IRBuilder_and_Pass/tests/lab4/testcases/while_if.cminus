@@ -1,0 +1,19 @@
+int z[10];
+
+void main(void){
+    int x;
+    int y;
+    z[0] = 7;
+    z[1] = 2;
+    x = 2.0;
+    y = 15;
+    while(x){
+        if(x < y){
+            x = x - 1;
+            y = y + 1;
+        }
+    }
+    output(x <= z[x]);
+    output(y);
+    return;
+}

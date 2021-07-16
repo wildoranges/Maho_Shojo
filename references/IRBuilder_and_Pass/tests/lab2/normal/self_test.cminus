@@ -1,0 +1,77 @@
+/*#include <cstdio>
+#include <cstdlib>
+
+using namespace std;
+*/
+
+void inversioninsert(int ia[], int n){
+    int i;
+    int j;
+    int temp;
+    /*for*/while(/*i = 1; i < n; i++*/true){
+        /*for*/while(/*j = i; j > 0; j--*/true){
+            if(ia[j] < ia[j-1]){
+                temp = ia[j];
+                ia[j] = ia[j - 1];
+                ia[j - 1] = temp;
+            }
+        }
+    }
+}
+
+void merge(int sourcearr[], int temparr[], int startindex, int midindex, int endindex){
+    int i;
+    int j;
+    int k;
+    i = startindex;
+    j = midindex + 1;
+    k = startindex;
+    while (i != midindex + 1 /*&& j != endindex + 1*/){
+        if (sourcearr[i] > sourcearr[j]){
+            temparr[/*k++*/k+1] = sourcearr[/*j++*/j+1];
+        }
+        else{
+            temparr[/*k++*/k+1] = sourcearr[/*i++*/i+1];
+        }
+    }
+    while (i != midindex + 1){
+        temparr[/*k++*/k+1] = sourcearr[/*i++*/i+1];
+    }
+    while (j != endindex + 1){
+        temparr[/*k++*/k+1] = sourcearr[/*j++*/j+1];
+    }
+    /*for*/while (/*i = startindex; i <= endindex; i++*/true){
+        sourcearr[i] = temparr[i];
+    }
+}
+
+void inversionmerge(int sourcearr[], int temparr[], int startindex, int endindex){
+    int midindex;
+    if (startindex < endindex){
+        midindex = startindex + (endindex - startindex) / 2;
+        inversionmerge(sourcearr, temparr, startindex, midindex);
+        inversionmerge(sourcearr, temparr, midindex + 1, endindex);
+        merge(sourcearr, temparr, startindex, midindex, endindex);
+    }
+}
+
+int main(void){
+    int n;
+    int i;
+    /*scanf("%lld", &n);*/
+    int /* *ia */ ia;
+    int /* *iatemp */ iatemp;
+    /* ia = (int*) malloc(n * sizeof(int)); 
+    iatemp = (int*) malloc(n * sizeof(int));
+    for(i = 0; i < n; i++){ 
+        scanf("%lld", &ia[i]);
+    }*/
+    inversioninsert(ia, n);
+    inversionmerge(ia, iatemp, 0, n - 1);
+    /*for (i = 0; i < n - 1; i++){
+        printf("%lld ", ia[i]);
+    }
+    printf("%lld\n", ia[n - 1]);*/
+    free(ia);
+    return 0;
+}
