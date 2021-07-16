@@ -75,12 +75,12 @@ BinaryInst *BinaryInst::create_srem(Value *v1, Value *v2, BasicBlock *bb, Module
 
 BinaryInst *BinaryInst::create_and(Value *v1, Value *v2, BasicBlock *bb, Module *m)
 {
-    return new BinaryInst(Type::get_int1_type(m), Instruction::sand, v1, v2, bb);
+    return new BinaryInst(Type::get_int32_type(m), Instruction::sand, v1, v2, bb);
 }
 
 BinaryInst *BinaryInst::create_or(Value *v1, Value *v2, BasicBlock *bb, Module *m)
 {
-    return new BinaryInst(Type::get_int1_type(m), Instruction::sor, v1, v2, bb);
+    return new BinaryInst(Type::get_int32_type(m), Instruction::sor, v1, v2, bb);
 }
 
 std::string BinaryInst::print()
