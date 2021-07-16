@@ -104,7 +104,8 @@ struct Node
 //node for initial value
 struct InitVal: Node{
     bool isExp;
-    std::vector<Ptr<InitVal>> elementList;
+    PtrList<InitVal> elementList;
+    //std::vector<Ptr<InitVal>> elementList;
     Ptr<Expr> expr;
     void accept(Visitor &visitor) final;
 };
