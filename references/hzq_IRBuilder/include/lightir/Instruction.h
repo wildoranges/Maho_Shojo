@@ -34,6 +34,7 @@ public:
         // Logical operators
         sand,
         sor,
+        zext, // zero extend
 
     };
     // create instruction, auto insert to bb
@@ -68,6 +69,7 @@ public:
             case phi: return "phi"; break;
             case call: return "call"; break;
             case getelementptr: return "getelementptr"; break;
+            case zext: return "zext"; break;
         
         default: return ""; break;
         }
@@ -97,6 +99,7 @@ public:
 
     bool is_call() { return op_id_ == call; }
     bool is_gep() { return op_id_ == getelementptr; }
+    bool is_zext() { return op_id_ == zext; }
     
 
     bool isBinary()
@@ -280,6 +283,22 @@ public:
 
 private:
     Type *alloca_ty_;
+};
+
+class ZextInst : public Instruction
+{
+private:
+    ZextInst(OpID op, Value *val, Type *ty, BasicBlock *bb);
+
+public:
+    static ZextInst *create_zext(Value *val, Type *ty, BasicBlock *bb);
+
+    Type *get_dest_type() const;
+
+    virtual std::string print() override;
+
+private:
+    Type *dest_ty_;
 };
 
 class PhiInst : public Instruction

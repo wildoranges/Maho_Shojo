@@ -27,6 +27,7 @@ Module::Module(std::string name)
     instr_id2string_.insert({ Instruction::phi, "phi" });
     instr_id2string_.insert({ Instruction::call, "call" });
     instr_id2string_.insert({ Instruction::getelementptr, "getelementptr" });
+    instr_id2string_.insert({ Instruction::zext, "zext" });
 }
 
 Module::~Module()

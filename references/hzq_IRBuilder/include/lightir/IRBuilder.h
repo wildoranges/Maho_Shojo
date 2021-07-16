@@ -54,6 +54,7 @@ public:
     }
 
     AllocaInst *create_alloca(Type *ty) { return AllocaInst::create_alloca(ty, this->BB_); }
+    ZextInst *create_zext(Value *val, Type *ty) { return ZextInst::create_zext(val, ty, this->BB_); }
 };
 
 #endif // SYSY_IRBUILDER_H
