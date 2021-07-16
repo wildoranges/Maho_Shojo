@@ -404,13 +404,23 @@ void SyntaxTreeChecker::visit(IfStmt &node)
 {
     //FIXME:FINISH THIS;
     node.cond_exp->accept(*this);
-    enter_scope();
-    node.if_statement->accept(*this);
-    exit_scope();
-    if (node.else_statement != nullptr) {
+    if (dynamic_cast<BlockStmt*>(node.if_statement.get())) {
+        node.if_statement->accept(*this);
+    }
+    else {
         enter_scope();
-        node.else_statement->accept(*this);
+        node.if_statement->accept(*this);
         exit_scope();
+    }
+    if (node.else_statement != nullptr) {
+        if (dynamic_cast<BlockStmt*>(node.else_statement.get())) {
+            node.else_statement->accept(*this);
+        }
+        else {
+            enter_scope();
+            node.else_statement->accept(*this);
+            exit_scope();
+        }
     }
 }
 
@@ -418,15 +428,23 @@ void SyntaxTreeChecker::visit(WhileStmt &node)
 {
     //FIXME:FINISH THIS;
     node.cond_exp->accept(*this);
-    enter_scope();
-    node.statement->accept(*this);
-    StmtStack.back() = node.statement;
-    exit_scope();
+    if (dynamic_cast<BlockStmt*>(node.statement.get())) {
+        WhileStmtStack.push_back(&node);
+        node.statement->accept(*this);
+        WhileStmtStack.pop_back();
+    }
+    else {
+        WhileStmtStack.push_back(&node);
+        enter_scope();
+        node.statement->accept(*this);
+        exit_scope();
+        WhileStmtStack.pop_back();
+    }
 }
 
 void SyntaxTreeChecker::visit(BreakStmt &node)//FIXME:unmatched break;
 {
-    if (StmtStack.back() == nullptr) {
+    if (WhileStmtStack.empty()) {
         haserror = true;
         err.error(node.loc,"UnmatchedBreak,err_code : "+err_code["UnmatchedBreak"]);
     }
@@ -434,7 +452,7 @@ void SyntaxTreeChecker::visit(BreakStmt &node)//FIXME:unmatched break;
 
 void SyntaxTreeChecker::visit(ContinueStmt &node)//FIXME:unmathed break;
 {
-    if (StmtStack.back() == nullptr) {
+    if (WhileStmtStack.empty()) {
         haserror = true;
         err.error(node.loc,"UnmatchedContinue,err_code : "+err_code["UnmatchedContinue"]);
     }

@@ -78,7 +78,8 @@ public:
     void visit(SyntaxTree::UnaryCondExpr &node)override;
     void visit(SyntaxTree::InitVal &node) override;
 private:
-    std::vector<Ptr<SyntaxTree::Stmt>> StmtStack;//used for WhileStmt
+    //std::vector<Ptr<SyntaxTree::Stmt>> StmtStack; // maybe useful
+    std::vector<SyntaxTree::WhileStmt *> WhileStmtStack; // only used by WhileStmt
     bool haserror = false;
     using Type = SyntaxTree::Type;
     bool hasRet = false;
@@ -120,7 +121,7 @@ private:
     void enter_scope() 
     { 
         variables.emplace_front(); 
-        StmtStack.push_back(nullptr);
+        //StmtStack.push_back(nullptr); // maybe useful
     }
 
     void exit_scope() 
@@ -133,7 +134,7 @@ private:
             }
         }
         variables.pop_front(); 
-        StmtStack.pop_back();
+        //StmtStack.pop_back(); // maybe useful
     }
 
     PtrVariable lookup_variable(std::string& name)
