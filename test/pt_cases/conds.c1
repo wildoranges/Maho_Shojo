@@ -1,0 +1,15 @@
+int a,b,c,d,e;
+
+int main(){
+    if (a || b && c || d && e) ;
+    if (a && b == c && d != e) ;
+    if (a == b >= c != d <= e) ;
+    if (a > b + c < d - e) ;
+    if (a + b * c - d / e) ;
+    if (!a && !b || c) ;
+
+    //test priorty should be : a||((!b)&&c)||(d&&(((a+b)>=(d%c))!=c))
+    if (a || !b && c || d && a+b >= d%c != c){
+        continue;
+    }
+}
