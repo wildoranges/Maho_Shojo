@@ -10,3 +10,4 @@ const int e9 = (1 + 2) * 3;
 int e10[4] = {e1, e2, e3};
 const int e11 = e1 * e3;
 int e11[4+3] = {};
+int e12[e1] = {};
