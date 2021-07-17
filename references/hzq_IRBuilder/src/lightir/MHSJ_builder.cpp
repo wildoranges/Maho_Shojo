@@ -502,13 +502,6 @@ void CminusfBuilder::visit(ASTCall &node) {
  * our implement
  */
 
-std::vector<SyntaxTree::FuncParam>func_fparams;
-
-std::vector<int>array_bounds;
-std::vector<int>array_sizes;
-int cur_pos;
-int cur_depth;
-std::map<int, Value*> initval;
 /* Global Variable */
 
 // used for backpatching
@@ -521,7 +514,13 @@ struct true_false_BB
 std::list<true_false_BB> IF_While_Cond_Stack;   // used for Cond
 std::list<true_false_BB> IF_While_Stack;        // used for Cond
 std::list<true_false_BB> While_Stack;           // used for break and continue
-
+// used for backpatching
+std::vector<SyntaxTree::FuncParam>func_fparams;
+std::vector<int>array_bounds;
+std::vector<int>array_sizes;
+int cur_pos;
+int cur_depth;
+std::map<int, Value*> initval;
 /* Global Variable */
 
 void MHSJbuilder::visit(SyntaxTree::Assembly &node){
