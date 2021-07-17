@@ -1,23 +1,26 @@
 #include <iostream>
+#include "MHSJBuilder.hpp"
 #include "MHSJDriver.h"
 #include "SyntaxTreePrinter.h"
 #include "SyntaxTreeChecker.h"
 
 void print_help(std::string exe_name) {
   std::cout << "Usage: " << exe_name
-            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -e | --emit_syntax ] [--nocheck] "
+            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-llvm ] [ -e | --emit_syntax ] [--nocheck] "
             << "<input-file>"
             << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
+    MHSJBuilder builder;
     MHSJDriver driver;
     SyntaxTreePrinter printer;
     ErrorReporter reporter(std::cerr);
     SyntaxTreeChecker checker(reporter);
 
     bool print = false;
+    bool print_IR = false;
     bool check = true;
     std::string filename = "test.sysy";
     for (int i = 1; i < argc; ++i) {
@@ -29,6 +32,8 @@ int main(int argc, char *argv[])
             driver.trace_parsing = true;
         else if (argv[i] == std::string("-s") || argv[i] == std::string("--trace_scanning"))
             driver.trace_scanning = true;
+        else if (argv[i] == std::string("-emit-llvm"))
+            print_IR = true;
         else if (argv[i] == std::string("-e") || argv[i] == std::string("--emit_syntax"))
             print = true;
         else if (argv[i] == std::string("--nocheck"))
@@ -39,6 +44,9 @@ int main(int argc, char *argv[])
     }
 
     auto root = driver.parse(filename);
+    if (print_IR) {
+        root->accept(print_IR);
+    }
     if (print)
         root->accept(printer);
     if(check){
