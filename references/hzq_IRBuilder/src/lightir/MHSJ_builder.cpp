@@ -511,7 +511,6 @@ struct true_false_BB
     BasicBlock * falseBB = nullptr;
 };
 
-std::list<true_false_BB> IF_While_Cond_Stack;   // used for Cond
 std::list<true_false_BB> IF_While_Stack;        // used for Cond
 std::list<true_false_BB> While_Stack;           // used for break and continue
 // used for backpatching
@@ -789,55 +788,56 @@ void MHSJbuilder::visit(SyntaxTree::UnaryCondExpr &node){
 }
 
 void MHSJbuilder::visit(SyntaxTree::BinaryCondExpr &node){
-    Value *cond_val;
-    if (node.rhs == nullptr) {
+    CmpInst *cond_val;
+    if (node.op == SyntaxTree::BinaryCondOp::LAND) {
+        auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
         node.lhs->accept(*this);
         auto ret_val = tmp_val;
-        cond_val = builder->create_icmp_ne(ret_val, CONST_INT(0));
-        builder->create_cond_br(cond_val, IF_While_Cond_Stack.back().trueBB, IF_While_Cond_Stack.back().falseBB);
-    } else {
-        if (node.op == SyntaxTree::BinaryCondOp::LAND) {
-            auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
-            IF_While_Cond_Stack.push_back({trueBB, IF_While_Stack.back().falseBB});
-            node.lhs->accept(*this);
-            builder->set_insert_point(trueBB);
-            node.rhs->accept(*this);
-            IF_While_Cond_Stack.pop_back();
-        } else if (node.op == SyntaxTree::BinaryCondOp::LOR) {
-            auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
-            IF_While_Cond_Stack.push_back({IF_While_Stack.back().trueBB, falseBB});
-            node.lhs->accept(*this);
-            builder->set_insert_point(falseBB);
-            node.rhs->accept(*this);
-            IF_While_Cond_Stack.pop_back();
-        } else {
-            node.lhs->accept(*this);
-            auto l_val = tmp_val;
-            node.rhs->accept(*this);
-            auto r_val = tmp_val;
-            Value *cmp;
-            switch (node.op) {
-            case SyntaxTree::BinaryCondOp::LT:
-                cmp = builder->create_icmp_lt(l_val, r_val);
-                break;
-            case SyntaxTree::BinaryCondOp::LTE:
-                cmp = builder->create_icmp_le(l_val, r_val);
-                break;
-            case SyntaxTree::BinaryCondOp::GTE:
-                cmp = builder->create_icmp_ge(l_val, r_val);
-                break;
-            case SyntaxTree::BinaryCondOp::GT:
-                cmp = builder->create_icmp_gt(l_val, r_val);
-                break;
-            case SyntaxTree::BinaryCondOp::EQ:
-                cmp = builder->create_icmp_eq(l_val, r_val);
-                break;
-            case SyntaxTree::BinaryCondOp::NEQ:
-                cmp = builder->create_icmp_ne(l_val, r_val);
-                break;
-            }
-            builder->create_cond_br(cmp, IF_While_Cond_Stack.back().trueBB, IF_While_Cond_Stack.back().falseBB);
+        cond_val = dynamic_cast<CmpInst*>(ret_val);
+        if (cond_val == nullptr) {
+            cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
         }
+        builder->create_cond_br(cond_val, trueBB, IF_While_Stack.back().falseBB);
+        builder->set_insert_point(trueBB);
+        node.rhs->accept(*this);
+    } else if (node.op == SyntaxTree::BinaryCondOp::LOR) {
+        auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
+        node.lhs->accept(*this);
+        auto ret_val = tmp_val;
+        cond_val = dynamic_cast<CmpInst*>(ret_val);
+        if (cond_val == nullptr) {
+            cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
+        }
+        builder->create_cond_br(cond_val, IF_While_Stack.back().trueBB, falseBB);
+        builder->set_insert_point(falseBB);
+        node.rhs->accept(*this);
+    } else {
+        node.lhs->accept(*this);
+        auto l_val = tmp_val;
+        node.rhs->accept(*this);
+        auto r_val = tmp_val;
+        Value *cmp;
+        switch (node.op) {
+        case SyntaxTree::BinaryCondOp::LT:
+            cmp = builder->create_icmp_lt(l_val, r_val);
+            break;
+        case SyntaxTree::BinaryCondOp::LTE:
+            cmp = builder->create_icmp_le(l_val, r_val);
+            break;
+        case SyntaxTree::BinaryCondOp::GTE:
+            cmp = builder->create_icmp_ge(l_val, r_val);
+            break;
+        case SyntaxTree::BinaryCondOp::GT:
+            cmp = builder->create_icmp_gt(l_val, r_val);
+            break;
+        case SyntaxTree::BinaryCondOp::EQ:
+            cmp = builder->create_icmp_eq(l_val, r_val);
+            break;
+        case SyntaxTree::BinaryCondOp::NEQ:
+            cmp = builder->create_icmp_ne(l_val, r_val);
+            break;
+        }
+        tmp_val = cmp;
     }
 }
 
@@ -854,20 +854,26 @@ void MHSJbuilder::visit(SyntaxTree::FuncCallStmt &node){
 }
 
 void MHSJbuilder::visit(SyntaxTree::IfStmt &node){
-    IF_While_Cond_Stack.push_back({nullptr, nullptr});
     auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
     auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
     auto contBB = BasicBlock::create(module.get(), "", cur_fun);
-    IF_While_Cond_Stack.back().trueBB = trueBB;
     IF_While_Stack.back().trueBB = trueBB;
     if (node.else_statement == nullptr) {
-        IF_While_Cond_Stack.back().falseBB = contBB;
         IF_While_Stack.back().falseBB = contBB;
     } else {
-        IF_While_Cond_Stack.back().falseBB = falseBB;
         IF_While_Stack.back().falseBB = falseBB;
     }
     node.cond_exp->accept(*this);
+    auto ret_val = tmp_val;
+    CmpInst *cond_val = dynamic_cast<CmpInst*>(ret_val);
+    if (cond_val == nullptr) {
+        cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
+    }
+    if (node.else_statement == nullptr) {
+        builder->create_cond_br(cond_val, trueBB, contBB);
+    } else {
+        builder->create_cond_br(cond_val, trueBB, falseBB);
+    }
     builder->set_insert_point(trueBB);
     if (dynamic_cast<SyntaxTree::BlockStmt*>(node.if_statement.get())){
         node.if_statement->accept(*this);
@@ -896,7 +902,6 @@ void MHSJbuilder::visit(SyntaxTree::IfStmt &node){
     }
 
     builder->set_insert_point(contBB);
-    IF_While_Cond_Stack.pop_back();
     IF_While_Stack.pop_back();
 }
 
@@ -904,13 +909,18 @@ void MHSJbuilder::visit(SyntaxTree::WhileStmt &node){
     auto whileBB = BasicBlock::create(module.get(), "", cur_fun);
     auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
     auto contBB = BasicBlock::create(module.get(), "", cur_fun);
-    IF_While_Cond_Stack.push_back({trueBB, contBB});
     IF_While_Stack.push_back({trueBB, contBB});
     While_Stack.push_back({trueBB, contBB});
     if (builder->get_insert_block()->get_terminator() == nullptr)
         builder->create_br(whileBB);
     builder->set_insert_point(whileBB);
     node.cond_exp->accept(*this);
+    auto ret_val = tmp_val;    
+    CmpInst *cond_val = dynamic_cast<CmpInst*>(ret_val);
+    if (cond_val == nullptr) {
+        cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
+    }
+    builder->create_cond_br(cond_val, trueBB, contBB);
     builder->set_insert_point(trueBB);
     if (dynamic_cast<SyntaxTree::BlockStmt*>(node.statement.get())){
         node.statement->accept(*this);
@@ -922,7 +932,6 @@ void MHSJbuilder::visit(SyntaxTree::WhileStmt &node){
     if (builder->get_insert_block()->get_terminator() == nullptr)
         builder->create_br(whileBB);
     builder->set_insert_point(contBB);
-    IF_While_Cond_Stack.pop_back();
     IF_While_Stack.pop_back();
     While_Stack.pop_back();
 }
