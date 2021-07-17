@@ -47,8 +47,25 @@ public:
         return nullptr;
     }
 
+    bool push_size(std::string name, std::vector<int> size){
+        auto result = inner_array_size[inner_array_size.size() - 1].insert({name,size});
+        return result.second;
+    }
+
+    std::vector<int> find_size(std::string name) {
+        for (auto s = inner_array_size.rbegin(); s!=inner_array_size.rend(); s++){
+            auto iter = s->find(name);
+            if (iter != s->end()) {
+                return iter->second;
+            }
+        }
+
+        return {};
+    }
+
 private:
     std::vector<std::map<std::string, Value *>> inner;
+    std::vector<std::map<std::string, std::vector<int>>> inner_array_size;
 };
 
 
