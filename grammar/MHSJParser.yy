@@ -218,7 +218,8 @@ InitVal: Exp{//TODO:CHECK?
     //TODO:Initializer cheking for scalar to array
     $$ = new SyntaxTree::InitVal();
     $$->isExp = true;
-    $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
+    $$->elementList = SyntaxTree::PtrList<SyntaxTree::InitVal>();
+    //$$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
     $$->expr = SyntaxTree::Ptr<SyntaxTree::Expr>($1);
     $$->loc = @$;
   }
@@ -234,7 +235,8 @@ InitValList: CommaInitValList InitVal{
   | %empty{
     $$ = new SyntaxTree::InitVal();
     $$->isExp = false;
-    $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
+    $$->elementList = SyntaxTree::PtrList<SyntaxTree::InitVal>();
+    //$$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
     $$->expr = nullptr;
     $$->loc = @$;
   }
@@ -247,7 +249,8 @@ CommaInitValList: CommaInitValList InitVal COMMA{
   | %empty{
     $$ = new SyntaxTree::InitVal();
     $$->isExp = false;
-    $$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
+    $$->elementList = SyntaxTree::PtrList<SyntaxTree::InitVal>();
+    //$$->elementList = std::vector<SyntaxTree::Ptr<SyntaxTree::InitVal>>();
     $$->expr = nullptr;
     $$->loc = @$;
   }
