@@ -1,0 +1,13 @@
+int a;
+
+int main(){
+    if (a){
+        continue;
+    }
+    else{
+        break;
+    }
+    else{
+        return 1;
+    }
+}
