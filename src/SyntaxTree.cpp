@@ -25,3 +25,24 @@ void ContinueStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void UnaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
 void BinaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
 void InitVal::accept(Visitor &visitor) { visitor.visit(*this); }
+
+//TODO
+void Node::accept(Visitor &visitor) {
+    visitor.visit(*this);
+}
+
+void Stmt::accept(Visitor &visitor) {
+    visitor.visit(*this);
+}
+
+void GlobalDef::accept(Visitor &visitor) {
+    visitor.visit(*this);
+}
+
+void Expr::accept(Visitor &visitor) {
+    visitor.visit(*this);
+}
+
+void CondExpr::accept(Visitor &visitor) {
+    visitor.visit(*this);
+}

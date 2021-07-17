@@ -765,7 +765,7 @@ void MHSJbuilder::visit(SyntaxTree::LVal &node){
 }
 
 void MHSJbuilder::visit(SyntaxTree::Literal &node){
-    
+    tmp_val = CONST_INT(node.int_const);
 }
 
 void MHSJbuilder::visit(SyntaxTree::ReturnStmt &node){
