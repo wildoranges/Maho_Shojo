@@ -164,7 +164,6 @@ public:
         builder = new IRBuilder(nullptr, module.get());
         auto TyVoid = Type::get_void_type(module.get());
         auto TyInt32 = Type::get_int32_type(module.get());
-        auto TyFloat = Type::get_float_type(module.get());
 
         auto input_type = FunctionType::get(TyInt32, {});
         auto input_fun =
@@ -183,13 +182,6 @@ public:
                     module.get());
 
         std::vector<Type *> output_float_params;
-        output_float_params.push_back(TyFloat);
-        auto output_float_type = FunctionType::get(TyVoid, output_float_params);
-        auto output_float_fun =
-            Function::create(
-                    output_float_type,
-                    "outputFloat",
-                    module.get());
 
         auto neg_idx_except_type = FunctionType::get(TyVoid, {});
         auto neg_idx_except_fun =

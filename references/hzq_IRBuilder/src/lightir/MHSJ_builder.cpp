@@ -498,22 +498,100 @@ void CminusfBuilder::visit(ASTCall &node) {
 
 
 
-/* TODO:
+/*
  * our implement
  */
 
 void MHSJbuilder::visit(SyntaxTree::Assembly &node){
+    VOID_T = Type::get_void_type(module.get());
+    INT1_T = Type::get_int1_type(module.get());
+    INT32_T = Type::get_int32_type(module.get());
+    INT32PTR_T = Type::get_int32_ptr_type(module.get());
     for (auto def: node.global_defs) {
         def->accept(*this);
     }
 }
 
 void MHSJbuilder::visit(SyntaxTree::InitVal &node){
-
+    //TODO:
+    if (node.isExp){
+        node.expr->accept(*this);
+        auto exp_val = tmp_val;
+    }
+    else{
+        for (auto elem: node.elementList){
+            elem->accept(*this);
+        }
+    }
 }
 
+
+std::vector<SyntaxTree::FuncParam>func_fparams;
+
 void MHSJbuilder::visit(SyntaxTree::FuncDef &node){
-    
+    FunctionType *fun_type;
+    Type *ret_type;
+    if (node.ret_type == SyntaxTree::Type::INT)
+        ret_type = INT32_T;
+    else
+        ret_type = VOID_T;
+
+    std::vector<Type *> param_types;
+    node.param_list->accept(*this);
+    for (auto param: func_fparams){
+        if (param.param_type == SyntaxTree::Type::INT){
+            if (param.array_index.empty()){
+                param_types.push_back(INT32_T);
+            }
+            else{
+                param_types.push_back(INT32PTR_T);
+            }
+        }
+    }
+    fun_type = FunctionType::get(ret_type, param_types);
+    auto fun = Function::create(fun_type,node.name,module.get());
+    scope.push(node.name, fun);
+    cur_fun = fun;
+    auto funBB = BasicBlock::create(module.get(), "entry", fun);
+    builder->set_insert_point(funBB);
+    scope.enter();
+    pre_enter_scope = true;
+    std::vector<Value*> args;
+    for (auto arg = fun->arg_begin();arg != fun->arg_end();arg++) {
+        args.push_back(*arg);
+    }
+    for (int i = 0;i < func_fparams.size(); i++){
+        if (func_fparams[i].array_index.empty()){
+            Value *alloc;
+            alloc = builder->create_alloca(INT32_T);
+            builder->create_store(args[i], alloc);
+            scope.push(func_fparams[i].name,alloc);
+        }
+        else{
+            Value *alloc_array;
+            alloc_array = builder->create_alloca(INT32PTR_T);
+            builder->create_store(args[i], alloc_array);
+            scope.push(func_fparams[i].name,alloc_array);
+        }
+    }
+    node.body->accept(*this);
+    if (builder->get_insert_block()->get_terminator() == nullptr){
+        if (cur_fun->get_return_type()->is_void_type())
+            builder->create_void_ret();
+        else
+            builder->create_ret(CONST_INT(0));
+    }
+    scope.exit();
+}
+
+void MHSJbuilder::visit(SyntaxTree::FuncFParamList &node){
+    for (auto Param: node.params){
+        Param->accept(*this);
+    }
+}
+
+void MHSJbuilder::visit(SyntaxTree::FuncParam &node){
+    func_fparams.push_back(node);
 }
 
 void MHSJbuilder::visit(SyntaxTree::VarDef &node){
@@ -565,14 +643,6 @@ void MHSJbuilder::visit(SyntaxTree::Literal &node){
 }
 
 void MHSJbuilder::visit(SyntaxTree::FuncCallStmt &node){
-    
-}
-
-void MHSJbuilder::visit(SyntaxTree::FuncParam &node){
-    
-}
-
-void MHSJbuilder::visit(SyntaxTree::FuncFParamList &node){
     
 }
 
