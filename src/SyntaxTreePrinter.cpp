@@ -7,7 +7,6 @@ using namespace SyntaxTree;
 
 std::map<Type, std::string> type2str = {
     {Type::INT, "int"},
-    //{Type::FLOAT, "float"},
     {Type::VOID, "void"}
 };
 
