@@ -23,6 +23,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_executable(MHSJ
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/MHSJBuilder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/MHSJDriver.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/SyntaxTree.cpp

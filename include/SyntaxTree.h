@@ -67,7 +67,11 @@ struct GlobalDef;
 struct FuncDef;
 
 struct Expr;
+struct CondExpr;
+struct AddExpr;
 struct BinaryExpr;
+struct BinaryCondExpr;
+struct UnaryCondExpr;
 struct UnaryExpr;
 struct LVal;
 struct Literal;
@@ -79,6 +83,7 @@ struct FuncCallStmt;
 struct ReturnStmt;
 struct BlockStmt;
 struct EmptyStmt;
+struct ExprStmt;
 
 struct FuncParam;
 struct FuncFParamList;
@@ -323,6 +328,7 @@ public:
     virtual void visit(BinaryCondExpr &node) = 0;
     virtual void visit(InitVal &node) = 0;
 };
-} // end namespace SyntaxTree
+} 
+// end namespace SyntaxTree
 
 #endif // _MHSJ_SYNTAX_TREE_H_

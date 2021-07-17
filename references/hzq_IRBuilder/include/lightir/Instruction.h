@@ -104,8 +104,7 @@ public:
 
     bool isBinary()
     {
-        return (is_add() || is_sub() || is_mul() || is_div() || is_rem()) && 
-                (is_and() || is_or()) && 
+        return (is_add() || is_sub() || is_mul() || is_div() || is_rem() || is_and() || is_or()) && 
                 (get_num_operand() == 2);
     }
 
