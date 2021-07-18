@@ -61,17 +61,21 @@ void MHSJBuilder::visit(SyntaxTree::InitVal &node) {
     cur_pos++;
   } else {
     for (const auto& elem : node.elementList) {
-      if (cur_pos % array_sizes[cur_depth - 1]) {
-        cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) *
-                  array_sizes[cur_depth - 1];
-      }
+        if (cur_depth>0){
+            if (cur_pos % array_sizes[cur_depth - 1]) {
+                cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) *
+                          array_sizes[cur_depth - 1];
+            }
+        }
       cur_depth++;
       elem->accept(*this);
       cur_depth--;
-      if (cur_pos % array_sizes[cur_depth - 1]) {
-        cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) *
-                  array_sizes[cur_depth - 1];
-      }
+        if (cur_depth>0){
+            if (cur_pos % array_sizes[cur_depth - 1]) {
+                cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) *
+                          array_sizes[cur_depth - 1];
+            }
+        }
     }
   }
 }
@@ -235,7 +239,7 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
     for (int i = 0; i < node.array_index.size(); i++) {
       node.array_index[i]->accept(*this);
       auto index_val = tmp_val;
-      auto exceptBB = BasicBlock::create(module.get(), "", cur_fun);
+      /*auto exceptBB = BasicBlock::create(module.get(), "", cur_fun);
       auto contBB = BasicBlock::create(module.get(), "", cur_fun);
       Value *is_neg = builder->create_icmp_lt(index_val, CONST_INT(0));
 
@@ -248,7 +252,7 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
       else
         builder->create_ret(CONST_INT(0));
 
-      builder->set_insert_point(contBB);
+      builder->set_insert_point(contBB);*/
       if (node.array_index.size() == 1) {
         // 1维数组
         auto tmp_ptr = builder->create_gep(var, {CONST_INT(0), index_val});
