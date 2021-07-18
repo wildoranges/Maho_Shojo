@@ -768,11 +768,32 @@ void MHSJbuilder::visit(SyntaxTree::Literal &node){
 }
 
 void MHSJbuilder::visit(SyntaxTree::ReturnStmt &node){
-    
+    if (node.ret==nullptr){
+        builder->create_void_ret();
+    }
+    else {
+        auto fun_ret_type = cur_fun->get_function_type()->get_return_type();
+        node.ret->accept(*this);
+        builder->create_ret(tmp_val);
+    }
 }
 
 void MHSJbuilder::visit(SyntaxTree::BlockStmt &node){
-    
+    bool need_exit_scope = !pre_enter_scope;
+    if (pre_enter_scope) {
+        pre_enter_scope = false;
+    }
+    else {
+        scope.enter();
+    }
+    for (auto& decl: node.body) {
+        decl->accept(*this);
+        if (builder->get_insert_block()->get_terminator() != nullptr)
+            break;
+    }
+    if (need_exit_scope) {
+        scope.exit();
+    }
 }
 
 void MHSJbuilder::visit(SyntaxTree::EmptyStmt &node){
@@ -780,11 +801,15 @@ void MHSJbuilder::visit(SyntaxTree::EmptyStmt &node){
 }
 
 void MHSJbuilder::visit(SyntaxTree::ExprStmt &node){
-    
+    node.exp->accept(*this);
 }
 
 void MHSJbuilder::visit(SyntaxTree::UnaryCondExpr &node){
-    
+    if (node.op == SyntaxTree::UnaryCondOp::NOT){
+        node.rhs->accept(*this);
+        auto r_val = tmp_val;
+        tmp_val = builder->create_icmp_ne(r_val, CONST_INT(0));
+    }
 }
 
 void MHSJbuilder::visit(SyntaxTree::BinaryCondExpr &node){
@@ -842,15 +867,51 @@ void MHSJbuilder::visit(SyntaxTree::BinaryCondExpr &node){
 }
 
 void MHSJbuilder::visit(SyntaxTree::BinaryExpr &node){
-    
+    if (node.rhs == nullptr){
+        node.lhs->accept(*this);
+    }
+    else{
+        node.rhs->accept(*this);
+        auto r_val = tmp_val;
+        node.lhs->accept(*thid);
+        auto l_val = tmp_val;
+        switch (node.op){
+            case SyntaxTree::BinOp::PLUS:
+                tmp_val = builder->create_iadd(l_val, r_val);
+                break;
+            case SyntaxTree::BinOp::MINUS:
+                tmp_val = builder->create_isub(l_val, r_val);
+                break;
+            case SyntaxTree::BinOp::MULTIPLY:
+                tmp_val = builder->create_imul(l_val, r_val);
+                break;
+            case SyntaxTree::BinOp::DIVIDE:
+                tmp_val = builder->create_isdiv(l_val, r_val);
+                break;
+            case SyntaxTree::BinOp::MODULO:
+                tmp_val = builder->create_isrem(l_val, r_val);
+        }
+    }
 }
 
 void MHSJbuilder::visit(SyntaxTree::UnaryExpr &node){
-    
+    node.rhs->accept(*this);
+    if (node.op == SyntaxTree::UnaryOp::MINUS){
+        auto r_val = tmp_val;
+        tmp_val = builder->create_isub(CONST_INT(0), r_val);
+    }
 }
 
 void MHSJbuilder::visit(SyntaxTree::FuncCallStmt &node){
-    
+    auto fun = static_cast<Function *>(scope.find(node.name));
+    std::vector<Value *> params;
+    auto param_type = fun->get_function_type()->param_begin();
+    for (auto &param: node.params) {
+        param->accept(*this);
+        params.push_back(tmp_val);
+        param_type++;
+    }
+    tmp_val = builder->create_call(static_cast<Function *>(fun), params);
 }
 
 void MHSJbuilder::visit(SyntaxTree::IfStmt &node){
