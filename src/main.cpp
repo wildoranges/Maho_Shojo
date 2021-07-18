@@ -6,7 +6,7 @@
 
 void print_help(std::string exe_name) {
   std::cout << "Usage: " << exe_name
-            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>]"
+            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] "
             << "<input-file>"
             << std::endl;
 }
