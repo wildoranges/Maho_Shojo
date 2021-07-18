@@ -1,7 +1,0 @@
-int a = {1,2};
-int d = 3;
-const int c = d;
-int main()
-{
-    return 0;
-}

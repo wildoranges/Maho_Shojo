@@ -1,6 +1,0 @@
-void f(){return;}
-void f(){return;}
-int main()
-{
-    return 0;
-}
