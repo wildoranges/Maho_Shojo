@@ -352,8 +352,14 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
   } else {
     node.lhs->accept(*this);
     auto l_val = tmp_val;
+    if (dynamic_cast<CmpInst*>(l_val)) {
+      l_val = builder->create_zext(l_val, INT32_T);
+    }
     node.rhs->accept(*this);
     auto r_val = tmp_val;
+    if (dynamic_cast<CmpInst*>(r_val)) {
+      r_val = builder->create_zext(r_val, INT32_T);
+    }
     Value *cmp;
     switch (node.op) {
     case SyntaxTree::BinaryCondOp::LT:
