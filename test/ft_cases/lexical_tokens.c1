@@ -1,8 +1,0 @@
-const int v = 1; // line comment test
-void main() {
-    int i = v[0];
-    i = (i + 1 - 1) * 3 / 2 % 3;
-    /* block
-    comment */
-    i = 022 + 0x1234FeDc;
-}
