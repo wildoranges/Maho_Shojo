@@ -5,7 +5,6 @@
 
 #include "MHSJBuilder.hpp"
 
-#define CONST_FP(num) ConstantFP::get((float)num, module.get())
 #define CONST_INT(num) ConstantInt::get(num, module.get())
 
 // You can define global variables here
@@ -50,7 +49,7 @@ void MHSJBuilder::visit(SyntaxTree::Assembly &node) {
   INT1_T = Type::get_int1_type(module.get());
   INT32_T = Type::get_int32_type(module.get());
   INT32PTR_T = Type::get_int32_ptr_type(module.get());
-  for (auto def : node.global_defs) {
+  for (const auto& def : node.global_defs) {
     def->accept(*this);
   }
 }
@@ -61,7 +60,7 @@ void MHSJBuilder::visit(SyntaxTree::InitVal &node) {
     initval[cur_pos] = tmp_val;
     cur_pos++;
   } else {
-    for (auto elem : node.elementList) {
+    for (const auto& elem : node.elementList) {
       if (cur_pos % array_sizes[cur_depth - 1]) {
         cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) *
                   array_sizes[cur_depth - 1];
@@ -87,7 +86,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
 
   std::vector<Type *> param_types;
   node.param_list->accept(*this);
-  for (auto param : func_fparams) {
+  for (const auto& param : func_fparams) {
     if (param.param_type == SyntaxTree::Type::INT) {
       if (param.array_index.empty()) {
         param_types.push_back(INT32_T);
@@ -132,7 +131,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
 }
 
 void MHSJBuilder::visit(SyntaxTree::FuncFParamList &node) {
-  for (auto Param : node.params) {
+  for (const auto& Param : node.params) {
     Param->accept(*this);
   }
 }
@@ -165,7 +164,7 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
       // array
       array_bounds.clear();
       array_sizes.clear();
-      for (auto bound_expr : node.array_length) {
+      for (const auto& bound_expr : node.array_length) {
         bound_expr->accept(*this);
         auto bound_const = dynamic_cast<ConstantInt *>(tmp_val);
         auto bound = bound_const->get_value();
@@ -243,7 +242,7 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
       builder->create_cond_br(is_neg, exceptBB, contBB);
       builder->set_insert_point(exceptBB);
       auto neg_idx_except_fun = scope.find("neg_idx_except");
-      builder->create_call(static_cast<Function *>(neg_idx_except_fun), {});
+      builder->create_call(static_cast<Function *>(neg_idx_except_fun), {});//FIXME:STATIC OR DYNAMIC
       if (cur_fun->get_return_type()->is_void_type())
         builder->create_void_ret();
       else
@@ -290,7 +289,7 @@ void MHSJBuilder::visit(SyntaxTree::ReturnStmt &node) {
   if (node.ret == nullptr) {
     builder->create_void_ret();
   } else {
-    auto fun_ret_type = cur_fun->get_function_type()->get_return_type();
+    //auto fun_ret_type = cur_fun->get_function_type()->get_return_type();
     node.ret->accept(*this);
     builder->create_ret(tmp_val);
   }
@@ -352,8 +351,14 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
   } else {
     node.lhs->accept(*this);
     auto l_val = tmp_val;
+    if (dynamic_cast<CmpInst*>(l_val)) {
+      l_val = builder->create_zext(l_val, INT32_T);
+    }
     node.rhs->accept(*this);
     auto r_val = tmp_val;
+    if (dynamic_cast<CmpInst*>(r_val)) {
+      r_val = builder->create_zext(r_val, INT32_T);
+    }
     Value *cmp;
     switch (node.op) {
     case SyntaxTree::BinaryCondOp::LT:
@@ -415,7 +420,7 @@ void MHSJBuilder::visit(SyntaxTree::UnaryExpr &node) {
 }
 
 void MHSJBuilder::visit(SyntaxTree::FuncCallStmt &node) {
-  auto fun = static_cast<Function *>(scope.find(node.name));
+  auto fun = static_cast<Function *>(scope.find(node.name));//FIXME:STATIC OR DYNAMIC?
   std::vector<Value *> params;
   auto param_type = fun->get_function_type()->param_begin();
   for (auto &param : node.params) {
@@ -430,6 +435,7 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
   auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
   auto contBB = BasicBlock::create(module.get(), "", cur_fun);
+  IF_While_Stack.push_back({nullptr, nullptr});
   IF_While_Stack.back().trueBB = trueBB;
   if (node.else_statement == nullptr) {
     IF_While_Stack.back().falseBB = contBB;
@@ -438,7 +444,7 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   }
   node.cond_exp->accept(*this);
   auto ret_val = tmp_val;
-  CmpInst *cond_val = dynamic_cast<CmpInst *>(ret_val);
+  auto *cond_val = dynamic_cast<CmpInst *>(ret_val);
   if (cond_val == nullptr) {
     cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
   }
@@ -489,7 +495,7 @@ void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
   builder->set_insert_point(whileBB);
   node.cond_exp->accept(*this);
   auto ret_val = tmp_val;
-  CmpInst *cond_val = dynamic_cast<CmpInst *>(ret_val);
+  auto *cond_val = dynamic_cast<CmpInst *>(ret_val);
   if (cond_val == nullptr) {
     cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
   }

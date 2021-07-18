@@ -361,7 +361,7 @@ return 语句返回的表达式指针。空指针代表void return
 
 变量名
 
-[PtrList](#ptrlist)<[Expr](#expr)> `LVal::array_inedx`
+[PtrList](#ptrlist)<[Expr](#expr)> `LVal::array_index`
 
 数组索引的指针列表。若不是数组，则为空
 

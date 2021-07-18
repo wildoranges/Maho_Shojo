@@ -87,8 +87,6 @@ struct ExprStmt;
 
 struct FuncParam;
 struct FuncFParamList;
-struct UnaryCondExpr;
-struct BinaryCondExpr;
 
 struct IfStmt;
 struct WhileStmt;
