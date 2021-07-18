@@ -42,21 +42,14 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/StaticChecker)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/MHSJBuilder)
 
 
-add_executable(MHSJ
-  #${CMAKE_CURRENT_SOURCE_DIR}/src/mir/MHSJBuilder.cpp
-  #${CMAKE_CURRENT_SOURCE_DIR}/src/MHSJDriver.cpp
+add_executable(
+  compiler
   ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
-  #${CMAKE_CURRENT_SOURCE_DIR}/src/SyntaxTree.cpp
-  #${CMAKE_CURRENT_SOURCE_DIR}/src/SyntaxTreePrinter.cpp
-  #${CMAKE_CURRENT_SOURCE_DIR}/src/SyntaxTreeChecker.cpp
-  #${CMAKE_CURRENT_SOURCE_DIR}/src/ErrorReporter.cpp
-  #${BISON_MHSJParser_OUTPUTS}
-  #${FLEX_MHSJScanner_OUTPUTS}
 )
 
 
 target_link_libraries(
-    MHSJ
+    compiler
     IRBuilder
     driver
     IR_lib
@@ -66,6 +59,6 @@ target_link_libraries(
 )
 
 install(
-  TARGETS MHSJ
+  TARGETS compiler
   RUNTIME DESTINATION bin
 )
