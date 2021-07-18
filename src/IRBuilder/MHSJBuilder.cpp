@@ -436,6 +436,7 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
   auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
   auto contBB = BasicBlock::create(module.get(), "", cur_fun);
+  IF_While_Stack.push_back({nullptr, nullptr});
   IF_While_Stack.back().trueBB = trueBB;
   if (node.else_statement == nullptr) {
     IF_While_Stack.back().falseBB = contBB;
