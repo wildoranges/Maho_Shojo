@@ -15,11 +15,13 @@ public:
     // enter a new scope
     void enter() {
         inner.push_back({});
+        inner_array_size.push_back({});
     }
 
     // exit a scope
     void exit() {
         inner.pop_back();
+        inner_array_size.pop_back();
     }
 
     bool in_global() {
@@ -47,6 +49,9 @@ public:
 
     bool push_size(std::string name, std::vector<int> size){
         auto result = inner_array_size[inner_array_size.size() - 1].insert({name,size});
+        /*for (auto size_one: size){
+            inner_array_size[inner_array_size.size() - 1][name].push_back(size_one);
+        }*/
         return result.second;
     }
 
