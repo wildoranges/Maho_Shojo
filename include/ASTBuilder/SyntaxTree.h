@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-#include "../build/location.hh"
+#include "location.hh"
 
 namespace SyntaxTree
 {

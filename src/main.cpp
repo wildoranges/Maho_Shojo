@@ -6,7 +6,7 @@
 
 void print_help(std::string exe_name) {
   std::cout << "Usage: " << exe_name
-            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-llvm ] [ -e | --emit_syntax ] [--nocheck] "
+            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -e | --emit_syntax ] [--nocheck] "
             << "<input-file>"
             << std::endl;
 }
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
             driver.trace_parsing = true;
         else if (argv[i] == std::string("-s") || argv[i] == std::string("--trace_scanning"))
             driver.trace_scanning = true;
-        else if (argv[i] == std::string("-emit-llvm"))
+        else if (argv[i] == std::string("-emit-mir"))
             print_IR = true;
         else if (argv[i] == std::string("-e") || argv[i] == std::string("--emit_syntax"))
             print = true;
@@ -44,9 +44,6 @@ int main(int argc, char *argv[])
     }
 
     auto root = driver.parse(filename);
-    if (print_IR) {
-        root->accept(print_IR);
-    }
     if (print)
         root->accept(printer);
     if(check){
@@ -56,6 +53,9 @@ int main(int argc, char *argv[])
             std::cout<<"The file has semantic errors\n";
             exit(-1);
         }
+    }
+    if (print_IR) {
+        root->accept(builder);
     }
     return 0;
 }

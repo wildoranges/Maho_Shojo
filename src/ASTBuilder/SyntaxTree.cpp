@@ -25,7 +25,7 @@ void ContinueStmt::accept(Visitor &visitor) { visitor.visit(*this); }
 void UnaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
 void BinaryCondExpr::accept(Visitor &visitor) { visitor.visit(*this); }
 void InitVal::accept(Visitor &visitor) { visitor.visit(*this); }
-
+/*
 void Stmt::accept(Visitor &visitor) {
     auto var_def = dynamic_cast<VarDef *>(this);
     if (var_def) {
@@ -116,4 +116,4 @@ void CondExpr::accept(Visitor &visitor) {
         binary_cond_expr->accept(visitor);
         return;
     }
-}
+}*/
