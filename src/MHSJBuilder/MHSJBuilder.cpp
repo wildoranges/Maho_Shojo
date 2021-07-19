@@ -260,7 +260,6 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
   require_lvalue = false;
   if (node.array_index.empty()) {
     if (should_return_lvalue) {
-      tmp_val = var;
       if (var->get_type()->get_pointer_element_type()->is_array_type()) {
         tmp_val = builder->create_gep(var, {CONST_INT(0), CONST_INT(0)});
       } else {
@@ -280,7 +279,8 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
         // 1维数组
         Value * tmp_ptr;
         if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
-          tmp_ptr = builder->create_load(var);
+          auto tmp_load = builder->create_load(var);
+          tmp_ptr = builder->create_gep(tmp_load, {index_val});
         } else {
           tmp_ptr = builder->create_gep(var, {CONST_INT(0), index_val});
         }
@@ -304,7 +304,8 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
     if (node.array_index.size() > 1) {
       Value * tmp_ptr;
       if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
-        tmp_ptr = builder->create_load(var);
+        auto tmp_load = builder->create_load(var);
+        tmp_ptr = builder->create_gep(tmp_load, {var_index});
       } else {
         tmp_ptr = builder->create_gep(var, {CONST_INT(0), var_index});
       }
