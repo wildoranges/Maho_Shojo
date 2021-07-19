@@ -17,8 +17,8 @@ def eval(EXE_PATH, TEST_BASE_PATH):
         OUTPUT_PATH = TEST_BASE_PATH + case + '.out'
         need_input = testcases[case]
 
-        result = subprocess.run(IRBuild_ptn.format(EXE_PATH, LL_PATH, SY_PATH), shell=True, stderr=subprocess.PIPE)
-        if result.returncode == 0:
+        IRBuild_result = subprocess.run(IRBuild_ptn.format(EXE_PATH, LL_PATH, SY_PATH), shell=True, stderr=subprocess.PIPE)
+        if IRBuild_result.returncode == 0:
             input_option = None
             if need_input:
                 with open(INPUT_PATH, "rb") as fin:
@@ -27,11 +27,12 @@ def eval(EXE_PATH, TEST_BASE_PATH):
             try:
                 subprocess.run(codegen_ptn.format(TEST_PATH, LL_PATH), shell=True, stderr=subprocess.PIPE)
                 result = subprocess.run(exe_ptn.format(TEST_PATH), shell=True, input=input_option, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=1)
-                out = list()
-                if result.stdout != b'':
-                    out.append(result.stdout.split(b'\n'))
+                out = result.stdout.split(b'\n')
                 if result.returncode != b'':
                     out.append(str(result.returncode).encode())
+                for i in range(len(out)-1, -1, -1):
+                    if out[i] == b'':
+                        out.remove(b'')
                 with open(OUTPUT_PATH, "rb") as fout:
                     i = 0
                     for line in fout.readlines():
@@ -41,10 +42,11 @@ def eval(EXE_PATH, TEST_BASE_PATH):
                         if out[i] == line:
                             print('\t\033[32mSuccess\033[0m')
                         else:
-                            print(out[i], line)
+                            print(result.stdout, result.returncode, out[i], line, end='')
                             print('\t\033[31mWrong Answer\033[0m')
                         i = i + 1
             except Exception as _:
+                print(_, end='')
                 print('\t\033[31mCodeGen or Execute Fail\033[0m')
             finally:
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH])
@@ -52,6 +54,7 @@ def eval(EXE_PATH, TEST_BASE_PATH):
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH + ".ll"])
 
         else:
+            print(IRBuild_result.stderr)
             print('\t\033[31mIRBuilder Fail\033[0m')
 
     print('============TEST END============')
