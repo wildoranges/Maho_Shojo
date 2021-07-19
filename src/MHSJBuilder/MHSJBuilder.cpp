@@ -261,6 +261,11 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
   if (node.array_index.empty()) {
     if (should_return_lvalue) {
       tmp_val = var;
+      if (var->get_type()->get_pointer_element_type()->is_array_type()) {
+        tmp_val = builder->create_gep(var, {CONST_INT(0), CONST_INT(0)});
+      } else {
+        tmp_val = var;
+      }
       require_lvalue = false;
     } else {
       tmp_val = builder->create_load(var);
