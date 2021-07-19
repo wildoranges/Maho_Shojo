@@ -88,6 +88,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
     ret_type = VOID_T;
 
   std::vector<Type *> param_types;
+  std::vector<SyntaxTree::FuncParam>().swap(func_fparams);
   node.param_list->accept(*this);
   for (const auto& param : func_fparams) {
     if (param.param_type == SyntaxTree::Type::INT) {
