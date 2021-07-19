@@ -86,6 +86,8 @@ class MHSJDriver;
 %type <SyntaxTree::Literal*>Number
 %type <SyntaxTree::Literal*>String
 
+%type <SyntaxTree::PtrList<SyntaxTree::Expr>>FParamFirstIndex
+%type <SyntaxTree::PtrList<SyntaxTree::Expr>>FParamIndexList
 %type <SyntaxTree::FuncParam*>FuncFParam
 %type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>FParamList
 %type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>CommaFParamList
@@ -274,7 +276,23 @@ CommaExpList:CommaExpList Exp COMMA{
   }
   ;
 
-FuncFParam:BType IDENTIFIER ArrayExpList{
+FParamFirstIndex:LBRACKET RBRACKET {
+    $$ = SyntaxTree::PtrList<SyntaxTree::Expr>();
+    $$.push_back(nullptr);
+}
+| %empty{
+    $$ = SyntaxTree::PtrList<SyntaxTree::Expr>();
+}
+;
+
+FParamIndexList:FParamFirstIndex ArrayExpList {
+    auto tmp = $1;
+    tmp.insert($1.end(),$2.begin(),$2.end());
+    $$ = tmp;
+}
+;
+
+FuncFParam:BType IDENTIFIER FParamIndexList{
   $$ = new SyntaxTree::FuncParam();
   $$->param_type = $1;
   $$->name = $2;
