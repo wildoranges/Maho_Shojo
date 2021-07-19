@@ -59,23 +59,22 @@ void MHSJBuilder::visit(SyntaxTree::InitVal &node) {
     node.expr->accept(*this);
     initval[cur_pos] = tmp_val;
     cur_pos++;
-  } else {
+  }
+  else {
     for (const auto& elem : node.elementList) {
-        if (cur_depth>0){
-            if (cur_pos % array_sizes[cur_depth - 1]) {
-                cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) *
-                          array_sizes[cur_depth - 1];
-            }
+      if (cur_depth>0){
+        if (cur_pos % array_sizes[cur_depth - 1]) {
+          cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) * array_sizes[cur_depth - 1];
         }
+      }
       cur_depth++;
       elem->accept(*this);
       cur_depth--;
-        if (cur_depth>0){
-            if (cur_pos % array_sizes[cur_depth - 1]) {
-                cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) *
-                          array_sizes[cur_depth - 1];
-            }
+      if (cur_depth>0){
+        if (cur_pos % array_sizes[cur_depth - 1]) {
+          cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) * array_sizes[cur_depth - 1];
         }
+      }
     }
   }
 }
@@ -89,6 +88,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
     ret_type = VOID_T;
 
   std::vector<Type *> param_types;
+  std::vector<SyntaxTree::FuncParam>().swap(func_fparams);
   node.param_list->accept(*this);
   for (const auto& param : func_fparams) {
     if (param.param_type == SyntaxTree::Type::INT) {
@@ -147,22 +147,29 @@ void MHSJBuilder::visit(SyntaxTree::FuncParam &node) {
 void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
   Type *var_type;
   if (node.is_constant && 0) {
-    // TODO
+    // TODO:constant
   } else {
     var_type = INT32_T;
     if (node.array_length.empty()) {
       Value *var;
       if (scope.in_global()) {
-        auto initializer = ConstantZero::get(var_type, module.get());
-        var = GlobalVariable::create(node.name, module.get(), var_type, false,
-                                     initializer);
+        if (node.is_inited) {
+          node.initializers->accept(*this);
+          auto initializer = dynamic_cast<ConstantInt *>(tmp_val);
+          var = GlobalVariable::create(node.name, module.get(), var_type, false, initializer);
+        }
+        else{
+          auto initializer = ConstantZero::get(var_type, module.get());
+          var = GlobalVariable::create(node.name, module.get(), var_type, false, initializer);
+        }
+        scope.push(node.name, var);
       } else {
         var = builder->create_alloca(var_type);
-      }
-      scope.push(node.name, var);
-      if (node.is_inited) {
-        node.initializers->accept(*this);
-        builder->create_store(tmp_val, var);
+        scope.push(node.name, var);
+        if (node.is_inited) {
+          node.initializers->accept(*this);
+          builder->create_store(tmp_val, var);
+        }
       }
     } else {
       // array
@@ -181,32 +188,50 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         total_size *= (*iter);
       }
       auto *array_type = ArrayType::get(var_type, total_size);
+
       Value *var;
       if (scope.in_global()) {
-        auto initializer = ConstantZero::get(array_type, module.get());
-        var = GlobalVariable::create(node.name, module.get(), array_type, false,
-                                     initializer);
-      } else {
-        var = builder->create_alloca(array_type);
-      }
-      scope.push(node.name, var);
-      scope.push_size(node.name, array_sizes);
-      if (node.is_inited) {
-        cur_pos = 0;
-        cur_depth = 0;
-        node.initializers->accept(*this);
-        for (int i = 0; i < array_bounds[0]; i++) {
-          if (initval[i]) {
-            builder->create_store(
-                initval[i],
-                builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
-          } else {
-            builder->create_store(
-                CONST_INT(0),
-                builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
-          }
+        if (node.is_inited ){
+          //TODO:global array initialization
+          //some thing to check:
+          //1.what's the ir like when there is initialization? ('@a = global [10 x i32] zeroinitializer' is no initialization)
+          //2.how to get  Constant *initializer with initialization
+          //necessary things:
+          //'initval' stores the index and init_value after accept, its type is map<int, Value*>
+          cur_pos = 0;
+          cur_depth = 0;
+          node.initializers->accept(*this);
+          /*
+           * get initializer
+           */
+          //var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
+          scope.push(node.name, var);
+          scope.push_size(node.name, array_sizes);
+        }
+        else {
+          auto initializer = ConstantZero::get(array_type, module.get());
+          var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
+          scope.push(node.name, var);
+          scope.push_size(node.name, array_sizes);
         }
       }
+      else {
+        var = builder->create_alloca(array_type);
+        scope.push(node.name, var);
+        scope.push_size(node.name, array_sizes);
+        if (node.is_inited) {
+          cur_pos = 0;
+          cur_depth = 0;
+          node.initializers->accept(*this);
+          for (int i = 0; i < array_bounds[0]; i++) {
+            if (initval[i]) {
+              builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
+            } else {
+              builder->create_store(CONST_INT(0), builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
+            }
+          }
+        }
+      }//if of global check
     }
   }
 }
@@ -246,7 +271,7 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
       builder->create_cond_br(is_neg, exceptBB, contBB);
       builder->set_insert_point(exceptBB);
       auto neg_idx_except_fun = scope.find("neg_idx_except");
-      builder->create_call(static_cast<Function *>(neg_idx_except_fun), {});//FIXME:STATIC OR DYNAMIC
+      builder->create_call(static_cast<Function *>(neg_idx_except_fun), {});
       if (cur_fun->get_return_type()->is_void_type())
         builder->create_void_ret();
       else
