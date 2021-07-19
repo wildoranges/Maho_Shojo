@@ -42,6 +42,7 @@ std::vector<int> array_sizes;
 int cur_pos;
 int cur_depth;
 std::map<int, Value *> initval;
+std::vector<Constant *> init_val;
 /* Global Variable */
 
 void MHSJBuilder::visit(SyntaxTree::Assembly &node) {
@@ -58,21 +59,24 @@ void MHSJBuilder::visit(SyntaxTree::InitVal &node) {
   if (node.isExp) {
     node.expr->accept(*this);
     initval[cur_pos] = tmp_val;
+    init_val.push_back(dynamic_cast<Constant *>(tmp_val));
     cur_pos++;
   }
   else {
     for (const auto& elem : node.elementList) {
       if (cur_depth>0){
-        if (cur_pos % array_sizes[cur_depth - 1]) {
-          cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) * array_sizes[cur_depth - 1];
+        if (cur_pos % array_sizes[cur_depth - 1] != 0) {
+          init_val.push_back(CONST_INT(0));
+          cur_pos++;
         }
       }
       cur_depth++;
       elem->accept(*this);
       cur_depth--;
       if (cur_depth>0){
-        if (cur_pos % array_sizes[cur_depth - 1]) {
-          cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) * array_sizes[cur_depth - 1];
+        if (cur_pos % array_sizes[cur_depth - 1] != array_sizes[cur_depth - 1] - 1) {
+          init_val.push_back(CONST_INT(0));
+          cur_pos++;
         }
       }
     }
@@ -192,19 +196,12 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
       Value *var;
       if (scope.in_global()) {
         if (node.is_inited ){
-          //TODO:global array initialization
-          //some thing to check:
-          //1.what's the ir like when there is initialization? ('@a = global [10 x i32] zeroinitializer' is no initialization)
-          //2.how to get  Constant *initializer with initialization
-          //necessary things:
-          //'initval' stores the index and init_value after accept, its type is map<int, Value*>
           cur_pos = 0;
           cur_depth = 0;
+          init_val.clear();
           node.initializers->accept(*this);
-          /*
-           * get initializer
-           */
-          //var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
+          auto initializer = ConstantArray::get(array_type, init_val);
+          var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
           scope.push(node.name, var);
           scope.push_size(node.name, array_sizes);
         }
@@ -222,6 +219,7 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         if (node.is_inited) {
           cur_pos = 0;
           cur_depth = 0;
+          initval.clear();
           node.initializers->accept(*this);
           for (int i = 0; i < array_bounds[0]; i++) {
             if (initval[i]) {
