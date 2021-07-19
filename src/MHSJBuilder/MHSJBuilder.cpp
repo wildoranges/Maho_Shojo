@@ -208,7 +208,6 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
           init_val.clear();
           node.initializers->accept(*this);
           auto initializer = ConstantArray::get(array_type, init_val);
-          std::cout<<initializer->print()<<std::endl;
           var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
           scope.push(node.name, var);
           scope.push_size(node.name, array_sizes);
