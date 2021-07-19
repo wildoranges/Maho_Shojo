@@ -42,6 +42,7 @@ std::vector<int> array_sizes;
 int cur_pos;
 int cur_depth;
 std::map<int, Value *> initval;
+std::vector<Constant *> init_val;
 /* Global Variable */
 
 void MHSJBuilder::visit(SyntaxTree::Assembly &node) {
@@ -58,22 +59,33 @@ void MHSJBuilder::visit(SyntaxTree::InitVal &node) {
   if (node.isExp) {
     node.expr->accept(*this);
     initval[cur_pos] = tmp_val;
+    init_val.push_back(dynamic_cast<Constant *>(tmp_val));
     cur_pos++;
   }
   else {
-    for (const auto& elem : node.elementList) {
-      if (cur_depth>0){
-        if (cur_pos % array_sizes[cur_depth - 1]) {
-          cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) * array_sizes[cur_depth - 1];
-        }
+    if (cur_depth!=0){
+        while (cur_pos % array_sizes[cur_depth] != 0) {
+        init_val.push_back(CONST_INT(0));
+        cur_pos++;
       }
+    }
+    for (const auto& elem : node.elementList) {
       cur_depth++;
       elem->accept(*this);
       cur_depth--;
-      if (cur_depth>0){
-        if (cur_pos % array_sizes[cur_depth - 1]) {
-          cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) * array_sizes[cur_depth - 1];
-        }
+    }
+    if (cur_depth!=0){
+      while (cur_pos % array_sizes[cur_depth] != array_sizes[cur_depth] - 1) {
+        init_val.push_back(CONST_INT(0));
+        cur_pos++;
+      }
+      init_val.push_back(CONST_INT(0));
+      cur_pos++;
+    }
+    if (cur_depth==0){
+      while (cur_pos < array_sizes[0]){
+        init_val.push_back(CONST_INT(0));
+        cur_pos++;
       }
     }
   }
@@ -187,24 +199,18 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         array_sizes.insert(array_sizes.begin(), total_size);
         total_size *= (*iter);
       }
+      array_sizes.insert(array_sizes.begin(), total_size);
       auto *array_type = ArrayType::get(var_type, total_size);
 
       Value *var;
       if (scope.in_global()) {
         if (node.is_inited ){
-          //TODO:global array initialization
-          //some thing to check:
-          //1.what's the ir like when there is initialization? ('@a = global [10 x i32] zeroinitializer' is no initialization)
-          //2.how to get  Constant *initializer with initialization
-          //necessary things:
-          //'initval' stores the index and init_value after accept, its type is map<int, Value*>
           cur_pos = 0;
           cur_depth = 0;
+          init_val.clear();
           node.initializers->accept(*this);
-          /*
-           * get initializer
-           */
-          //var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
+          auto initializer = ConstantArray::get(array_type, init_val);
+          var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
           scope.push(node.name, var);
           scope.push_size(node.name, array_sizes);
         }
@@ -222,8 +228,9 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         if (node.is_inited) {
           cur_pos = 0;
           cur_depth = 0;
+          initval.clear();
           node.initializers->accept(*this);
-          for (int i = 0; i < array_bounds[0]; i++) {
+          for (int i = 0; i < array_sizes[0]; i++) {
             if (initval[i]) {
               builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
             } else {
@@ -264,20 +271,6 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
     for (int i = 0; i < node.array_index.size(); i++) {
       node.array_index[i]->accept(*this);
       auto index_val = tmp_val;
-      /*auto exceptBB = BasicBlock::create(module.get(), "", cur_fun);
-      auto contBB = BasicBlock::create(module.get(), "", cur_fun);
-      Value *is_neg = builder->create_icmp_lt(index_val, CONST_INT(0));
-
-      builder->create_cond_br(is_neg, exceptBB, contBB);
-      builder->set_insert_point(exceptBB);
-      auto neg_idx_except_fun = scope.find("neg_idx_except");
-      builder->create_call(static_cast<Function *>(neg_idx_except_fun), {});
-      if (cur_fun->get_return_type()->is_void_type())
-        builder->create_void_ret();
-      else
-        builder->create_ret(CONST_INT(0));
-
-      builder->set_insert_point(contBB);*/
       if (node.array_index.size() == 1) {
         // 1维数组
         Value * tmp_ptr;
@@ -295,7 +288,7 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
       } else {
         //多维数组
         auto one_index =
-            builder->create_imul(CONST_INT(var_sizes[i]), index_val);
+            builder->create_imul(CONST_INT(var_sizes[i + 1]), index_val);
         if (var_index == nullptr) {
           var_index = one_index;
         } else {
