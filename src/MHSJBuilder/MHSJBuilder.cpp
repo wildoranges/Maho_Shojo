@@ -63,22 +63,24 @@ void MHSJBuilder::visit(SyntaxTree::InitVal &node) {
     cur_pos++;
   }
   else {
-    for (const auto& elem : node.elementList) {
-      if (cur_depth!=0){
-          while (cur_pos % array_sizes[cur_depth] != 0) {
-          init_val.push_back(CONST_INT(0));
-          cur_pos++;
-        }
+    if (cur_depth!=0){
+        while (cur_pos % array_sizes[cur_depth] != 0) {
+        init_val.push_back(CONST_INT(0));
+        cur_pos++;
       }
+    }
+    for (const auto& elem : node.elementList) {
       cur_depth++;
       elem->accept(*this);
       cur_depth--;
-      if (cur_depth!=0){
-        while (cur_pos % array_sizes[cur_depth] != array_sizes[cur_depth] - 1) {
-          init_val.push_back(CONST_INT(0));
-          cur_pos++;
-        }
+    }
+    if (cur_depth!=0){
+      while (cur_pos % array_sizes[cur_depth] != array_sizes[cur_depth] - 1) {
+        init_val.push_back(CONST_INT(0));
+        cur_pos++;
       }
+      init_val.push_back(CONST_INT(0));
+      cur_pos++;
     }
     if (cur_depth==0){
       while (cur_pos < array_sizes[0]){
@@ -228,7 +230,7 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
           cur_depth = 0;
           initval.clear();
           node.initializers->accept(*this);
-          for (int i = 0; i < array_bounds[0]; i++) {
+          for (int i = 0; i < array_sizes[0]; i++) {
             if (initval[i]) {
               builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
             } else {
