@@ -1,6 +1,6 @@
-#line 1 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJScanner.cpp"
+#line 1 "MHSJScanner.cpp"
 
-#line 3 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJScanner.cpp"
+#line 3 "MHSJScanner.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -386,8 +386,8 @@ int yyFlexLexer::yywrap() { return 1; }
 /* %% [3.0] code to copy yytext_ptr to yytext[] goes here, if %array \ */\
 	(yy_c_buf_p) = yy_cp;
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
-#define YY_NUM_RULES 41
-#define YY_END_OF_BUFFER 42
+#define YY_NUM_RULES 42
+#define YY_END_OF_BUFFER 43
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -395,18 +395,18 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static const flex_int16_t yy_accept[94] =
+static const flex_int16_t yy_accept[96] =
     {   0,
-        0,    0,   42,   40,   33,   34,   16,   40,   23,   40,
-       27,   28,   21,   19,   26,   20,   22,   37,   37,   25,
-       10,   24,   12,   38,   29,   30,   38,   38,   38,   38,
-       38,   38,   38,   31,   40,   32,   33,   34,   15,    0,
-       39,    0,   17,    0,    0,   37,    0,   37,   11,   14,
-       13,   38,   38,   38,   38,    8,   38,   38,   38,   38,
-       18,   39,    0,    0,    0,    0,   36,   37,   38,   38,
-       38,    1,   38,   38,   38,   35,   38,   38,   38,    9,
-       38,    3,   38,    5,    4,   38,   38,    7,   38,    2,
-       38,    6,    0
+        0,    0,   43,   41,   34,   35,   16,   41,   23,   41,
+       27,   28,   21,   19,   26,   20,   22,   38,   38,   25,
+       10,   24,   12,   39,   29,   30,   39,   39,   39,   39,
+       39,   39,   39,   31,   41,   32,   34,   35,   15,    0,
+       40,    0,   17,    0,    0,   38,    0,   38,   11,   14,
+       13,   39,    0,   33,   39,   39,   39,    8,   39,   39,
+       39,   39,   18,   40,    0,    0,    0,    0,   37,   38,
+       39,   39,   39,    1,   39,   39,   39,   36,   39,   39,
+       39,    9,   39,    3,   39,    5,    4,   39,   39,    7,
+       39,    2,   39,    6,    0
 
     } ;
 
@@ -451,90 +451,93 @@ static const YY_CHAR yy_meta[49] =
         3,    3,    3,    3,    3,    1,    1,    1
     } ;
 
-static const flex_int16_t yy_base[100] =
+static const flex_int16_t yy_base[102] =
     {   0,
-        0,    0,  136,  137,  133,  131,  113,   44,  137,  125,
-      137,  137,  137,  137,  137,  137,   40,   36,   40,  137,
-      111,  110,  109,    0,  137,  137,   88,   88,   89,   20,
-       93,   85,   89,  137,   75,  137,  119,  117,  137,   54,
-      137,   56,  137,   52,  116,   48,    0,   52,  137,  137,
-      137,    0,   86,   79,   75,    0,   73,   72,   78,   77,
-      137,   60,   61,   62,   63,  108,  137,    0,   82,   37,
-       77,    0,   65,   76,   69,  137,   69,   62,   68,    0,
-       62,    0,   69,    0,    0,   47,   46,    0,   40,    0,
-       49,    0,  137,   86,   88,   91,   94,   72,   97
+        0,    0,  140,  141,  137,  135,  117,   44,  141,  129,
+      141,  141,  141,  141,  141,  141,   40,   36,   40,  141,
+      115,  114,  113,    0,   51,  141,   92,   92,   93,   25,
+       97,   89,   93,  141,   79,  141,  123,  121,  141,   54,
+      141,   56,  141,   52,  120,   49,    0,   52,  141,  141,
+      141,    0,   69,  141,   90,   83,   79,    0,   77,   76,
+       82,   81,  141,   67,   63,   65,   71,  112,  141,    0,
+       86,   42,   81,    0,   69,   80,   58,  141,   58,   50,
+       56,    0,   50,    0,   57,    0,    0,   50,   49,    0,
+       43,    0,   44,    0,  141,   96,   98,  101,  104,   72,
 
+      107
     } ;
 
-static const flex_int16_t yy_def[100] =
+static const flex_int16_t yy_def[102] =
     {   0,
-       93,    1,   93,   93,   93,   93,   93,   94,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   95,   93,   93,   95,   95,   95,   95,
-       95,   95,   95,   93,   93,   93,   93,   93,   93,   94,
-       93,   94,   93,   96,   97,   93,   98,   93,   93,   93,
-       93,   95,   95,   95,   95,   95,   95,   95,   95,   95,
-       93,   94,   96,   99,   96,   97,   93,   98,   95,   95,
-       95,   95,   95,   95,   95,   93,   95,   95,   95,   95,
+       95,    1,   95,   95,   95,   95,   95,   96,   95,   95,
        95,   95,   95,   95,   95,   95,   95,   95,   95,   95,
-       95,   95,    0,   93,   93,   93,   93,   93,   93
+       95,   95,   95,   97,   95,   95,   97,   97,   97,   97,
+       97,   97,   97,   95,   95,   95,   95,   95,   95,   96,
+       95,   96,   95,   98,   99,   95,  100,   95,   95,   95,
+       95,   97,   95,   95,   97,   97,   97,   97,   97,   97,
+       97,   97,   95,   96,   98,  101,   98,   99,   95,  100,
+       97,   97,   97,   97,   97,   97,   97,   95,   97,   97,
+       97,   97,   97,   97,   97,   97,   97,   97,   97,   97,
+       97,   97,   97,   97,    0,   95,   95,   95,   95,   95,
 
+       95
     } ;
 
-static const flex_int16_t yy_nxt[186] =
+static const flex_int16_t yy_nxt[190] =
     {   0,
         4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
        14,   15,   16,   17,   18,   19,   19,   20,   21,   22,
        23,   24,   24,   24,   25,    4,   26,   24,   27,   28,
        24,   29,   24,   24,   30,   24,   24,   24,   24,   31,
        24,   24,   24,   32,   33,   34,   35,   36,   41,   44,
-       46,   46,   56,   45,   48,   48,   48,   57,   41,   47,
-       62,   64,   46,   46,   41,   65,   48,   48,   48,   42,
-       64,   64,   64,   68,   65,   76,   65,   78,   79,   42,
-       92,   42,   91,   90,   89,   42,   40,   40,   40,   52,
-       52,   63,   63,   63,   66,   66,   66,   65,   65,   65,
+       46,   46,   53,   45,   48,   48,   48,   58,   41,   47,
+       64,   66,   59,   46,   46,   67,   48,   48,   48,   42,
+       53,   41,   66,   70,   66,   94,   67,   54,   78,   42,
+       66,   42,   80,   81,   67,   93,   92,   91,   90,   89,
+       88,   87,   42,   86,   85,   54,   40,   40,   40,   52,
 
-       88,   87,   86,   85,   84,   83,   82,   81,   80,   77,
-       67,   75,   74,   73,   72,   71,   70,   69,   67,   38,
-       37,   61,   60,   59,   58,   55,   54,   53,   51,   50,
-       49,   43,   39,   38,   37,   93,    3,   93,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   93,   93
+       52,   65,   65,   65,   68,   68,   68,   67,   67,   67,
+       84,   83,   82,   79,   69,   77,   76,   75,   74,   73,
+       72,   71,   69,   38,   37,   63,   62,   61,   60,   57,
+       56,   55,   51,   50,   49,   43,   39,   38,   37,   95,
+        3,   95,   95,   95,   95,   95,   95,   95,   95,   95,
+       95,   95,   95,   95,   95,   95,   95,   95,   95,   95,
+       95,   95,   95,   95,   95,   95,   95,   95,   95,   95,
+       95,   95,   95,   95,   95,   95,   95,   95,   95,   95,
+       95,   95,   95,   95,   95,   95,   95,   95,   95
     } ;
 
-static const flex_int16_t yy_chk[186] =
+static const flex_int16_t yy_chk[190] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    8,   17,
-       18,   18,   30,   17,   19,   19,   19,   30,   40,   18,
-       42,   44,   46,   46,   62,   44,   48,   48,   48,    8,
-       63,   64,   65,   98,   63,   64,   65,   70,   70,   40,
-       91,   42,   89,   87,   86,   62,   94,   94,   94,   95,
-       95,   96,   96,   96,   97,   97,   97,   99,   99,   99,
+       18,   18,   25,   17,   19,   19,   19,   30,   40,   18,
+       42,   44,   30,   46,   46,   44,   48,   48,   48,    8,
+       53,   64,   65,  100,   66,   93,   65,   25,   66,   40,
+       67,   42,   72,   72,   67,   91,   89,   88,   85,   83,
+       81,   80,   64,   79,   77,   53,   96,   96,   96,   97,
 
-       83,   81,   79,   78,   77,   75,   74,   73,   71,   69,
-       66,   60,   59,   58,   57,   55,   54,   53,   45,   38,
-       37,   35,   33,   32,   31,   29,   28,   27,   23,   22,
-       21,   10,    7,    6,    5,    3,   93,   93,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   93,   93,   93,   93,   93,   93,   93,
-       93,   93,   93,   93,   93
+       97,   98,   98,   98,   99,   99,   99,  101,  101,  101,
+       76,   75,   73,   71,   68,   62,   61,   60,   59,   57,
+       56,   55,   45,   38,   37,   35,   33,   32,   31,   29,
+       28,   27,   23,   22,   21,   10,    7,    6,    5,    3,
+       95,   95,   95,   95,   95,   95,   95,   95,   95,   95,
+       95,   95,   95,   95,   95,   95,   95,   95,   95,   95,
+       95,   95,   95,   95,   95,   95,   95,   95,   95,   95,
+       95,   95,   95,   95,   95,   95,   95,   95,   95,   95,
+       95,   95,   95,   95,   95,   95,   95,   95,   95
     } ;
 
-static const flex_int16_t yy_rule_linenum[41] =
+static const flex_int16_t yy_rule_linenum[42] =
     {   0,
-       97,   98,   99,  100,  101,  102,  103,  104,  105,  107,
-      108,  109,  110,  111,  112,  113,  114,  115,  116,  117,
-      118,  119,  120,  121,  122,  123,  124,  125,  126,  127,
-      128,  129,  131,  132,  133,  136,  137,  138,  139,  141
+       98,   99,  100,  101,  102,  103,  104,  105,  106,  108,
+      109,  110,  111,  112,  113,  114,  115,  116,  117,  118,
+      119,  120,  121,  122,  123,  124,  125,  126,  127,  128,
+      129,  130,  133,  134,  135,  136,  139,  140,  141,  142,
+      144
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -544,8 +547,8 @@ static const flex_int16_t yy_rule_linenum[41] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
-#line 2 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 1 "../grammar/MHSJScanner.ll"
+#line 2 "../grammar/MHSJScanner.ll"
 # include <cerrno>
 # include <climits>
 # include <cstdlib>
@@ -555,8 +558,8 @@ static const flex_int16_t yy_rule_linenum[41] =
 # include <iostream>
 # include "MHSJDriver.h"
 # include "MHSJParser.h"
-#line 558 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJScanner.cpp"
-#line 14 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 561 "MHSJScanner.cpp"
+#line 14 "../grammar/MHSJScanner.ll"
 #if defined __clang__
 # define CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
 #endif
@@ -617,16 +620,16 @@ static const flex_int16_t yy_rule_linenum[41] =
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 # endif
 #endif
-#line 620 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJScanner.cpp"
+#line 623 "MHSJScanner.cpp"
 #define YY_NO_INPUT 1
-#line 79 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 79 "../grammar/MHSJScanner.ll"
  /**/
   // Code run each time a pattern is matched.
   # define YY_USER_ACTION  loc.columns(yyleng);
-#line 626 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJScanner.cpp"
-#line 85 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 629 "MHSJScanner.cpp"
+#line 85 "../grammar/MHSJScanner.ll"
  /* Regex abbreviations: */
-#line 629 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJScanner.cpp"
+#line 632 "MHSJScanner.cpp"
 
 #define INITIAL 0
 
@@ -818,10 +821,10 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 95 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 96 "../grammar/MHSJScanner.ll"
 
  /* keyword */
-#line 824 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJScanner.cpp"
+#line 827 "MHSJScanner.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -850,13 +853,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 94 )
+				if ( yy_current_state >= 96 )
 					yy_c = yy_meta[yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 93 );
+		while ( yy_current_state != 95 );
 		yy_cp = (yy_last_accepting_cpos);
 		yy_current_state = (yy_last_accepting_state);
 
@@ -875,12 +878,12 @@ do_action:	/* This label is used only to access EOF actions. */
 			{
 			if ( yy_act == 0 )
 				std::cerr << "--scanner backing up\n";
-			else if ( yy_act < 41 )
+			else if ( yy_act < 42 )
 				std::cerr << "--accepting rule at line " << yy_rule_linenum[yy_act] <<
 				         "(\"" << yytext << "\")\n";
-			else if ( yy_act == 41 )
-				std::cerr << "--accepting default rule (\"" << yytext << "\")\n";
 			else if ( yy_act == 42 )
+				std::cerr << "--accepting default rule (\"" << yytext << "\")\n";
+			else if ( yy_act == 43 )
 				std::cerr << "--(end of buffer or a NUL)\n";
 			else
 				std::cerr << "--EOF (start condition " << YY_START << ")\n";
@@ -898,222 +901,227 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 97 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 98 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_INT(loc);}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 98 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 99 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_RETURN(loc);}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 99 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 100 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_VOID(loc);}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 100 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 101 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_CONST(loc);}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 101 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 102 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_BREAK(loc);}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 102 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 103 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_CONTINUE(loc);}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 103 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 104 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_WHILE(loc);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 104 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 105 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_IF(loc);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 105 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 106 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_ELSE(loc);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 107 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 108 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LT(loc);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 108 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 109 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LTE(loc);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 109 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 110 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_GT(loc);}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 110 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 111 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_GTE(loc);}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 111 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 112 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_EQ(loc);}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 112 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 113 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_NEQ(loc);}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 113 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 114 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_NOT(loc);}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 114 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 115 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LOGICAND(loc);}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 115 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 116 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LOGICOR(loc);}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 116 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 117 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_PLUS(loc);}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 117 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 118 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_MINUS(loc);}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 118 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 119 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_MULTIPLY(loc);}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 119 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 120 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_DIVIDE(loc);}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 120 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 121 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_MODULO(loc);}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 121 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 122 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_ASSIGN(loc);}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 122 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 123 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_SEMICOLON(loc);}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 123 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 124 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_COMMA(loc);}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 124 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 125 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LPARENTHESE(loc);}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 125 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 126 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_RPARENTHESE(loc);}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 126 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 127 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LBRACKET(loc);} 
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 127 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 128 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_RBRACKET(loc);}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 128 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 129 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LBRACE(loc);}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 129 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 130 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_RBRACE(loc);}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 131 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
-{loc.step();}
+#line 133 "../grammar/MHSJScanner.ll"
+{return yy::MHSJParser::make_LRBRACKET(loc);}
 	YY_BREAK
 case 34:
-/* rule 34 can match eol */
 YY_RULE_SETUP
-#line 132 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
-{loc.lines(yyleng); loc.step();}
+#line 134 "../grammar/MHSJScanner.ll"
+{loc.step();}
 	YY_BREAK
 case 35:
 /* rule 35 can match eol */
 YY_RULE_SETUP
-#line 133 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 135 "../grammar/MHSJScanner.ll"
+{loc.lines(yyleng); loc.step();}
+	YY_BREAK
+case 36:
+/* rule 36 can match eol */
+YY_RULE_SETUP
+#line 136 "../grammar/MHSJScanner.ll"
 {std::string s = yytext;
                           size_t n = std::count(s.begin(), s.end(), '\n');
                           for (size_t i = 0; i < n; i++) loc.lines(1);}
 	YY_BREAK
-case 36:
+case 37:
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 136 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 139 "../grammar/MHSJScanner.ll"
 /* ignore */
-	YY_BREAK
-case 37:
-YY_RULE_SETUP
-#line 137 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
-{return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 138 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
-{return yy::MHSJParser::make_IDENTIFIER(yytext, loc);}
+#line 140 "../grammar/MHSJScanner.ll"
+{return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);}
 	YY_BREAK
 case 39:
-/* rule 39 can match eol */
 YY_RULE_SETUP
-#line 139 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 141 "../grammar/MHSJScanner.ll"
+{return yy::MHSJParser::make_IDENTIFIER(yytext, loc);}
+	YY_BREAK
+case 40:
+/* rule 40 can match eol */
+YY_RULE_SETUP
+#line 142 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_STRINGCONST(yytext,loc);}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 140 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 143 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_END(loc);}
-	YY_BREAK
-case 40:
-YY_RULE_SETUP
-#line 141 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
-{std::cout << "Error in scanner!" << '\n'; exit(1);}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 142 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 144 "../grammar/MHSJScanner.ll"
+{std::cout << "Error in scanner!" << '\n'; exit(1);}
+	YY_BREAK
+case 42:
+YY_RULE_SETUP
+#line 145 "../grammar/MHSJScanner.ll"
 ECHO;
 	YY_BREAK
-#line 1116 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJScanner.cpp"
+#line 1124 "MHSJScanner.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1551,7 +1559,7 @@ int yyFlexLexer::yy_get_next_buffer()
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 94 )
+			if ( yy_current_state >= 96 )
 				yy_c = yy_meta[yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
@@ -1584,11 +1592,11 @@ int yyFlexLexer::yy_get_next_buffer()
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 94 )
+		if ( yy_current_state >= 96 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	yy_is_jam = (yy_current_state == 93);
+	yy_is_jam = (yy_current_state == 95);
 
 		return yy_is_jam ? 0 : yy_current_state;
 }
@@ -2230,7 +2238,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 142 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJScanner.ll"
+#line 145 "../grammar/MHSJScanner.ll"
 
 
 int yyFlexLexer::yylex() {

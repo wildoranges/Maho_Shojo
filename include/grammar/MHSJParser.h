@@ -435,8 +435,6 @@ namespace yy {
       // ArrayExpList
       // ExpList
       // CommaExpList
-      // FParamFirstIndex
-      // FParamIndexList
       char dummy9[sizeof (SyntaxTree::PtrList<SyntaxTree::Expr>)];
 
       // FParamList
@@ -526,8 +524,8 @@ namespace yy {
         TOK_YYEMPTY = -2,
     TOK_YYEOF = 0,                 // "end of file"
     TOK_YYerror = 256,             // error
-    TOK_YYUNDEF = 303,             // "invalid token"
-    TOK_END = 304,                 // END
+    TOK_YYUNDEF = 304,             // "invalid token"
+    TOK_END = 305,                 // END
     TOK_ERROR = 258,               // ERROR
     TOK_PLUS = 259,                // PLUS
     TOK_MINUS = 260,               // MINUS
@@ -573,9 +571,10 @@ namespace yy {
     TOK_LOGICOR = 300,             // LOGICOR
     TOK_LT = 301,                  // LT
     TOK_STRINGCONST = 302,         // STRINGCONST
-    TOK_UPLUS = 305,               // UPLUS
-    TOK_UMINUS = 306,              // UMINUS
-    TOK_UNOT = 307                 // UNOT
+    TOK_LRBRACKET = 303,           // LRBRACKET
+    TOK_UPLUS = 306,               // UPLUS
+    TOK_UMINUS = 307,              // UMINUS
+    TOK_UNOT = 308                 // UNOT
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -592,7 +591,7 @@ namespace yy {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 52, ///< Number of tokens.
+        YYNTOKENS = 53, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -643,47 +642,46 @@ namespace yy {
         S_LOGICOR = 46,                          // LOGICOR
         S_LT = 47,                               // LT
         S_STRINGCONST = 48,                      // STRINGCONST
-        S_UPLUS = 49,                            // UPLUS
-        S_UMINUS = 50,                           // UMINUS
-        S_UNOT = 51,                             // UNOT
-        S_YYACCEPT = 52,                         // $accept
-        S_Begin = 53,                            // Begin
-        S_CompUnit = 54,                         // CompUnit
-        S_GlobalDecl = 55,                       // GlobalDecl
-        S_ConstDecl = 56,                        // ConstDecl
-        S_ConstDefList = 57,                     // ConstDefList
-        S_BType = 58,                            // BType
-        S_ConstDef = 59,                         // ConstDef
-        S_VarDecl = 60,                          // VarDecl
-        S_VarDefList = 61,                       // VarDefList
-        S_VarDef = 62,                           // VarDef
-        S_ArrayExpList = 63,                     // ArrayExpList
-        S_InitVal = 64,                          // InitVal
-        S_InitValList = 65,                      // InitValList
-        S_CommaInitValList = 66,                 // CommaInitValList
-        S_ExpList = 67,                          // ExpList
-        S_CommaExpList = 68,                     // CommaExpList
-        S_FParamFirstIndex = 69,                 // FParamFirstIndex
-        S_FParamIndexList = 70,                  // FParamIndexList
-        S_FuncFParam = 71,                       // FuncFParam
-        S_FParamList = 72,                       // FParamList
-        S_CommaFParamList = 73,                  // CommaFParamList
-        S_FuncDef = 74,                          // FuncDef
-        S_Block = 75,                            // Block
-        S_BlockItemList = 76,                    // BlockItemList
-        S_BlockItem = 77,                        // BlockItem
-        S_Stmt = 78,                             // Stmt
-        S_IfStmt = 79,                           // IfStmt
-        S_OptionRet = 80,                        // OptionRet
-        S_LVal = 81,                             // LVal
-        S_Exp = 82,                              // Exp
-        S_RelExp = 83,                           // RelExp
-        S_EqExp = 84,                            // EqExp
-        S_LAndExp = 85,                          // LAndExp
-        S_LOrExp = 86,                           // LOrExp
-        S_CondExp = 87,                          // CondExp
-        S_Number = 88,                           // Number
-        S_String = 89                            // String
+        S_LRBRACKET = 49,                        // LRBRACKET
+        S_UPLUS = 50,                            // UPLUS
+        S_UMINUS = 51,                           // UMINUS
+        S_UNOT = 52,                             // UNOT
+        S_YYACCEPT = 53,                         // $accept
+        S_Begin = 54,                            // Begin
+        S_CompUnit = 55,                         // CompUnit
+        S_GlobalDecl = 56,                       // GlobalDecl
+        S_ConstDecl = 57,                        // ConstDecl
+        S_ConstDefList = 58,                     // ConstDefList
+        S_BType = 59,                            // BType
+        S_ConstDef = 60,                         // ConstDef
+        S_VarDecl = 61,                          // VarDecl
+        S_VarDefList = 62,                       // VarDefList
+        S_VarDef = 63,                           // VarDef
+        S_ArrayExpList = 64,                     // ArrayExpList
+        S_InitVal = 65,                          // InitVal
+        S_InitValList = 66,                      // InitValList
+        S_CommaInitValList = 67,                 // CommaInitValList
+        S_ExpList = 68,                          // ExpList
+        S_CommaExpList = 69,                     // CommaExpList
+        S_FuncFParam = 70,                       // FuncFParam
+        S_FParamList = 71,                       // FParamList
+        S_CommaFParamList = 72,                  // CommaFParamList
+        S_FuncDef = 73,                          // FuncDef
+        S_Block = 74,                            // Block
+        S_BlockItemList = 75,                    // BlockItemList
+        S_BlockItem = 76,                        // BlockItem
+        S_Stmt = 77,                             // Stmt
+        S_IfStmt = 78,                           // IfStmt
+        S_OptionRet = 79,                        // OptionRet
+        S_LVal = 80,                             // LVal
+        S_Exp = 81,                              // Exp
+        S_RelExp = 82,                           // RelExp
+        S_EqExp = 83,                            // EqExp
+        S_LAndExp = 84,                          // LAndExp
+        S_LOrExp = 85,                           // LOrExp
+        S_CondExp = 86,                          // CondExp
+        S_Number = 87,                           // Number
+        S_String = 88                            // String
       };
     };
 
@@ -764,8 +762,6 @@ namespace yy {
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.move< SyntaxTree::PtrList<SyntaxTree::Expr> > (std::move (that.value));
         break;
 
@@ -1172,8 +1168,6 @@ switch (yykind)
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.template destroy< SyntaxTree::PtrList<SyntaxTree::Expr> > ();
         break;
 
@@ -1324,6 +1318,7 @@ switch (yykind)
                    || (token::TOK_YYUNDEF <= tok && tok <= token::TOK_END)
                    || (token::TOK_ERROR <= tok && tok <= token::TOK_WHILE)
                    || (token::TOK_LETTER <= tok && tok <= token::TOK_LT)
+                   || tok == token::TOK_LRBRACKET
                    || (token::TOK_UPLUS <= tok && tok <= token::TOK_UNOT));
       }
 #if 201103L <= YY_CPLUSPLUS
@@ -2143,6 +2138,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_LRBRACKET (location_type l)
+      {
+        return symbol_type (token::TOK_LRBRACKET, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_LRBRACKET (const location_type& l)
+      {
+        return symbol_type (token::TOK_LRBRACKET, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_UPLUS (location_type l)
       {
         return symbol_type (token::TOK_UPLUS, std::move (l));
@@ -2516,7 +2526,7 @@ switch (yykind)
     enum
     {
       yylast_ = 190,     ///< Last index in yytable_.
-      yynnts_ = 38,  ///< Number of nonterminal symbols.
+      yynnts_ = 36,  ///< Number of nonterminal symbols.
       yyfinal_ = 13 ///< Termination state number.
     };
 
@@ -2566,10 +2576,10 @@ switch (yykind)
       16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
       26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
       36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
-      46,    47,    48,     2,     3,    49,    50,    51
+      46,    47,    48,    49,     2,     3,    50,    51,    52
     };
     // Last valid token kind.
-    const int code_max = 307;
+    const int code_max = 308;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2632,8 +2642,6 @@ switch (yykind)
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.copy< SyntaxTree::PtrList<SyntaxTree::Expr> > (YY_MOVE (that.value));
         break;
 
@@ -2758,8 +2766,6 @@ switch (yykind)
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.move< SyntaxTree::PtrList<SyntaxTree::Expr> > (YY_MOVE (s.value));
         break;
 
@@ -2873,7 +2879,7 @@ switch (yykind)
   }
 
 } // yy
-#line 2877 "MHSJParser.h"
+#line 2883 "MHSJParser.h"
 
 
 
