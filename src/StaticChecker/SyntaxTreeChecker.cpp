@@ -167,7 +167,7 @@ void SyntaxTreeChecker::visit(LVal &node)
                 if(Fparam->get()->name==node.name){
                     LvalConst = false;
                     LvalType = Fparam->get()->param_type;
-                    if(Fparam->get()->array_index.size()!=node.array_index.size())
+                    /*if(Fparam->get()->array_index.size()!=node.array_index.size())
                     {
                         ExprType = LvalType;
                         isConst = false;
@@ -175,7 +175,7 @@ void SyntaxTreeChecker::visit(LVal &node)
                         isCond = false;
                         err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" imcompatible index");
                         exit(-1);
-                    }
+                    }*/
                     for(const auto& exp:node.array_index)
                     {
                         exp->accept(*this);
@@ -211,7 +211,7 @@ void SyntaxTreeChecker::visit(LVal &node)
         LvalConst = Valptr->var_def->is_constant;
         LvalType = Valptr->var_def->btype;
         Valptr->isused = true;
-        if(Valptr->var_def->array_length.size()!=node.array_index.size())
+        /*if(Valptr->var_def->array_length.size()!=node.array_index.size())
         {
             ExprType = LvalType;
             isConst = false;
@@ -219,7 +219,7 @@ void SyntaxTreeChecker::visit(LVal &node)
             isCond = false;
             err.error(node.loc,"ArrayIndexErr,err_code : "+err_code["ArrayIndexErr"]+" imcompatible index");
             exit(-1);
-        }
+        }*/
         for(const auto& exp:node.array_index)
         {
             exp->accept(*this);
