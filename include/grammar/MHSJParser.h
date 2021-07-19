@@ -32,7 +32,7 @@
 
 
 /**
- ** \file /home/cjb/compile_contest/Maho_Shojo/build/MHSJParser.h
+ ** \file MHSJParser.h
  ** Define the yy::parser class.
  */
 
@@ -42,16 +42,16 @@
 // especially those whose name start with YY_ or yy_.  They are
 // private implementation details that can be changed or removed.
 
-#ifndef YY_YY_HOME_CJB_COMPILE_CONTEST_MAHO_SHOJO_BUILD_MHSJPARSER_H_INCLUDED
-# define YY_YY_HOME_CJB_COMPILE_CONTEST_MAHO_SHOJO_BUILD_MHSJPARSER_H_INCLUDED
+#ifndef YY_YY_MHSJPARSER_H_INCLUDED
+# define YY_YY_MHSJPARSER_H_INCLUDED
 // "%code requires" blocks.
-#line 12 "/home/cjb/compile_contest/Maho_Shojo/grammar/MHSJParser.yy"
+#line 12 "../grammar/MHSJParser.yy"
 
 #include <string>
 #include "SyntaxTree.h"
 class MHSJDriver;
 
-#line 55 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJParser.h"
+#line 55 "MHSJParser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -185,7 +185,7 @@ class MHSJDriver;
 #endif
 
 namespace yy {
-#line 189 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJParser.h"
+#line 189 "MHSJParser.h"
 
 
 
@@ -435,6 +435,8 @@ namespace yy {
       // ArrayExpList
       // ExpList
       // CommaExpList
+      // FParamFirstIndex
+      // FParamIndexList
       char dummy9[sizeof (SyntaxTree::PtrList<SyntaxTree::Expr>)];
 
       // FParamList
@@ -661,25 +663,27 @@ namespace yy {
         S_CommaInitValList = 66,                 // CommaInitValList
         S_ExpList = 67,                          // ExpList
         S_CommaExpList = 68,                     // CommaExpList
-        S_FuncFParam = 69,                       // FuncFParam
-        S_FParamList = 70,                       // FParamList
-        S_CommaFParamList = 71,                  // CommaFParamList
-        S_FuncDef = 72,                          // FuncDef
-        S_Block = 73,                            // Block
-        S_BlockItemList = 74,                    // BlockItemList
-        S_BlockItem = 75,                        // BlockItem
-        S_Stmt = 76,                             // Stmt
-        S_IfStmt = 77,                           // IfStmt
-        S_OptionRet = 78,                        // OptionRet
-        S_LVal = 79,                             // LVal
-        S_Exp = 80,                              // Exp
-        S_RelExp = 81,                           // RelExp
-        S_EqExp = 82,                            // EqExp
-        S_LAndExp = 83,                          // LAndExp
-        S_LOrExp = 84,                           // LOrExp
-        S_CondExp = 85,                          // CondExp
-        S_Number = 86,                           // Number
-        S_String = 87                            // String
+        S_FParamFirstIndex = 69,                 // FParamFirstIndex
+        S_FParamIndexList = 70,                  // FParamIndexList
+        S_FuncFParam = 71,                       // FuncFParam
+        S_FParamList = 72,                       // FParamList
+        S_CommaFParamList = 73,                  // CommaFParamList
+        S_FuncDef = 74,                          // FuncDef
+        S_Block = 75,                            // Block
+        S_BlockItemList = 76,                    // BlockItemList
+        S_BlockItem = 77,                        // BlockItem
+        S_Stmt = 78,                             // Stmt
+        S_IfStmt = 79,                           // IfStmt
+        S_OptionRet = 80,                        // OptionRet
+        S_LVal = 81,                             // LVal
+        S_Exp = 82,                              // Exp
+        S_RelExp = 83,                           // RelExp
+        S_EqExp = 84,                            // EqExp
+        S_LAndExp = 85,                          // LAndExp
+        S_LOrExp = 86,                           // LOrExp
+        S_CondExp = 87,                          // CondExp
+        S_Number = 88,                           // Number
+        S_String = 89                            // String
       };
     };
 
@@ -760,6 +764,8 @@ namespace yy {
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
+      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
+      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.move< SyntaxTree::PtrList<SyntaxTree::Expr> > (std::move (that.value));
         break;
 
@@ -1166,6 +1172,8 @@ switch (yykind)
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
+      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
+      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.template destroy< SyntaxTree::PtrList<SyntaxTree::Expr> > ();
         break;
 
@@ -2229,7 +2237,7 @@ switch (yykind)
     /// \param yyvalue   the value to check
     static bool yy_table_value_is_error_ (int yyvalue);
 
-    static const signed char yypact_ninf_;
+    static const short yypact_ninf_;
     static const signed char yytable_ninf_;
 
     /// Convert a scanner token kind \a t to a symbol kind.
@@ -2507,8 +2515,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 188,     ///< Last index in yytable_.
-      yynnts_ = 36,  ///< Number of nonterminal symbols.
+      yylast_ = 190,     ///< Last index in yytable_.
+      yynnts_ = 38,  ///< Number of nonterminal symbols.
       yyfinal_ = 13 ///< Termination state number.
     };
 
@@ -2624,6 +2632,8 @@ switch (yykind)
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
+      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
+      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.copy< SyntaxTree::PtrList<SyntaxTree::Expr> > (YY_MOVE (that.value));
         break;
 
@@ -2748,6 +2758,8 @@ switch (yykind)
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
+      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
+      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.move< SyntaxTree::PtrList<SyntaxTree::Expr> > (YY_MOVE (s.value));
         break;
 
@@ -2861,9 +2873,9 @@ switch (yykind)
   }
 
 } // yy
-#line 2865 "/home/cjb/compile_contest/Maho_Shojo/build/MHSJParser.h"
+#line 2877 "MHSJParser.h"
 
 
 
 
-#endif // !YY_YY_HOME_CJB_COMPILE_CONTEST_MAHO_SHOJO_BUILD_MHSJPARSER_H_INCLUDED
+#endif // !YY_YY_MHSJPARSER_H_INCLUDED
