@@ -90,6 +90,7 @@ IntConst            (("0"[0-7]*)|([1-9][0-9]*)|("0"[xX][0-9a-fA-F]+))
 Blank               [ \t\r]
 NewLine             [\n]
 STRING              \"([^\"]*(\\\")?)*\"
+LRBRACKET          \[[ \t\r]*\]
 
 %%
  /* keyword */
@@ -127,6 +128,8 @@ else        {return yy::MHSJParser::make_ELSE(loc);}
 [{] 		{return yy::MHSJParser::make_LBRACE(loc);}
 [}] 		{return yy::MHSJParser::make_RBRACE(loc);}
 
+
+{LRBRACKET}               {return yy::MHSJParser::make_LRBRACKET(loc);}
 {Blank}+                  {loc.step();}
 {NewLine}+                {loc.lines(yyleng); loc.step();}
 {MultilineComment}				{std::string s = yytext;

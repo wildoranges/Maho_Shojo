@@ -251,8 +251,6 @@ namespace yy {
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.YY_MOVE_OR_COPY< SyntaxTree::PtrList<SyntaxTree::Expr> > (YY_MOVE (that.value));
         break;
 
@@ -363,8 +361,6 @@ namespace yy {
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.move< SyntaxTree::PtrList<SyntaxTree::Expr> > (YY_MOVE (that.value));
         break;
 
@@ -475,8 +471,6 @@ namespace yy {
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.copy< SyntaxTree::PtrList<SyntaxTree::Expr> > (that.value);
         break;
 
@@ -586,8 +580,6 @@ namespace yy {
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         value.move< SyntaxTree::PtrList<SyntaxTree::Expr> > (that.value);
         break;
 
@@ -793,7 +785,7 @@ namespace yy {
 yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
 }
 
-#line 797 "MHSJParser.cpp"
+#line 789 "MHSJParser.cpp"
 
 
     /* Initialize the stack.  The initial state will be set in
@@ -952,8 +944,6 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
       case symbol_kind::S_ArrayExpList: // ArrayExpList
       case symbol_kind::S_ExpList: // ExpList
       case symbol_kind::S_CommaExpList: // CommaExpList
-      case symbol_kind::S_FParamFirstIndex: // FParamFirstIndex
-      case symbol_kind::S_FParamIndexList: // FParamIndexList
         yylhs.value.emplace< SyntaxTree::PtrList<SyntaxTree::Expr> > ();
         break;
 
@@ -1032,7 +1022,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     driver.root = yystack_[1].value.as < SyntaxTree::Assembly* > ();
     return 0;
   }
-#line 1036 "MHSJParser.cpp"
+#line 1026 "MHSJParser.cpp"
     break;
 
   case 3: // CompUnit: CompUnit GlobalDecl
@@ -1041,7 +1031,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
 		yystack_[1].value.as < SyntaxTree::Assembly* > ()->global_defs.insert(yystack_[1].value.as < SyntaxTree::Assembly* > ()->global_defs.end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().end());
 		yylhs.value.as < SyntaxTree::Assembly* > ()=yystack_[1].value.as < SyntaxTree::Assembly* > ();
 	}
-#line 1045 "MHSJParser.cpp"
+#line 1035 "MHSJParser.cpp"
     break;
 
   case 4: // CompUnit: GlobalDecl
@@ -1050,7 +1040,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
 		yylhs.value.as < SyntaxTree::Assembly* > ()=new SyntaxTree::Assembly();
 		yylhs.value.as < SyntaxTree::Assembly* > ()->global_defs.insert(yylhs.value.as < SyntaxTree::Assembly* > ()->global_defs.end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().end());
   }
-#line 1054 "MHSJParser.cpp"
+#line 1044 "MHSJParser.cpp"
     break;
 
   case 5: // GlobalDecl: ConstDecl
@@ -1059,7 +1049,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ()=SyntaxTree::PtrList<SyntaxTree::GlobalDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().insert(yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().end());
   }
-#line 1063 "MHSJParser.cpp"
+#line 1053 "MHSJParser.cpp"
     break;
 
   case 6: // GlobalDecl: VarDecl
@@ -1068,7 +1058,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ()=SyntaxTree::PtrList<SyntaxTree::GlobalDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().insert(yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().end());
   }
-#line 1072 "MHSJParser.cpp"
+#line 1062 "MHSJParser.cpp"
     break;
 
   case 7: // GlobalDecl: FuncDef
@@ -1077,7 +1067,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ()=SyntaxTree::PtrList<SyntaxTree::GlobalDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::GlobalDef>(yystack_[0].value.as < SyntaxTree::FuncDef* > ()));
   }
-#line 1081 "MHSJParser.cpp"
+#line 1071 "MHSJParser.cpp"
     break;
 
   case 8: // ConstDecl: CONST BType ConstDefList SEMICOLON
@@ -1088,7 +1078,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
       node->btype = yystack_[2].value.as < SyntaxTree::Type > ();
     }
   }
-#line 1092 "MHSJParser.cpp"
+#line 1082 "MHSJParser.cpp"
     break;
 
   case 9: // ConstDefList: ConstDefList COMMA ConstDef
@@ -1097,7 +1087,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>(yystack_[0].value.as < SyntaxTree::VarDef* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ();
   }
-#line 1101 "MHSJParser.cpp"
+#line 1091 "MHSJParser.cpp"
     break;
 
   case 10: // ConstDefList: ConstDef
@@ -1106,7 +1096,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=SyntaxTree::PtrList<SyntaxTree::VarDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>(yystack_[0].value.as < SyntaxTree::VarDef* > ()));
   }
-#line 1110 "MHSJParser.cpp"
+#line 1100 "MHSJParser.cpp"
     break;
 
   case 11: // BType: INT
@@ -1114,7 +1104,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
          {
   yylhs.value.as < SyntaxTree::Type > ()=SyntaxTree::Type::INT;
 }
-#line 1118 "MHSJParser.cpp"
+#line 1108 "MHSJParser.cpp"
     break;
 
   case 12: // ConstDef: IDENTIFIER ArrayExpList ASSIGN InitVal
@@ -1128,7 +1118,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::VarDef* > ()->initializers = SyntaxTree::Ptr<SyntaxTree::InitVal>(yystack_[0].value.as < SyntaxTree::InitVal* > ());
     yylhs.value.as < SyntaxTree::VarDef* > ()->loc = yylhs.location;
   }
-#line 1132 "MHSJParser.cpp"
+#line 1122 "MHSJParser.cpp"
     break;
 
   case 13: // VarDecl: BType VarDefList SEMICOLON
@@ -1139,7 +1129,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
       node->btype = yystack_[2].value.as < SyntaxTree::Type > ();
     }
   }
-#line 1143 "MHSJParser.cpp"
+#line 1133 "MHSJParser.cpp"
     break;
 
   case 14: // VarDefList: VarDefList COMMA VarDef
@@ -1148,7 +1138,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>(yystack_[0].value.as < SyntaxTree::VarDef* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ();
   }
-#line 1152 "MHSJParser.cpp"
+#line 1142 "MHSJParser.cpp"
     break;
 
   case 15: // VarDefList: VarDef
@@ -1157,7 +1147,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=SyntaxTree::PtrList<SyntaxTree::VarDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>(yystack_[0].value.as < SyntaxTree::VarDef* > ()));
   }
-#line 1161 "MHSJParser.cpp"
+#line 1151 "MHSJParser.cpp"
     break;
 
   case 16: // VarDef: IDENTIFIER ArrayExpList
@@ -1169,7 +1159,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::VarDef* > ()->is_inited = false;
     yylhs.value.as < SyntaxTree::VarDef* > ()->loc = yylhs.location;
   }
-#line 1173 "MHSJParser.cpp"
+#line 1163 "MHSJParser.cpp"
     break;
 
   case 17: // VarDef: IDENTIFIER ArrayExpList ASSIGN InitVal
@@ -1182,7 +1172,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::VarDef* > ()->is_inited = true;
     yylhs.value.as < SyntaxTree::VarDef* > ()->loc = yylhs.location;
   }
-#line 1186 "MHSJParser.cpp"
+#line 1176 "MHSJParser.cpp"
     break;
 
   case 18: // ArrayExpList: ArrayExpList LBRACKET Exp RBRACKET
@@ -1191,7 +1181,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yystack_[3].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().push_back(SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[1].value.as < SyntaxTree::Expr* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ()=yystack_[3].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
   }
-#line 1195 "MHSJParser.cpp"
+#line 1185 "MHSJParser.cpp"
     break;
 
   case 19: // ArrayExpList: %empty
@@ -1199,7 +1189,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
                 {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ()=SyntaxTree::PtrList<SyntaxTree::Expr>();
   }
-#line 1203 "MHSJParser.cpp"
+#line 1193 "MHSJParser.cpp"
     break;
 
   case 20: // InitVal: Exp
@@ -1213,7 +1203,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::InitVal* > ()->expr = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[0].value.as < SyntaxTree::Expr* > ());
     yylhs.value.as < SyntaxTree::InitVal* > ()->loc = yylhs.location;
   }
-#line 1217 "MHSJParser.cpp"
+#line 1207 "MHSJParser.cpp"
     break;
 
   case 21: // InitVal: LBRACE InitValList RBRACE
@@ -1221,7 +1211,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
                              {
     yylhs.value.as < SyntaxTree::InitVal* > () = yystack_[1].value.as < SyntaxTree::InitVal* > ();
   }
-#line 1225 "MHSJParser.cpp"
+#line 1215 "MHSJParser.cpp"
     break;
 
   case 22: // InitValList: CommaInitValList InitVal
@@ -1230,7 +1220,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yystack_[1].value.as < SyntaxTree::InitVal* > ()->elementList.push_back(SyntaxTree::Ptr<SyntaxTree::InitVal>(yystack_[0].value.as < SyntaxTree::InitVal* > ()));
     yylhs.value.as < SyntaxTree::InitVal* > () = yystack_[1].value.as < SyntaxTree::InitVal* > ();
   }
-#line 1234 "MHSJParser.cpp"
+#line 1224 "MHSJParser.cpp"
     break;
 
   case 23: // InitValList: %empty
@@ -1243,7 +1233,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::InitVal* > ()->expr = nullptr;
     yylhs.value.as < SyntaxTree::InitVal* > ()->loc = yylhs.location;
   }
-#line 1247 "MHSJParser.cpp"
+#line 1237 "MHSJParser.cpp"
     break;
 
   case 24: // CommaInitValList: CommaInitValList InitVal COMMA
@@ -1252,7 +1242,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yystack_[2].value.as < SyntaxTree::InitVal* > ()->elementList.push_back(SyntaxTree::Ptr<SyntaxTree::InitVal>(yystack_[1].value.as < SyntaxTree::InitVal* > ()));
     yylhs.value.as < SyntaxTree::InitVal* > () = yystack_[2].value.as < SyntaxTree::InitVal* > ();
   }
-#line 1256 "MHSJParser.cpp"
+#line 1246 "MHSJParser.cpp"
     break;
 
   case 25: // CommaInitValList: %empty
@@ -1265,7 +1255,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::InitVal* > ()->expr = nullptr;
     yylhs.value.as < SyntaxTree::InitVal* > ()->loc = yylhs.location;
   }
-#line 1269 "MHSJParser.cpp"
+#line 1259 "MHSJParser.cpp"
     break;
 
   case 26: // ExpList: CommaExpList Exp
@@ -1274,7 +1264,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().push_back(SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[0].value.as < SyntaxTree::Expr* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
   }
-#line 1278 "MHSJParser.cpp"
+#line 1268 "MHSJParser.cpp"
     break;
 
   case 27: // ExpList: %empty
@@ -1282,7 +1272,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
           {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = SyntaxTree::PtrList<SyntaxTree::Expr>();
   }
-#line 1286 "MHSJParser.cpp"
+#line 1276 "MHSJParser.cpp"
     break;
 
   case 28: // CommaExpList: CommaExpList Exp COMMA
@@ -1291,7 +1281,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().push_back(SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[1].value.as < SyntaxTree::Expr* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
   }
-#line 1295 "MHSJParser.cpp"
+#line 1285 "MHSJParser.cpp"
     break;
 
   case 29: // CommaExpList: %empty
@@ -1299,84 +1289,70 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
           {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = SyntaxTree::PtrList<SyntaxTree::Expr>();
   }
-#line 1303 "MHSJParser.cpp"
+#line 1293 "MHSJParser.cpp"
     break;
 
-  case 30: // FParamFirstIndex: LBRACKET RBRACKET
-#line 279 "../grammar/MHSJParser.yy"
-                                   {
-    yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = SyntaxTree::PtrList<SyntaxTree::Expr>();
-    yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().push_back(nullptr);
-}
-#line 1312 "MHSJParser.cpp"
-    break;
-
-  case 31: // FParamFirstIndex: %empty
-#line 283 "../grammar/MHSJParser.yy"
-        {
-    yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = SyntaxTree::PtrList<SyntaxTree::Expr>();
-}
-#line 1320 "MHSJParser.cpp"
-    break;
-
-  case 32: // FParamIndexList: FParamFirstIndex ArrayExpList
-#line 288 "../grammar/MHSJParser.yy"
-                                              {
-    auto tmp = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
-    tmp.insert(yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().end(),yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().begin(),yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().end());
-    yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = tmp;
-}
-#line 1330 "MHSJParser.cpp"
-    break;
-
-  case 33: // FuncFParam: BType IDENTIFIER FParamIndexList
-#line 295 "../grammar/MHSJParser.yy"
-                                           {
+  case 30: // FuncFParam: BType IDENTIFIER ArrayExpList
+#line 294 "../grammar/MHSJParser.yy"
+                                        {
   yylhs.value.as < SyntaxTree::FuncParam* > () = new SyntaxTree::FuncParam();
   yylhs.value.as < SyntaxTree::FuncParam* > ()->param_type = yystack_[2].value.as < SyntaxTree::Type > ();
   yylhs.value.as < SyntaxTree::FuncParam* > ()->name = yystack_[1].value.as < std::string > ();
   yylhs.value.as < SyntaxTree::FuncParam* > ()->array_index = yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
   yylhs.value.as < SyntaxTree::FuncParam* > ()->loc = yylhs.location;
 }
-#line 1342 "MHSJParser.cpp"
+#line 1305 "MHSJParser.cpp"
     break;
 
-  case 34: // FParamList: CommaFParamList FuncFParam
-#line 304 "../grammar/MHSJParser.yy"
+  case 31: // FuncFParam: BType IDENTIFIER LRBRACKET ArrayExpList
+#line 301 "../grammar/MHSJParser.yy"
+                                         {
+   yylhs.value.as < SyntaxTree::FuncParam* > () = new SyntaxTree::FuncParam();
+   yylhs.value.as < SyntaxTree::FuncParam* > ()->param_type = yystack_[3].value.as < SyntaxTree::Type > ();
+   yylhs.value.as < SyntaxTree::FuncParam* > ()->name = yystack_[2].value.as < std::string > ();
+   yylhs.value.as < SyntaxTree::FuncParam* > ()->array_index = yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
+   yylhs.value.as < SyntaxTree::FuncParam* > ()->array_index.insert(yylhs.value.as < SyntaxTree::FuncParam* > ()->array_index.begin(),nullptr);
+   yylhs.value.as < SyntaxTree::FuncParam* > ()->loc = yylhs.location;
+}
+#line 1318 "MHSJParser.cpp"
+    break;
+
+  case 32: // FParamList: CommaFParamList FuncFParam
+#line 312 "../grammar/MHSJParser.yy"
                                       {
   yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > ().push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>(yystack_[0].value.as < SyntaxTree::FuncParam* > ()));
   yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > () = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > ();
 }
-#line 1351 "MHSJParser.cpp"
+#line 1327 "MHSJParser.cpp"
     break;
 
-  case 35: // FParamList: %empty
-#line 308 "../grammar/MHSJParser.yy"
+  case 33: // FParamList: %empty
+#line 316 "../grammar/MHSJParser.yy"
         {
   yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > () = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
 }
-#line 1359 "MHSJParser.cpp"
+#line 1335 "MHSJParser.cpp"
     break;
 
-  case 36: // CommaFParamList: CommaFParamList FuncFParam COMMA
-#line 313 "../grammar/MHSJParser.yy"
+  case 34: // CommaFParamList: CommaFParamList FuncFParam COMMA
+#line 321 "../grammar/MHSJParser.yy"
                                                 {
   yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > ().push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>(yystack_[1].value.as < SyntaxTree::FuncParam* > ()));
   yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > () = yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > ();
 }
-#line 1368 "MHSJParser.cpp"
+#line 1344 "MHSJParser.cpp"
     break;
 
-  case 37: // CommaFParamList: %empty
-#line 317 "../grammar/MHSJParser.yy"
+  case 35: // CommaFParamList: %empty
+#line 325 "../grammar/MHSJParser.yy"
         {
   yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > () = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
 }
-#line 1376 "MHSJParser.cpp"
+#line 1352 "MHSJParser.cpp"
     break;
 
-  case 38: // FuncDef: BType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block
-#line 321 "../grammar/MHSJParser.yy"
+  case 36: // FuncDef: BType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block
+#line 329 "../grammar/MHSJParser.yy"
                                                                  {
     yylhs.value.as < SyntaxTree::FuncDef* > () = new SyntaxTree::FuncDef();
     yylhs.value.as < SyntaxTree::FuncDef* > ()->ret_type = yystack_[5].value.as < SyntaxTree::Type > ();
@@ -1387,11 +1363,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::FuncDef* > ()->body = SyntaxTree::Ptr<SyntaxTree::BlockStmt>(yystack_[0].value.as < SyntaxTree::BlockStmt* > ());
     yylhs.value.as < SyntaxTree::FuncDef* > ()->loc = yylhs.location;
   }
-#line 1391 "MHSJParser.cpp"
+#line 1367 "MHSJParser.cpp"
     break;
 
-  case 39: // FuncDef: VOID IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block
-#line 331 "../grammar/MHSJParser.yy"
+  case 37: // FuncDef: VOID IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block
+#line 339 "../grammar/MHSJParser.yy"
                                                             {
     yylhs.value.as < SyntaxTree::FuncDef* > () = new SyntaxTree::FuncDef();
     yylhs.value.as < SyntaxTree::FuncDef* > ()->ret_type = SyntaxTree::Type::VOID;
@@ -1402,65 +1378,65 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::FuncDef* > ()->body = SyntaxTree::Ptr<SyntaxTree::BlockStmt>(yystack_[0].value.as < SyntaxTree::BlockStmt* > ());
     yylhs.value.as < SyntaxTree::FuncDef* > ()->loc = yylhs.location;
   }
-#line 1406 "MHSJParser.cpp"
+#line 1382 "MHSJParser.cpp"
     break;
 
-  case 40: // Block: LBRACE BlockItemList RBRACE
-#line 343 "../grammar/MHSJParser.yy"
+  case 38: // Block: LBRACE BlockItemList RBRACE
+#line 351 "../grammar/MHSJParser.yy"
                                  {
     yylhs.value.as < SyntaxTree::BlockStmt* > () = new SyntaxTree::BlockStmt();
     yylhs.value.as < SyntaxTree::BlockStmt* > ()->body = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ();
     yylhs.value.as < SyntaxTree::BlockStmt* > ()->loc = yylhs.location;
   }
-#line 1416 "MHSJParser.cpp"
+#line 1392 "MHSJParser.cpp"
     break;
 
-  case 41: // BlockItemList: BlockItemList BlockItem
-#line 350 "../grammar/MHSJParser.yy"
+  case 39: // BlockItemList: BlockItemList BlockItem
+#line 358 "../grammar/MHSJParser.yy"
                                      {
     yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().insert(yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().end());
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ();
   }
-#line 1425 "MHSJParser.cpp"
+#line 1401 "MHSJParser.cpp"
     break;
 
-  case 42: // BlockItemList: %empty
-#line 354 "../grammar/MHSJParser.yy"
+  case 40: // BlockItemList: %empty
+#line 362 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = SyntaxTree::PtrList<SyntaxTree::Stmt>();
   }
-#line 1433 "MHSJParser.cpp"
+#line 1409 "MHSJParser.cpp"
     break;
 
-  case 43: // BlockItem: VarDecl
-#line 359 "../grammar/MHSJParser.yy"
+  case 41: // BlockItem: VarDecl
+#line 367 "../grammar/MHSJParser.yy"
                  {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = SyntaxTree::PtrList<SyntaxTree::Stmt>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().insert(yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().end());
   }
-#line 1442 "MHSJParser.cpp"
+#line 1418 "MHSJParser.cpp"
     break;
 
-  case 44: // BlockItem: ConstDecl
-#line 363 "../grammar/MHSJParser.yy"
+  case 42: // BlockItem: ConstDecl
+#line 371 "../grammar/MHSJParser.yy"
              {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = SyntaxTree::PtrList<SyntaxTree::Stmt>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().insert(yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().end());
   }
-#line 1451 "MHSJParser.cpp"
+#line 1427 "MHSJParser.cpp"
     break;
 
-  case 45: // BlockItem: Stmt
-#line 367 "../grammar/MHSJParser.yy"
+  case 43: // BlockItem: Stmt
+#line 375 "../grammar/MHSJParser.yy"
         {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = SyntaxTree::PtrList<SyntaxTree::Stmt>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().push_back(SyntaxTree::Ptr<SyntaxTree::Stmt>(yystack_[0].value.as < SyntaxTree::Stmt* > ()));
   }
-#line 1460 "MHSJParser.cpp"
+#line 1436 "MHSJParser.cpp"
     break;
 
-  case 46: // Stmt: LVal ASSIGN Exp SEMICOLON
-#line 373 "../grammar/MHSJParser.yy"
+  case 44: // Stmt: LVal ASSIGN Exp SEMICOLON
+#line 381 "../grammar/MHSJParser.yy"
                               {
     auto temp = new SyntaxTree::AssignStmt();
     temp->target = SyntaxTree::Ptr<SyntaxTree::LVal>(yystack_[3].value.as < SyntaxTree::LVal* > ());
@@ -1468,41 +1444,41 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Stmt* > () = temp;
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1472 "MHSJParser.cpp"
+#line 1448 "MHSJParser.cpp"
     break;
 
-  case 47: // Stmt: Exp SEMICOLON
-#line 380 "../grammar/MHSJParser.yy"
+  case 45: // Stmt: Exp SEMICOLON
+#line 388 "../grammar/MHSJParser.yy"
                  {
     auto temp = new SyntaxTree::ExprStmt();
     temp->exp = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[1].value.as < SyntaxTree::Expr* > ());
     yylhs.value.as < SyntaxTree::Stmt* > () = temp;
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1483 "MHSJParser.cpp"
+#line 1459 "MHSJParser.cpp"
     break;
 
-  case 48: // Stmt: RETURN OptionRet SEMICOLON
-#line 386 "../grammar/MHSJParser.yy"
+  case 46: // Stmt: RETURN OptionRet SEMICOLON
+#line 394 "../grammar/MHSJParser.yy"
                               {
     auto temp = new SyntaxTree::ReturnStmt();
     temp->ret = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[1].value.as < SyntaxTree::Expr* > ());
     yylhs.value.as < SyntaxTree::Stmt* > () = temp;
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1494 "MHSJParser.cpp"
+#line 1470 "MHSJParser.cpp"
     break;
 
-  case 49: // Stmt: Block
-#line 392 "../grammar/MHSJParser.yy"
+  case 47: // Stmt: Block
+#line 400 "../grammar/MHSJParser.yy"
          {
     yylhs.value.as < SyntaxTree::Stmt* > () = yystack_[0].value.as < SyntaxTree::BlockStmt* > ();
   }
-#line 1502 "MHSJParser.cpp"
+#line 1478 "MHSJParser.cpp"
     break;
 
-  case 50: // Stmt: WHILE LPARENTHESE CondExp RPARENTHESE Stmt
-#line 395 "../grammar/MHSJParser.yy"
+  case 48: // Stmt: WHILE LPARENTHESE CondExp RPARENTHESE Stmt
+#line 403 "../grammar/MHSJParser.yy"
                                               {
     auto temp = new SyntaxTree::WhileStmt();
     temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[2].value.as < SyntaxTree::Expr* > ());
@@ -1510,46 +1486,46 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Stmt* > () = temp;
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1514 "MHSJParser.cpp"
+#line 1490 "MHSJParser.cpp"
     break;
 
-  case 51: // Stmt: IfStmt
-#line 402 "../grammar/MHSJParser.yy"
+  case 49: // Stmt: IfStmt
+#line 410 "../grammar/MHSJParser.yy"
            {
     yylhs.value.as < SyntaxTree::Stmt* > () = yystack_[0].value.as < SyntaxTree::Stmt* > ();
   }
-#line 1522 "MHSJParser.cpp"
+#line 1498 "MHSJParser.cpp"
     break;
 
-  case 52: // Stmt: BREAK SEMICOLON
-#line 405 "../grammar/MHSJParser.yy"
+  case 50: // Stmt: BREAK SEMICOLON
+#line 413 "../grammar/MHSJParser.yy"
                     {
     yylhs.value.as < SyntaxTree::Stmt* > () = new SyntaxTree::BreakStmt();
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1531 "MHSJParser.cpp"
+#line 1507 "MHSJParser.cpp"
     break;
 
-  case 53: // Stmt: CONTINUE SEMICOLON
-#line 409 "../grammar/MHSJParser.yy"
+  case 51: // Stmt: CONTINUE SEMICOLON
+#line 417 "../grammar/MHSJParser.yy"
                        {
     yylhs.value.as < SyntaxTree::Stmt* > () = new SyntaxTree::ContinueStmt();
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1540 "MHSJParser.cpp"
+#line 1516 "MHSJParser.cpp"
     break;
 
-  case 54: // Stmt: SEMICOLON
-#line 413 "../grammar/MHSJParser.yy"
+  case 52: // Stmt: SEMICOLON
+#line 421 "../grammar/MHSJParser.yy"
              {
     yylhs.value.as < SyntaxTree::Stmt* > () = new SyntaxTree::EmptyStmt();
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1549 "MHSJParser.cpp"
+#line 1525 "MHSJParser.cpp"
     break;
 
-  case 55: // IfStmt: IF LPARENTHESE CondExp RPARENTHESE Stmt
-#line 419 "../grammar/MHSJParser.yy"
+  case 53: // IfStmt: IF LPARENTHESE CondExp RPARENTHESE Stmt
+#line 427 "../grammar/MHSJParser.yy"
                                                {
     auto temp = new SyntaxTree::IfStmt();
     temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[2].value.as < SyntaxTree::Expr* > ());
@@ -1558,11 +1534,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Stmt* > () = temp;
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1562 "MHSJParser.cpp"
+#line 1538 "MHSJParser.cpp"
     break;
 
-  case 56: // IfStmt: IF LPARENTHESE CondExp RPARENTHESE Stmt ELSE Stmt
-#line 427 "../grammar/MHSJParser.yy"
+  case 54: // IfStmt: IF LPARENTHESE CondExp RPARENTHESE Stmt ELSE Stmt
+#line 435 "../grammar/MHSJParser.yy"
                                                       {
     auto temp = new SyntaxTree::IfStmt();
     temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[4].value.as < SyntaxTree::Expr* > ());
@@ -1571,38 +1547,38 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Stmt* > () = temp;
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
   }
-#line 1575 "MHSJParser.cpp"
+#line 1551 "MHSJParser.cpp"
     break;
 
-  case 57: // OptionRet: Exp
-#line 437 "../grammar/MHSJParser.yy"
+  case 55: // OptionRet: Exp
+#line 445 "../grammar/MHSJParser.yy"
              {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
-#line 1583 "MHSJParser.cpp"
+#line 1559 "MHSJParser.cpp"
     break;
 
-  case 58: // OptionRet: %empty
-#line 440 "../grammar/MHSJParser.yy"
+  case 56: // OptionRet: %empty
+#line 448 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::Expr* > () = nullptr;
   }
-#line 1591 "MHSJParser.cpp"
+#line 1567 "MHSJParser.cpp"
     break;
 
-  case 59: // LVal: IDENTIFIER ArrayExpList
-#line 445 "../grammar/MHSJParser.yy"
+  case 57: // LVal: IDENTIFIER ArrayExpList
+#line 453 "../grammar/MHSJParser.yy"
                             {
     yylhs.value.as < SyntaxTree::LVal* > () = new SyntaxTree::LVal();
     yylhs.value.as < SyntaxTree::LVal* > ()->name = yystack_[1].value.as < std::string > ();
     yylhs.value.as < SyntaxTree::LVal* > ()->array_index = yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
     yylhs.value.as < SyntaxTree::LVal* > ()->loc = yylhs.location;
   }
-#line 1602 "MHSJParser.cpp"
+#line 1578 "MHSJParser.cpp"
     break;
 
-  case 60: // Exp: PLUS Exp
-#line 457 "../grammar/MHSJParser.yy"
+  case 58: // Exp: PLUS Exp
+#line 465 "../grammar/MHSJParser.yy"
                         {
     auto temp = new SyntaxTree::UnaryExpr();
     temp->op = SyntaxTree::UnaryOp::PLUS;
@@ -1610,11 +1586,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1614 "MHSJParser.cpp"
+#line 1590 "MHSJParser.cpp"
     break;
 
-  case 61: // Exp: MINUS Exp
-#line 464 "../grammar/MHSJParser.yy"
+  case 59: // Exp: MINUS Exp
+#line 472 "../grammar/MHSJParser.yy"
                           {
     auto temp = new SyntaxTree::UnaryExpr();
     temp->op = SyntaxTree::UnaryOp::MINUS;
@@ -1622,11 +1598,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1626 "MHSJParser.cpp"
+#line 1602 "MHSJParser.cpp"
     break;
 
-  case 62: // Exp: NOT Exp
-#line 471 "../grammar/MHSJParser.yy"
+  case 60: // Exp: NOT Exp
+#line 479 "../grammar/MHSJParser.yy"
                       {
     auto temp = new SyntaxTree::UnaryCondExpr();
     temp->op = SyntaxTree::UnaryCondOp::NOT;
@@ -1634,11 +1610,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1638 "MHSJParser.cpp"
+#line 1614 "MHSJParser.cpp"
     break;
 
-  case 63: // Exp: Exp PLUS Exp
-#line 478 "../grammar/MHSJParser.yy"
+  case 61: // Exp: Exp PLUS Exp
+#line 486 "../grammar/MHSJParser.yy"
                 {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::PLUS;
@@ -1647,11 +1623,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1651 "MHSJParser.cpp"
+#line 1627 "MHSJParser.cpp"
     break;
 
-  case 64: // Exp: Exp MINUS Exp
-#line 486 "../grammar/MHSJParser.yy"
+  case 62: // Exp: Exp MINUS Exp
+#line 494 "../grammar/MHSJParser.yy"
                  {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::MINUS;
@@ -1660,11 +1636,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1664 "MHSJParser.cpp"
+#line 1640 "MHSJParser.cpp"
     break;
 
-  case 65: // Exp: Exp MULTIPLY Exp
-#line 494 "../grammar/MHSJParser.yy"
+  case 63: // Exp: Exp MULTIPLY Exp
+#line 502 "../grammar/MHSJParser.yy"
                     {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::MULTIPLY;
@@ -1673,11 +1649,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1677 "MHSJParser.cpp"
+#line 1653 "MHSJParser.cpp"
     break;
 
-  case 66: // Exp: Exp DIVIDE Exp
-#line 502 "../grammar/MHSJParser.yy"
+  case 64: // Exp: Exp DIVIDE Exp
+#line 510 "../grammar/MHSJParser.yy"
                   {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::DIVIDE;
@@ -1686,11 +1662,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1690 "MHSJParser.cpp"
+#line 1666 "MHSJParser.cpp"
     break;
 
-  case 67: // Exp: Exp MODULO Exp
-#line 510 "../grammar/MHSJParser.yy"
+  case 65: // Exp: Exp MODULO Exp
+#line 518 "../grammar/MHSJParser.yy"
                   {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::MODULO;
@@ -1699,19 +1675,19 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1703 "MHSJParser.cpp"
+#line 1679 "MHSJParser.cpp"
     break;
 
-  case 68: // Exp: LPARENTHESE Exp RPARENTHESE
-#line 518 "../grammar/MHSJParser.yy"
+  case 66: // Exp: LPARENTHESE Exp RPARENTHESE
+#line 526 "../grammar/MHSJParser.yy"
                                {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[1].value.as < SyntaxTree::Expr* > ();
   }
-#line 1711 "MHSJParser.cpp"
+#line 1687 "MHSJParser.cpp"
     break;
 
-  case 69: // Exp: IDENTIFIER LPARENTHESE ExpList RPARENTHESE
-#line 521 "../grammar/MHSJParser.yy"
+  case 67: // Exp: IDENTIFIER LPARENTHESE ExpList RPARENTHESE
+#line 529 "../grammar/MHSJParser.yy"
                                                {
     auto temp = new SyntaxTree::FuncCallStmt();
     temp->name = yystack_[3].value.as < std::string > ();
@@ -1719,35 +1695,35 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1723 "MHSJParser.cpp"
+#line 1699 "MHSJParser.cpp"
     break;
 
-  case 70: // Exp: LVal
-#line 528 "../grammar/MHSJParser.yy"
+  case 68: // Exp: LVal
+#line 536 "../grammar/MHSJParser.yy"
         {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::LVal* > ();
   }
-#line 1731 "MHSJParser.cpp"
+#line 1707 "MHSJParser.cpp"
     break;
 
-  case 71: // Exp: Number
-#line 531 "../grammar/MHSJParser.yy"
-          {
-    yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Literal* > ();
-  }
-#line 1739 "MHSJParser.cpp"
-    break;
-
-  case 72: // Exp: String
-#line 534 "../grammar/MHSJParser.yy"
-          {
-    yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Literal* > ();
-  }
-#line 1747 "MHSJParser.cpp"
-    break;
-
-  case 73: // RelExp: RelExp LT Exp
+  case 69: // Exp: Number
 #line 539 "../grammar/MHSJParser.yy"
+          {
+    yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Literal* > ();
+  }
+#line 1715 "MHSJParser.cpp"
+    break;
+
+  case 70: // Exp: String
+#line 542 "../grammar/MHSJParser.yy"
+          {
+    yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Literal* > ();
+  }
+#line 1723 "MHSJParser.cpp"
+    break;
+
+  case 71: // RelExp: RelExp LT Exp
+#line 547 "../grammar/MHSJParser.yy"
                     {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LT;
@@ -1756,11 +1732,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1760 "MHSJParser.cpp"
+#line 1736 "MHSJParser.cpp"
     break;
 
-  case 74: // RelExp: RelExp LTE Exp
-#line 547 "../grammar/MHSJParser.yy"
+  case 72: // RelExp: RelExp LTE Exp
+#line 555 "../grammar/MHSJParser.yy"
                  {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LTE;
@@ -1769,11 +1745,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1773 "MHSJParser.cpp"
+#line 1749 "MHSJParser.cpp"
     break;
 
-  case 75: // RelExp: RelExp GT Exp
-#line 555 "../grammar/MHSJParser.yy"
+  case 73: // RelExp: RelExp GT Exp
+#line 563 "../grammar/MHSJParser.yy"
                 {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::GT;
@@ -1782,11 +1758,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1786 "MHSJParser.cpp"
+#line 1762 "MHSJParser.cpp"
     break;
 
-  case 76: // RelExp: RelExp GTE Exp
-#line 563 "../grammar/MHSJParser.yy"
+  case 74: // RelExp: RelExp GTE Exp
+#line 571 "../grammar/MHSJParser.yy"
                  {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::GTE;
@@ -1795,19 +1771,19 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1799 "MHSJParser.cpp"
+#line 1775 "MHSJParser.cpp"
     break;
 
-  case 77: // RelExp: Exp
-#line 571 "../grammar/MHSJParser.yy"
+  case 75: // RelExp: Exp
+#line 579 "../grammar/MHSJParser.yy"
        {//FIXME:type transfer
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
-#line 1807 "MHSJParser.cpp"
+#line 1783 "MHSJParser.cpp"
     break;
 
-  case 78: // EqExp: EqExp EQ RelExp
-#line 576 "../grammar/MHSJParser.yy"
+  case 76: // EqExp: EqExp EQ RelExp
+#line 584 "../grammar/MHSJParser.yy"
                      {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::EQ;
@@ -1816,11 +1792,11 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1820 "MHSJParser.cpp"
+#line 1796 "MHSJParser.cpp"
     break;
 
-  case 79: // EqExp: EqExp NEQ RelExp
-#line 584 "../grammar/MHSJParser.yy"
+  case 77: // EqExp: EqExp NEQ RelExp
+#line 592 "../grammar/MHSJParser.yy"
                    {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::NEQ;
@@ -1829,19 +1805,19 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1833 "MHSJParser.cpp"
+#line 1809 "MHSJParser.cpp"
     break;
 
-  case 80: // EqExp: RelExp
-#line 592 "../grammar/MHSJParser.yy"
+  case 78: // EqExp: RelExp
+#line 600 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
-#line 1841 "MHSJParser.cpp"
+#line 1817 "MHSJParser.cpp"
     break;
 
-  case 81: // LAndExp: LAndExp LOGICAND EqExp
-#line 597 "../grammar/MHSJParser.yy"
+  case 79: // LAndExp: LAndExp LOGICAND EqExp
+#line 605 "../grammar/MHSJParser.yy"
                                {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LAND;
@@ -1850,19 +1826,19 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1854 "MHSJParser.cpp"
+#line 1830 "MHSJParser.cpp"
     break;
 
-  case 82: // LAndExp: EqExp
-#line 605 "../grammar/MHSJParser.yy"
+  case 80: // LAndExp: EqExp
+#line 613 "../grammar/MHSJParser.yy"
         {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
-#line 1862 "MHSJParser.cpp"
+#line 1838 "MHSJParser.cpp"
     break;
 
-  case 83: // LOrExp: LOrExp LOGICOR LAndExp
-#line 610 "../grammar/MHSJParser.yy"
+  case 81: // LOrExp: LOrExp LOGICOR LAndExp
+#line 618 "../grammar/MHSJParser.yy"
                               {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LOR;
@@ -1871,49 +1847,49 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     yylhs.value.as < SyntaxTree::Expr* > () = temp;
     yylhs.value.as < SyntaxTree::Expr* > ()->loc = yylhs.location;
   }
-#line 1875 "MHSJParser.cpp"
+#line 1851 "MHSJParser.cpp"
     break;
 
-  case 84: // LOrExp: LAndExp
-#line 618 "../grammar/MHSJParser.yy"
+  case 82: // LOrExp: LAndExp
+#line 626 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
-#line 1883 "MHSJParser.cpp"
+#line 1859 "MHSJParser.cpp"
     break;
 
-  case 85: // CondExp: LOrExp
-#line 623 "../grammar/MHSJParser.yy"
+  case 83: // CondExp: LOrExp
+#line 631 "../grammar/MHSJParser.yy"
               {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
-#line 1891 "MHSJParser.cpp"
+#line 1867 "MHSJParser.cpp"
     break;
 
-  case 86: // Number: INTCONST
-#line 628 "../grammar/MHSJParser.yy"
+  case 84: // Number: INTCONST
+#line 636 "../grammar/MHSJParser.yy"
                  {
     yylhs.value.as < SyntaxTree::Literal* > () = new SyntaxTree::Literal();
     yylhs.value.as < SyntaxTree::Literal* > ()->is_int = true;
     yylhs.value.as < SyntaxTree::Literal* > ()->int_const = yystack_[0].value.as < int > ();
     yylhs.value.as < SyntaxTree::Literal* > ()->loc = yylhs.location;
   }
-#line 1902 "MHSJParser.cpp"
+#line 1878 "MHSJParser.cpp"
     break;
 
-  case 87: // String: STRINGCONST
-#line 636 "../grammar/MHSJParser.yy"
+  case 85: // String: STRINGCONST
+#line 644 "../grammar/MHSJParser.yy"
                     {
   yylhs.value.as < SyntaxTree::Literal* > () = new SyntaxTree::Literal();
   yylhs.value.as < SyntaxTree::Literal* > ()->is_int = false;
   yylhs.value.as < SyntaxTree::Literal* > ()->str = yystack_[0].value.as < std::string > ();
   yylhs.value.as < SyntaxTree::Literal* > ()->loc = yylhs.location;
 }
-#line 1913 "MHSJParser.cpp"
+#line 1889 "MHSJParser.cpp"
     break;
 
 
-#line 1917 "MHSJParser.cpp"
+#line 1893 "MHSJParser.cpp"
 
             default:
               break;
@@ -2262,153 +2238,153 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
   }
 
 
-  const short MHSJParser::yypact_ninf_ = -131;
+  const short MHSJParser::yypact_ninf_ = -129;
 
-  const signed char MHSJParser::yytable_ninf_ = -38;
+  const signed char MHSJParser::yytable_ninf_ = -36;
 
   const short
   MHSJParser::yypact_[] =
   {
-       9,  -131,   -25,    17,    26,    19,  -131,  -131,    21,  -131,
-    -131,    31,    23,  -131,  -131,  -131,    37,    13,  -131,    55,
-    -131,    43,  -131,    55,     5,  -131,    58,    65,    17,    12,
-    -131,    23,    73,   118,    18,  -131,  -131,    85,    80,    78,
-     118,  -131,    85,    18,    18,    18,    88,   102,  -131,    18,
-    -131,  -131,  -131,   171,  -131,  -131,   108,  -131,  -131,   106,
-    -131,  -131,  -131,  -131,  -131,   148,    99,   118,   112,   107,
-    -131,    18,    18,    18,    18,    18,  -131,    64,   113,  -131,
-    -131,  -131,  -131,   120,   119,    18,     6,     6,  -131,  -131,
-    -131,  -131,  -131,   121,    18,   126,   129,   130,  -131,    58,
-    -131,  -131,  -131,  -131,  -131,   132,   154,  -131,   107,  -131,
-    -131,    66,    18,   133,   171,    18,  -131,  -131,    18,  -131,
-    -131,   171,     7,    54,   123,   135,   145,  -131,   146,   166,
-      18,    18,    18,    18,    18,    18,    18,    18,   103,   103,
-    -131,   171,   171,   171,   171,     7,     7,    54,   123,   128,
-    -131,   103,  -131
+       0,  -129,   -26,    -4,    29,    53,  -129,  -129,    16,  -129,
+    -129,    17,    19,  -129,  -129,  -129,    41,    36,  -129,    56,
+    -129,    92,  -129,    56,     5,  -129,    31,    67,    -4,    54,
+    -129,    19,    74,    25,    18,  -129,  -129,    83,    88,   105,
+      25,  -129,    83,    18,    18,    18,   102,   111,  -129,    18,
+    -129,  -129,  -129,   167,  -129,  -129,   106,  -129,  -129,    75,
+    -129,  -129,  -129,  -129,  -129,   129,   109,    25,   128,   130,
+    -129,    18,    18,    18,    18,    18,  -129,    62,  -129,   130,
+    -129,  -129,   134,   133,    18,     6,     6,  -129,  -129,  -129,
+    -129,  -129,   135,    18,   147,   151,   152,  -129,    31,  -129,
+    -129,  -129,  -129,  -129,   154,   150,   130,  -129,  -129,   137,
+      18,   161,   167,    18,  -129,  -129,    18,  -129,  -129,   167,
+       7,    57,   125,   132,   160,  -129,   162,   155,    18,    18,
+      18,    18,    18,    18,    18,    18,   101,   101,  -129,   167,
+     167,   167,   167,     7,     7,    57,   125,   156,  -129,   101,
+    -129
   };
 
   const signed char
   MHSJParser::yydefact_[] =
   {
        0,    11,     0,     0,     0,     0,     4,     5,     0,     6,
-       7,     0,     0,     1,     2,     3,    19,     0,    15,    35,
-      19,     0,    10,    35,    16,    13,     0,     0,     0,     0,
-       8,     0,     0,     0,     0,    19,    14,     0,     0,    34,
-       0,     9,     0,     0,     0,     0,    25,    19,    86,     0,
-      87,    17,    70,    20,    71,    72,     0,    42,    39,    31,
-      36,    12,    38,    60,    61,     0,     0,     0,    29,    59,
-      62,     0,     0,     0,     0,     0,    18,     0,     0,    19,
-      33,    68,    21,    22,     0,     0,    63,    64,    65,    66,
-      67,    54,    40,     0,    58,     0,     0,     0,    44,     0,
-      43,    49,    41,    45,    51,    70,     0,    30,    32,    24,
-      69,    26,     0,     0,    57,     0,    52,    53,     0,    47,
-      28,    77,    80,    82,    84,    85,     0,    48,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-      46,    74,    75,    76,    73,    78,    79,    81,    83,    55,
-      50,     0,    56
+       7,     0,     0,     1,     2,     3,    19,     0,    15,    33,
+      19,     0,    10,    33,    16,    13,     0,     0,     0,     0,
+       8,     0,     0,     0,     0,    19,    14,     0,     0,    32,
+       0,     9,     0,     0,     0,     0,    25,    19,    84,     0,
+      85,    17,    68,    20,    69,    70,     0,    40,    37,    19,
+      34,    12,    36,    58,    59,     0,     0,     0,    29,    57,
+      60,     0,     0,     0,     0,     0,    18,     0,    19,    30,
+      66,    21,    22,     0,     0,    61,    62,    63,    64,    65,
+      52,    38,     0,    56,     0,     0,     0,    42,     0,    41,
+      47,    39,    43,    49,    68,     0,    31,    24,    67,    26,
+       0,     0,    55,     0,    50,    51,     0,    45,    28,    75,
+      78,    80,    82,    83,     0,    46,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,    44,    72,
+      73,    74,    71,    76,    77,    79,    81,    53,    48,     0,
+      54
   };
 
   const short
   MHSJParser::yypgoto_[] =
   {
-    -131,  -131,  -131,   164,   109,  -131,     0,   152,   110,  -131,
-     158,   -14,   -36,  -131,  -131,  -131,  -131,  -131,  -131,  -131,
-     162,  -131,  -131,    20,  -131,  -131,  -130,  -131,  -131,   -75,
-     -33,   -56,    52,    53,  -131,    74,  -131,  -131
+    -129,  -129,  -129,   177,   107,  -129,    -1,   157,   108,  -129,
+     163,   -14,   -35,  -129,  -129,  -129,  -129,  -129,   164,  -129,
+    -129,    35,  -129,  -129,  -128,  -129,  -129,   -74,   -33,   -12,
+      49,    51,  -129,    77,  -129,  -129
   };
 
   const signed char
   MHSJParser::yydefgoto_[] =
   {
        0,     4,     5,     6,     7,    21,     8,    22,     9,    17,
-      18,    24,    51,    66,    67,    84,    85,    79,    80,    39,
-      27,    28,    10,   101,    77,   102,   103,   104,   113,    52,
-     121,   122,   123,   124,   125,   126,    54,    55
+      18,    24,    51,    66,    67,    83,    84,    39,    27,    28,
+      10,   100,    77,   101,   102,   103,   111,    52,   119,   120,
+     121,   122,   123,   124,    54,    55
   };
 
   const short
   MHSJParser::yytable_[] =
   {
-      53,    56,   105,    12,    61,    11,    29,    53,   149,   150,
-      63,    64,    65,    73,    74,    75,    70,   130,   131,   132,
-      33,   152,    14,    43,    44,    34,    13,    40,    38,    25,
-      26,    83,    34,    69,    53,     1,    45,     2,    86,    87,
-      88,    89,    90,     1,   106,     1,     3,     2,    47,    19,
-      48,    16,   111,    20,   133,    23,     3,    58,    49,    30,
-      31,   114,    62,   105,   105,   108,    50,   134,   135,    43,
-      44,    71,    72,    73,    74,    75,   105,    99,   145,   146,
-      91,   -37,    45,   120,    37,   129,    57,    92,    35,    93,
-       1,    94,    42,    95,    47,    60,    48,   141,   142,   143,
-     144,     3,    96,    97,    49,   106,   106,    57,    43,    44,
-      59,   -23,    50,    71,    72,    73,    74,    75,   106,    91,
-      68,    45,    82,    43,    44,    57,    78,    34,    93,    76,
-      94,   -27,    95,    47,   107,    48,    45,   109,   110,   112,
-      46,    96,    97,    49,   115,   116,   117,   118,    47,   127,
-      48,    50,   151,    71,    72,    73,    74,    75,    49,    71,
-      72,    73,    74,    75,   138,   139,    50,    81,   136,    15,
-     119,    71,    72,    73,    74,    75,    71,    72,    73,    74,
-      75,   137,   140,    41,    36,    32,    98,   100,   147,   128,
-     148
+      53,    56,    12,   104,    11,    61,    29,    53,   147,   148,
+      63,    64,    65,    73,    74,    75,    70,   128,   129,   130,
+      33,   150,     1,    43,    44,    34,     1,    38,     2,    13,
+      43,    44,    82,    69,    53,    19,    45,     3,    85,    86,
+      87,    88,    89,    45,   105,    79,    16,    46,    47,    20,
+      48,   109,    25,    26,   131,    47,    14,    48,    49,    23,
+     112,    35,   104,   104,   106,    49,    50,    43,    44,    40,
+     132,   133,    58,    50,    34,   104,    98,    62,    90,     1,
+      45,     2,   -35,   127,    57,    91,    37,    92,     1,    93,
+       3,    94,    47,    42,    48,   139,   140,   141,   142,     3,
+      95,    96,    49,   105,   105,    57,    43,    44,    30,    31,
+      50,    71,    72,    73,    74,    75,   105,    90,    59,    45,
+     143,   144,    60,    57,    78,   -23,    92,    76,    93,    68,
+      94,    47,    81,    48,    71,    72,    73,    74,    75,    95,
+      96,    49,    71,    72,    73,    74,    75,   -27,    80,    50,
+      34,   107,   108,   110,   118,    71,    72,    73,    74,    75,
+      71,    72,    73,    74,    75,   113,   117,   114,   115,   116,
+     134,   138,    71,    72,    73,    74,    75,   125,   135,   136,
+     149,   137,    15,   145,    97,    99,   146,    32,    41,    36,
+     126
   };
 
   const unsigned char
   MHSJParser::yycheck_[] =
   {
-      33,    34,    77,     3,    40,    30,    20,    40,   138,   139,
+      33,    34,     3,    77,    30,    40,    20,    40,   136,   137,
       43,    44,    45,     7,     8,     9,    49,    10,    11,    12,
-      15,   151,     3,     5,     6,    20,     0,    15,    28,    16,
-      17,    67,    20,    47,    67,    26,    18,    28,    71,    72,
-      73,    74,    75,    26,    77,    26,    37,    28,    30,    18,
-      32,    30,    85,    30,    47,    18,    37,    37,    40,    16,
-      17,    94,    42,   138,   139,    79,    48,    13,    14,     5,
-       6,     5,     6,     7,     8,     9,   151,    77,   134,   135,
-      16,    26,    18,    17,    19,   118,    22,    23,    30,    25,
-      26,    27,    19,    29,    30,    17,    32,   130,   131,   132,
-     133,    37,    38,    39,    40,   138,   139,    22,     5,     6,
-      30,    23,    48,     5,     6,     7,     8,     9,   151,    16,
-      18,    18,    23,     5,     6,    22,    20,    20,    25,    21,
-      27,    19,    29,    30,    21,    32,    18,    17,    19,    18,
-      22,    38,    39,    40,    18,    16,    16,    15,    30,    16,
-      32,    48,    24,     5,     6,     7,     8,     9,    40,     5,
-       6,     7,     8,     9,    19,    19,    48,    19,    45,     5,
-      16,     5,     6,     7,     8,     9,     5,     6,     7,     8,
-       9,    46,    16,    31,    26,    23,    77,    77,   136,   115,
-     137
+      15,   149,    26,     5,     6,    20,    26,    28,    28,     0,
+       5,     6,    67,    47,    67,    18,    18,    37,    71,    72,
+      73,    74,    75,    18,    77,    59,    30,    22,    30,    30,
+      32,    84,    16,    17,    47,    30,     3,    32,    40,    18,
+      93,    30,   136,   137,    78,    40,    48,     5,     6,    15,
+      13,    14,    37,    48,    20,   149,    77,    42,    16,    26,
+      18,    28,    26,   116,    22,    23,    19,    25,    26,    27,
+      37,    29,    30,    19,    32,   128,   129,   130,   131,    37,
+      38,    39,    40,   136,   137,    22,     5,     6,    16,    17,
+      48,     5,     6,     7,     8,     9,   149,    16,    30,    18,
+     132,   133,    17,    22,    49,    23,    25,    21,    27,    18,
+      29,    30,    23,    32,     5,     6,     7,     8,     9,    38,
+      39,    40,     5,     6,     7,     8,     9,    19,    19,    48,
+      20,    17,    19,    18,    17,     5,     6,     7,     8,     9,
+       5,     6,     7,     8,     9,    18,    16,    16,    16,    15,
+      45,    16,     5,     6,     7,     8,     9,    16,    46,    19,
+      24,    19,     5,   134,    77,    77,   135,    23,    31,    26,
+     113
   };
 
   const signed char
   MHSJParser::yystos_[] =
   {
-       0,    26,    28,    37,    53,    54,    55,    56,    58,    60,
-      74,    30,    58,     0,     3,    55,    30,    61,    62,    18,
-      30,    57,    59,    18,    63,    16,    17,    72,    73,    63,
-      16,    17,    72,    15,    20,    30,    62,    19,    58,    71,
-      15,    59,    19,     5,     6,    18,    22,    30,    32,    40,
-      48,    64,    81,    82,    88,    89,    82,    22,    75,    30,
-      17,    64,    75,    82,    82,    82,    65,    66,    18,    63,
-      82,     5,     6,     7,     8,     9,    21,    76,    20,    69,
-      70,    19,    23,    64,    67,    68,    82,    82,    82,    82,
-      82,    16,    23,    25,    27,    29,    38,    39,    56,    58,
-      60,    75,    77,    78,    79,    81,    82,    21,    63,    17,
-      19,    82,    18,    80,    82,    18,    16,    16,    15,    16,
-      17,    82,    83,    84,    85,    86,    87,    16,    87,    82,
-      10,    11,    12,    47,    13,    14,    45,    46,    19,    19,
-      16,    82,    82,    82,    82,    83,    83,    84,    85,    78,
-      78,    24,    78
+       0,    26,    28,    37,    54,    55,    56,    57,    59,    61,
+      73,    30,    59,     0,     3,    56,    30,    62,    63,    18,
+      30,    58,    60,    18,    64,    16,    17,    71,    72,    64,
+      16,    17,    71,    15,    20,    30,    63,    19,    59,    70,
+      15,    60,    19,     5,     6,    18,    22,    30,    32,    40,
+      48,    65,    80,    81,    87,    88,    81,    22,    74,    30,
+      17,    65,    74,    81,    81,    81,    66,    67,    18,    64,
+      81,     5,     6,     7,     8,     9,    21,    75,    49,    64,
+      19,    23,    65,    68,    69,    81,    81,    81,    81,    81,
+      16,    23,    25,    27,    29,    38,    39,    57,    59,    61,
+      74,    76,    77,    78,    80,    81,    64,    17,    19,    81,
+      18,    79,    81,    18,    16,    16,    15,    16,    17,    81,
+      82,    83,    84,    85,    86,    16,    86,    81,    10,    11,
+      12,    47,    13,    14,    45,    46,    19,    19,    16,    81,
+      81,    81,    81,    82,    82,    83,    84,    77,    77,    24,
+      77
   };
 
   const signed char
   MHSJParser::yyr1_[] =
   {
-       0,    52,    53,    54,    54,    55,    55,    55,    56,    57,
-      57,    58,    59,    60,    61,    61,    62,    62,    63,    63,
-      64,    64,    65,    65,    66,    66,    67,    67,    68,    68,
-      69,    69,    70,    71,    72,    72,    73,    73,    74,    74,
-      75,    76,    76,    77,    77,    77,    78,    78,    78,    78,
-      78,    78,    78,    78,    78,    79,    79,    80,    80,    81,
-      82,    82,    82,    82,    82,    82,    82,    82,    82,    82,
-      82,    82,    82,    83,    83,    83,    83,    83,    84,    84,
-      84,    85,    85,    86,    86,    87,    88,    89
+       0,    53,    54,    55,    55,    56,    56,    56,    57,    58,
+      58,    59,    60,    61,    62,    62,    63,    63,    64,    64,
+      65,    65,    66,    66,    67,    67,    68,    68,    69,    69,
+      70,    70,    71,    71,    72,    72,    73,    73,    74,    75,
+      75,    76,    76,    76,    77,    77,    77,    77,    77,    77,
+      77,    77,    77,    78,    78,    79,    79,    80,    81,    81,
+      81,    81,    81,    81,    81,    81,    81,    81,    81,    81,
+      81,    82,    82,    82,    82,    82,    83,    83,    83,    84,
+      84,    85,    85,    86,    87,    88
   };
 
   const signed char
@@ -2417,12 +2393,12 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
        0,     2,     2,     2,     1,     1,     1,     1,     4,     3,
        1,     1,     4,     3,     3,     1,     2,     4,     4,     0,
        1,     3,     2,     0,     3,     0,     2,     0,     3,     0,
-       2,     0,     2,     3,     2,     0,     3,     0,     6,     6,
-       3,     2,     0,     1,     1,     1,     4,     2,     3,     1,
-       5,     1,     2,     2,     1,     5,     7,     1,     0,     2,
-       2,     2,     2,     3,     3,     3,     3,     3,     3,     4,
-       1,     1,     1,     3,     3,     3,     3,     1,     3,     3,
-       1,     3,     1,     3,     1,     1,     1,     1
+       3,     4,     2,     0,     3,     0,     6,     6,     3,     2,
+       0,     1,     1,     1,     4,     2,     3,     1,     5,     1,
+       2,     2,     1,     5,     7,     1,     0,     2,     2,     2,
+       2,     3,     3,     3,     3,     3,     3,     4,     1,     1,
+       1,     3,     3,     3,     3,     1,     3,     3,     1,     3,
+       1,     3,     1,     1,     1,     1
   };
 
 
@@ -2438,15 +2414,14 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
   "RBRACKET", "LBRACE", "RBRACE", "ELSE", "IF", "INT", "RETURN", "VOID",
   "WHILE", "IDENTIFIER", "FLOATCONST", "INTCONST", "LETTER", "EOL",
   "COMMENT", "BLANK", "CONST", "BREAK", "CONTINUE", "NOT", "AND", "OR",
-  "MOD", "FLOAT", "LOGICAND", "LOGICOR", "LT", "STRINGCONST", "UPLUS",
-  "UMINUS", "UNOT", "$accept", "Begin", "CompUnit", "GlobalDecl",
+  "MOD", "FLOAT", "LOGICAND", "LOGICOR", "LT", "STRINGCONST", "LRBRACKET",
+  "UPLUS", "UMINUS", "UNOT", "$accept", "Begin", "CompUnit", "GlobalDecl",
   "ConstDecl", "ConstDefList", "BType", "ConstDef", "VarDecl",
   "VarDefList", "VarDef", "ArrayExpList", "InitVal", "InitValList",
-  "CommaInitValList", "ExpList", "CommaExpList", "FParamFirstIndex",
-  "FParamIndexList", "FuncFParam", "FParamList", "CommaFParamList",
-  "FuncDef", "Block", "BlockItemList", "BlockItem", "Stmt", "IfStmt",
-  "OptionRet", "LVal", "Exp", "RelExp", "EqExp", "LAndExp", "LOrExp",
-  "CondExp", "Number", "String", YY_NULLPTR
+  "CommaInitValList", "ExpList", "CommaExpList", "FuncFParam",
+  "FParamList", "CommaFParamList", "FuncDef", "Block", "BlockItemList",
+  "BlockItem", "Stmt", "IfStmt", "OptionRet", "LVal", "Exp", "RelExp",
+  "EqExp", "LAndExp", "LOrExp", "CondExp", "Number", "String", YY_NULLPTR
   };
 #endif
 
@@ -2458,12 +2433,12 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
        0,   110,   110,   117,   121,   127,   131,   135,   141,   148,
      152,   158,   164,   175,   183,   187,   193,   200,   210,   214,
      219,   228,   233,   237,   247,   251,   261,   265,   270,   274,
-     279,   283,   288,   295,   304,   308,   313,   317,   321,   331,
-     343,   350,   354,   359,   363,   367,   373,   380,   386,   392,
-     395,   402,   405,   409,   413,   419,   427,   437,   440,   445,
-     457,   464,   471,   478,   486,   494,   502,   510,   518,   521,
-     528,   531,   534,   539,   547,   555,   563,   571,   576,   584,
-     592,   597,   605,   610,   618,   623,   628,   636
+     294,   301,   312,   316,   321,   325,   329,   339,   351,   358,
+     362,   367,   371,   375,   381,   388,   394,   400,   403,   410,
+     413,   417,   421,   427,   435,   445,   448,   453,   465,   472,
+     479,   486,   494,   502,   510,   518,   526,   529,   536,   539,
+     542,   547,   555,   563,   571,   579,   584,   592,   600,   605,
+     613,   618,   626,   631,   636,   644
   };
 
   void
@@ -2495,9 +2470,9 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
 
 
 } // yy
-#line 2499 "MHSJParser.cpp"
+#line 2474 "MHSJParser.cpp"
 
-#line 644 "../grammar/MHSJParser.yy"
+#line 652 "../grammar/MHSJParser.yy"
 
 
 // Register errors to the driver:

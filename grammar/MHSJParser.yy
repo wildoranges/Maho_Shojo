@@ -57,7 +57,7 @@ class MHSJDriver;
 %token LOGICOR 300
 %token LT 301
 %token <std::string>STRINGCONST 302
-
+%token LRBRACKET 303
 // Use variant-based semantic values: %type and %token expect genuine types
 
 %type <SyntaxTree::Assembly*>CompUnit
@@ -86,8 +86,6 @@ class MHSJDriver;
 %type <SyntaxTree::Literal*>Number
 %type <SyntaxTree::Literal*>String
 
-%type <SyntaxTree::PtrList<SyntaxTree::Expr>>FParamFirstIndex
-%type <SyntaxTree::PtrList<SyntaxTree::Expr>>FParamIndexList
 %type <SyntaxTree::FuncParam*>FuncFParam
 %type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>FParamList
 %type <SyntaxTree::PtrList<SyntaxTree::FuncParam>>CommaFParamList
@@ -97,7 +95,6 @@ class MHSJDriver;
 %type <SyntaxTree::Expr*>LOrExp
 %type <SyntaxTree::Expr*>CondExp
 %type <SyntaxTree::Stmt*>IfStmt
-//%type <SyntaxTree::FuncFParamList*>FuncFParams
 
 // No %destructors are needed, since memory will be reclaimed by the
 // regular destructors.
@@ -276,28 +273,21 @@ CommaExpList:CommaExpList Exp COMMA{
   }
   ;
 
-FParamFirstIndex:LBRACKET RBRACKET {
-    $$ = SyntaxTree::PtrList<SyntaxTree::Expr>();
-    $$.push_back(nullptr);
-}
-| %empty{
-    $$ = SyntaxTree::PtrList<SyntaxTree::Expr>();
-}
-;
 
-FParamIndexList:FParamFirstIndex ArrayExpList {
-    auto tmp = $1;
-    tmp.insert($1.end(),$2.begin(),$2.end());
-    $$ = tmp;
-}
-;
-
-FuncFParam:BType IDENTIFIER FParamIndexList{
+FuncFParam:BType IDENTIFIER ArrayExpList{
   $$ = new SyntaxTree::FuncParam();
   $$->param_type = $1;
   $$->name = $2;
   $$->array_index = $3;
   $$->loc = @$;
+}
+| BType IDENTIFIER LRBRACKET ArrayExpList{
+   $$ = new SyntaxTree::FuncParam();
+   $$->param_type = $1;
+   $$->name = $2;
+   $$->array_index = $4;
+   $$->array_index.insert($$->array_index.begin(),nullptr);
+   $$->loc = @$;
 }
 ;
 
