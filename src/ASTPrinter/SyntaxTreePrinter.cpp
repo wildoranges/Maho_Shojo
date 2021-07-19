@@ -219,7 +219,8 @@ void SyntaxTreePrinter::visit(FuncParam &node)
     for(auto exp:node.array_index)
     {
         std::cout << "[";
-        exp->accept(*this);
+        if (exp != nullptr)
+            exp->accept(*this);
         std::cout << "]";
     }
 }
