@@ -106,24 +106,60 @@ public:
         builder = new IRBuilder(nullptr, module.get());
         auto TyVoid = Type::get_void_type(module.get());
         auto TyInt32 = Type::get_int32_type(module.get());
+        auto TyInt32Ptr = Type::get_int32_ptr_type(module.get());
 
         auto input_type = FunctionType::get(TyInt32, {});
-        auto input_fun =
+        auto get_int =
             Function::create(
                     input_type,
-                    "input",
+                    "getint",
+                    module.get());
+
+        input_type = FunctionType::get(TyInt32, {});
+        auto get_char =
+            Function::create(
+                    input_type,
+                    "getch",
+                    module.get());
+
+        std::vector<Type *> input_params;
+        std::vector<Type *>().swap(input_params);
+        input_params.push_back(TyInt32Ptr);
+        input_type = FunctionType::get(TyInt32, input_params);
+        auto get_array =
+            Function::create(
+                    input_type,
+                    "getarray",
                     module.get());
 
         std::vector<Type *> output_params;
+        std::vector<Type *>().swap(output_params);
         output_params.push_back(TyInt32);
         auto output_type = FunctionType::get(TyVoid, output_params);
-        auto output_fun =
+        auto put_int =
             Function::create(
                     output_type,
-                    "output",
+                    "putint",
                     module.get());
 
-        std::vector<Type *> output_float_params;
+        std::vector<Type *>().swap(output_params);
+        output_params.push_back(TyInt32);
+        output_type = FunctionType::get(TyVoid, output_params);
+        auto put_char =
+            Function::create(
+                    output_type,
+                    "putch",
+                    module.get());
+
+        std::vector<Type *>().swap(output_params);
+        output_params.push_back(TyInt32);
+        output_params.push_back(TyInt32Ptr);
+        output_type = FunctionType::get(TyVoid, output_params);
+        auto put_array =
+            Function::create(
+                    output_type,
+                    "putarray",
+                    module.get());
 
         auto neg_idx_except_type = FunctionType::get(TyVoid, {});
         auto neg_idx_except_fun =
@@ -133,8 +169,12 @@ public:
                     module.get());
 
         scope.enter();
-        scope.push("input", input_fun);
-        scope.push("output", output_fun);
+        scope.push("getint", get_int);
+        scope.push("getch", get_char);
+        scope.push("getarray", get_array);
+        scope.push("putint", put_int);
+        scope.push("putch", put_char);
+        scope.push("putarray", put_array);
         scope.push("neg_idx_except", neg_idx_except_fun);
     }
     std::unique_ptr<Module> getModule() {
