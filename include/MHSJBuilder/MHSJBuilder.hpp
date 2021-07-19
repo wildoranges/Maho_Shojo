@@ -161,13 +161,6 @@ public:
                     "putarray",
                     module.get());
 
-        auto neg_idx_except_type = FunctionType::get(TyVoid, {});
-        auto neg_idx_except_fun =
-            Function::create(
-                    neg_idx_except_type,
-                    "neg_idx_except",
-                    module.get());
-
         scope.enter();
         scope.push("getint", get_int);
         scope.push("getch", get_char);
@@ -175,7 +168,6 @@ public:
         scope.push("putint", put_int);
         scope.push("putch", put_char);
         scope.push("putarray", put_array);
-        scope.push("neg_idx_except", neg_idx_except_fun);
     }
     std::unique_ptr<Module> getModule() {
         return std::move(module);

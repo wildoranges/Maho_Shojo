@@ -280,7 +280,12 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
       builder->set_insert_point(contBB);*/
       if (node.array_index.size() == 1) {
         // 1维数组
-        auto tmp_ptr = builder->create_gep(var, {CONST_INT(0), index_val});
+        Value * tmp_ptr;
+        if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
+          tmp_ptr = builder->create_load(var);
+        } else {
+          tmp_ptr = builder->create_gep(var, {CONST_INT(0), index_val});
+        }
         if (should_return_lvalue) {
           tmp_val = tmp_ptr;
           require_lvalue = false;
@@ -299,7 +304,12 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
       }
     } // end for
     if (node.array_index.size() > 1) {
-      auto tmp_ptr = builder->create_gep(var, {CONST_INT(0), var_index});
+      Value * tmp_ptr;
+      if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
+        tmp_ptr = builder->create_load(var);
+      } else {
+        tmp_ptr = builder->create_gep(var, {CONST_INT(0), var_index});
+      }
       if (should_return_lvalue) {
         tmp_val = tmp_ptr;
         require_lvalue = false;
@@ -451,11 +461,16 @@ void MHSJBuilder::visit(SyntaxTree::UnaryExpr &node) {
 void MHSJBuilder::visit(SyntaxTree::FuncCallStmt &node) {
   auto fun = static_cast<Function *>(scope.find(node.name));//FIXME:STATIC OR DYNAMIC?
   std::vector<Value *> params;
-  auto param_type = fun->get_function_type()->param_begin();
+  int i = 0;
   for (auto &param : node.params) {
+    if (fun->get_function_type()->get_param_type(i++)->is_integer_type()) {
+      require_lvalue = false;
+    } else {
+      require_lvalue = true;
+    }
     param->accept(*this);
+    require_lvalue = false;
     params.push_back(tmp_val);
-    param_type++;
   }
   tmp_val = builder->create_call(static_cast<Function *>(fun), params);
 }
