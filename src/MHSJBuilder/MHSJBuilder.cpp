@@ -69,18 +69,17 @@ void MHSJBuilder::visit(SyntaxTree::InitVal &node) {
         cur_pos++;
       }
     }
+    int cur_start_pos = cur_pos;
     for (const auto& elem : node.elementList) {
       cur_depth++;
       elem->accept(*this);
       cur_depth--;
     }
     if (cur_depth!=0){
-      while (cur_pos % array_sizes[cur_depth] != array_sizes[cur_depth] - 1) {
+      while (cur_pos < cur_start_pos + array_sizes[cur_depth]) {
         init_val.push_back(CONST_INT(0));
         cur_pos++;
       }
-      init_val.push_back(CONST_INT(0));
-      cur_pos++;
     }
     if (cur_depth==0){
       while (cur_pos < array_sizes[0]){
