@@ -553,6 +553,9 @@ void MHSJBuilder::visit(SyntaxTree::UnaryExpr &node) {
       tmp_val = CONST_INT(0 - val_const->get_value());
     }
     else{
+      if (dynamic_cast<CmpInst*>(r_val) != nullptr) {
+        r_val = builder->create_zext(r_val, INT32_T);
+      }
       tmp_val = builder->create_isub(CONST_INT(0), r_val);
     }
   }
