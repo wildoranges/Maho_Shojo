@@ -368,7 +368,7 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
   CmpInst *cond_val;
   if (node.op == SyntaxTree::BinaryCondOp::LAND) {
     auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
-    node.lhs->accept(*this);
+    node.rhs->accept(*this);
     auto ret_val = tmp_val;
     cond_val = dynamic_cast<CmpInst *>(ret_val);
     if (cond_val == nullptr) {
@@ -376,10 +376,10 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
     }
     builder->create_cond_br(cond_val, trueBB, IF_While_Stack.back().falseBB);
     builder->set_insert_point(trueBB);
-    node.rhs->accept(*this);
+    node.lhs->accept(*this);
   } else if (node.op == SyntaxTree::BinaryCondOp::LOR) {
     auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
-    node.lhs->accept(*this);
+    node.rhs->accept(*this);
     auto ret_val = tmp_val;
     cond_val = dynamic_cast<CmpInst *>(ret_val);
     if (cond_val == nullptr) {
@@ -387,7 +387,7 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
     }
     builder->create_cond_br(cond_val, IF_While_Stack.back().trueBB, falseBB);
     builder->set_insert_point(falseBB);
-    node.rhs->accept(*this);
+    node.lhs->accept(*this);
   } else {
     node.lhs->accept(*this);
     auto l_val = tmp_val;
@@ -419,6 +419,7 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
     case SyntaxTree::BinaryCondOp::NEQ:
       cmp = builder->create_icmp_ne(l_val, r_val);
       break;
+    default: break;
     }
     tmp_val = cmp;
   }
