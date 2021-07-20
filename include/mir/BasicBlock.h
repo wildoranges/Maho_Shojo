@@ -61,6 +61,10 @@ public:
     void erase_from_parent();
     
     virtual std::string print() override;
+    void set_idom(BasicBlock* bb){idom_ = bb;}
+    BasicBlock* get_idom(){return idom_;}
+    void add_dom_frontier(BasicBlock* bb){dom_frontier_.insert(bb);}
+    std::set<BasicBlock*> get_dom_frontier(){return dom_frontier_;}
 
 private:
     explicit BasicBlock(Module *m, const std::string &name ,
@@ -69,7 +73,8 @@ private:
     std::list<BasicBlock *> succ_bbs_;
     std::list<Instruction *> instr_list_;
     Function *parent_;
-
+    BasicBlock* idom_ = nullptr;
+    std::set<BasicBlock*> dom_frontier_;
 };
 
 #endif // SYSY_BASICBLOCK_H
