@@ -157,8 +157,59 @@ void MHSJBuilder::visit(SyntaxTree::FuncParam &node) {
 
 void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
   Type *var_type;
-  if (node.is_constant && 0) {
-    // TODO:constant
+  if (node.is_constant) {
+    // constant
+    Value *var;
+    if (node.array_length.empty()){
+      node.initializers->accept(*this);
+      auto initializer = dynamic_cast<ConstantInt *>(tmp_val)->get_value();
+      var = ConstantInt::get(initializer, module.get());
+      scope.push(node.name, var);
+    }
+    else {
+      //array
+      array_bounds.clear();
+      array_sizes.clear();
+      for (const auto& bound_expr : node.array_length) {
+        bound_expr->accept(*this);
+        auto bound_const = dynamic_cast<ConstantInt *>(tmp_val);
+        auto bound = bound_const->get_value();
+        array_bounds.push_back(bound);
+      }
+      int total_size = 1;
+      for (auto iter = array_bounds.rbegin(); iter != array_bounds.rend();
+           iter++) {
+        array_sizes.insert(array_sizes.begin(), total_size);
+        total_size *= (*iter);
+      }
+      array_sizes.insert(array_sizes.begin(), total_size);
+
+      var_type = INT32_T;
+      auto *array_type = ArrayType::get(var_type, total_size);
+
+      node.initializers->accept(*this);
+      auto initializer = ConstantArray::get(array_type, init_val);
+
+      if (scope.in_global()){
+        var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
+        scope.push(node.name, var);
+        scope.push_size(node.name, array_sizes);
+        scope.push_const(node.name, initializer);
+      }
+      else {
+        var = builder->create_alloca(array_type);
+        scope.push(node.name, var);
+        scope.push_size(node.name, array_sizes);
+        scope.push_const(node.name, initializer);
+        for (int i = 0; i < array_sizes[0]; i++) {
+          if (initval[i]) {
+            builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
+          } else {
+            builder->create_store(CONST_INT(0), builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
+          }
+        }
+      }
+    }
   } else {
     var_type = INT32_T;
     if (node.array_length.empty()) {
@@ -168,12 +219,13 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
           node.initializers->accept(*this);
           auto initializer = dynamic_cast<ConstantInt *>(tmp_val);
           var = GlobalVariable::create(node.name, module.get(), var_type, false, initializer);
+          scope.push(node.name, var);
         }
         else{
           auto initializer = ConstantZero::get(var_type, module.get());
           var = GlobalVariable::create(node.name, module.get(), var_type, false, initializer);
+          scope.push(node.name, var);
         }
-        scope.push(node.name, var);
       } else {
         var = builder->create_alloca(var_type);
         scope.push(node.name, var);
@@ -268,7 +320,13 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
       }
       require_lvalue = false;
     } else {
-      tmp_val = builder->create_load(var);
+      auto val_const = dynamic_cast<ConstantInt *>(var);
+      if (val_const != nullptr){
+        tmp_val = val_const;
+      }
+      else{
+        tmp_val = builder->create_load(var);
+      }
     }
   } else {
     auto var_sizes = scope.find_size(node.name);
@@ -428,24 +486,51 @@ void MHSJBuilder::visit(SyntaxTree::BinaryExpr &node) {
     node.lhs->accept(*this);
   } else {
     node.rhs->accept(*this);
+    auto r_val_const = dynamic_cast<ConstantInt *>(tmp_val);
     auto r_val = tmp_val;
     node.lhs->accept(*this);
+    auto l_val_const = dynamic_cast<ConstantInt *>(tmp_val);
     auto l_val = tmp_val;
     switch (node.op) {
     case SyntaxTree::BinOp::PLUS:
-      tmp_val = builder->create_iadd(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() + r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_iadd(l_val, r_val);
+      }
       break;
     case SyntaxTree::BinOp::MINUS:
-      tmp_val = builder->create_isub(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() - r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_isub(l_val, r_val);
+      }
       break;
     case SyntaxTree::BinOp::MULTIPLY:
-      tmp_val = builder->create_imul(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() * r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_imul(l_val, r_val);
+      }
       break;
     case SyntaxTree::BinOp::DIVIDE:
-      tmp_val = builder->create_isdiv(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() / r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_isdiv(l_val, r_val);
+      }
       break;
     case SyntaxTree::BinOp::MODULO:
-      tmp_val = builder->create_isrem(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() % r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_isrem(l_val, r_val);
+      }
     }
   }
 }
@@ -453,8 +538,14 @@ void MHSJBuilder::visit(SyntaxTree::BinaryExpr &node) {
 void MHSJBuilder::visit(SyntaxTree::UnaryExpr &node) {
   node.rhs->accept(*this);
   if (node.op == SyntaxTree::UnaryOp::MINUS) {
+    auto val_const = dynamic_cast<ConstantInt *>(tmp_val);
     auto r_val = tmp_val;
-    tmp_val = builder->create_isub(CONST_INT(0), r_val);
+    if (val_const != nullptr){
+      tmp_val = CONST_INT(0 - val_const->get_value());
+    }
+    else{
+      tmp_val = builder->create_isub(CONST_INT(0), r_val);
+    }
   }
 }
 

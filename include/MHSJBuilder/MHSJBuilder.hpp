@@ -16,12 +16,14 @@ public:
     void enter() {
         inner.push_back({});
         inner_array_size.push_back({});
+        inner_array_const.push_back({});
     }
 
     // exit a scope
     void exit() {
         inner.pop_back();
         inner_array_size.pop_back();
+        inner_array_const.pop_back();
     }
 
     bool in_global() {
@@ -49,9 +51,6 @@ public:
 
     bool push_size(std::string name, std::vector<int> size){
         auto result = inner_array_size[inner_array_size.size() - 1].insert({name,size});
-        /*for (auto size_one: size){
-            inner_array_size[inner_array_size.size() - 1][name].push_back(size_one);
-        }*/
         return result.second;
     }
 
@@ -66,9 +65,26 @@ public:
         return {};
     }
 
+    bool push_const(std::string name, Value* size){
+        auto result = inner_array_const[inner_array_const.size() - 1].insert({name,size});
+        return result.second;
+    }
+
+    Value* find_const(std::string name) {
+        for (auto s = inner_array_const.rbegin(); s!=inner_array_const.rend(); s++){
+            auto iter = s->find(name);
+            if (iter != s->end()) {
+                return iter->second;
+            }
+        }
+
+        return {};
+    }
+
 private:
     std::vector<std::map<std::string, Value *>> inner;
     std::vector<std::map<std::string, std::vector<int>>> inner_array_size;
+    std::vector<std::map<std::string, Value *>> inner_array_const;
 };
 
 class MHSJBuilder: public SyntaxTree::Visitor
