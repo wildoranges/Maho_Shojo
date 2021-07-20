@@ -161,6 +161,20 @@ public:
                     "putarray",
                     module.get());
 
+        auto time_type = FunctionType::get(TyVoid, {});
+        auto start_time =
+            Function::create(
+                    time_type,
+                    "starttime",
+                    module.get());
+
+        time_type = FunctionType::get(TyVoid, {});
+        auto stop_time =
+            Function::create(
+                    time_type,
+                    "stoptime",
+                    module.get());
+
         scope.enter();
         scope.push("getint", get_int);
         scope.push("getch", get_char);
@@ -168,6 +182,8 @@ public:
         scope.push("putint", put_int);
         scope.push("putch", put_char);
         scope.push("putarray", put_array);
+        scope.push("starttime", start_time);
+        scope.push("stoptime", stop_time);
     }
     std::unique_ptr<Module> getModule() {
         return std::move(module);
