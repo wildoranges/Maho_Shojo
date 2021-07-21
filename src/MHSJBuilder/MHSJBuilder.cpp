@@ -126,7 +126,8 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
   for (auto arg = fun->arg_begin(); arg != fun->arg_end(); arg++) {
     args.push_back(*arg);
   }
-  for (int i = 0; i < func_fparams.size(); i++) {
+  int param_num = func_fparams.size();
+  for (int i = 0; i < param_num; i++) {
     if (func_fparams[i].array_index.empty()) {
       Value *alloc;
       alloc = builder->create_alloca(INT32_T);
@@ -138,6 +139,27 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
       alloc_array = builder->create_alloca(INT32PTR_T);
       builder->create_store(args[i], alloc_array);
       scope.push(func_fparams[i].name, alloc_array);
+      array_bounds.clear();
+      array_sizes.clear();
+      for (auto bound_expr : func_fparams[i].array_index) {
+        int bound;
+        if (bound_expr==nullptr){
+          bound = 1;
+        }
+        else{
+          bound_expr->accept(*this);
+          auto bound_const = dynamic_cast<ConstantInt *>(tmp_val);
+          bound = bound_const->get_value();
+        }
+        array_bounds.push_back(bound);
+      }
+      int total_size = 1;
+      for (auto iter = array_bounds.rbegin(); iter != array_bounds.rend();iter++) {
+        array_sizes.insert(array_sizes.begin(), total_size);
+        total_size *= (*iter);
+      }
+      array_sizes.insert(array_sizes.begin(), total_size);
+      scope.push_size(func_fparams[i].name, array_sizes);
     }
   }
   node.body->accept(*this);
@@ -477,7 +499,7 @@ void MHSJBuilder::visit(SyntaxTree::BlockStmt &node) {
   }
 }
 
-void MHSJBuilder::visit(SyntaxTree::EmptyStmt &node) {}
+void MHSJBuilder::visit(SyntaxTree::EmptyStmt &node) { tmp_val = nullptr; }
 
 void MHSJBuilder::visit(SyntaxTree::ExprStmt &node) { node.exp->accept(*this); }
 
