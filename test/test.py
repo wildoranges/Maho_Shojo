@@ -3,10 +3,10 @@ import subprocess
 import os
 
 IRBuild_ptn = '"{}" "-nocheck" "-emit-mir" "-o" "{}" "{}"'
-ExeGen_ptn = '"clang" "-o" "{}" "{}" "../lib/lib.c"'
+ExeGen_ptn = '"clang" "{}" "-o" "{}" "{}" "../lib/lib.c"'
 Exe_ptn = '"{}"'
 
-def eval(EXE_PATH, TEST_BASE_PATH):
+def eval(EXE_PATH, TEST_BASE_PATH, timeout, optimization):
     print('===========TEST START===========')
     for case in testcases:
         print('Case %s:' % case, end='')
@@ -25,8 +25,8 @@ def eval(EXE_PATH, TEST_BASE_PATH):
                     input_option = fin.read()
 
             try:
-                subprocess.run(ExeGen_ptn.format(TEST_PATH, LL_PATH), shell=True, stderr=subprocess.PIPE)
-                result = subprocess.run(Exe_ptn.format(TEST_PATH), shell=True, input=input_option, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=1)
+                subprocess.run(ExeGen_ptn.format(optimization, TEST_PATH, LL_PATH), shell=True, stderr=subprocess.PIPE)
+                result = subprocess.run(Exe_ptn.format(TEST_PATH), shell=True, input=input_option, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
                 out = result.stdout.split(b'\n')
                 if result.returncode != b'':
                     out.append(str(result.returncode).encode())
@@ -42,11 +42,12 @@ def eval(EXE_PATH, TEST_BASE_PATH):
                             continue
                         if out[i] != line:
                             Success_flag == False
-                            #print(result.stdout, result.returncode, out[i], line, end='')
+                            print(result.stdout, result.returncode, out[i], line, end='')
                             print('\t\033[31mWrong Answer\033[0m')
                         i = i + 1
                     if Success_flag == True:
                         print('\t\033[32mSuccess\033[0m')
+                print(result.stderr.decode())
             except Exception as _:
                 print(_, end='')
                 print('\t\033[31mExeGen or Execute Fail\033[0m')
@@ -63,12 +64,13 @@ def eval(EXE_PATH, TEST_BASE_PATH):
 
 
 if __name__ == "__main__":
-    # { name: need_input }
-    testcases = {}
+    # you should only revise this
+    TEST_BASE_PATH = './performance_test2021_pre/'
+    timeout = 10
+    optimization = "-O3"     # -O0 -O1 -O2 -O3 -O4(currently = -O3) -Ofast
+    # you should only revise this
+    testcases = {}  # { name: need_input }
     EXE_PATH = os.path.abspath('../build/compiler')
-    # you should only revise this
-    TEST_BASE_PATH = './function_test2021/'
-    # you should only revise this
     testcase_list = list(map(lambda x: x.split('.'), os.listdir(TEST_BASE_PATH)))
     testcase_list.sort()
     for i in range(len(testcase_list)-1, -1, -1):
@@ -78,4 +80,4 @@ if __name__ == "__main__":
         testcases[testcase_list[i][0]] = False
     for i in range(len(testcase_list)):
         testcases[testcase_list[i][0]] = testcases[testcase_list[i][0]] | (testcase_list[i][1] == 'in')
-    eval(EXE_PATH, TEST_BASE_PATH)
+    eval(EXE_PATH, TEST_BASE_PATH, timeout=timeout, optimization=optimization)
