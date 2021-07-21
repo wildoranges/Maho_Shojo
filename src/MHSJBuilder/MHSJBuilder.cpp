@@ -37,6 +37,7 @@ std::list<true_false_BB> IF_While_And_Cond_Stack; // used for Cond
 std::list<true_false_BB> IF_While_Or_Cond_Stack; // used for Cond
 std::list<true_false_BB> While_Stack;    // used for break and continue
 // used for backpatching
+std::vector<BasicBlock*> cur_basic_block_list;
 std::vector<SyntaxTree::FuncParam> func_fparams;
 std::vector<int> array_bounds;
 std::vector<int> array_sizes;
@@ -118,6 +119,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
   cur_fun = fun;
   auto funBB = BasicBlock::create(module.get(), "entry", fun);
   builder->set_insert_point(funBB);
+  cur_basic_block_list.push_back(funBB);
   scope.enter();
   pre_enter_scope = true;
   std::vector<Value *> args;
@@ -146,6 +148,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
       builder->create_ret(CONST_INT(0));
   }
   scope.exit();
+  cur_basic_block_list.pop_back();
 }
 
 void MHSJBuilder::visit(SyntaxTree::FuncFParamList &node) {
@@ -160,6 +163,12 @@ void MHSJBuilder::visit(SyntaxTree::FuncParam &node) {
 
 void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
   Type *var_type;
+  BasicBlock *cur_fun_entry_block;
+  BasicBlock *cur_fun_cur_block;
+  if (scope.in_global() == false) {
+    cur_fun_entry_block = cur_fun->get_entry_block();   // entry block
+    cur_fun_cur_block = cur_basic_block_list.back();                // current block
+  }
   if (node.is_constant) {
     // constant
     Value *var;
@@ -181,7 +190,7 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
       }
       int total_size = 1;
       for (auto iter = array_bounds.rbegin(); iter != array_bounds.rend();
-           iter++) {
+            iter++) {
         array_sizes.insert(array_sizes.begin(), total_size);
         total_size *= (*iter);
       }
@@ -200,7 +209,16 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         scope.push_const(node.name, initializer);
       }
       else {
+        auto tmp_terminator = cur_fun_entry_block->get_terminator();
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->delete_instr(tmp_terminator);
+        }
         var = builder->create_alloca(array_type);
+        cur_fun_cur_block->delete_instr(dynamic_cast<Instruction*>(var));
+        cur_fun_entry_block->add_instruction(dynamic_cast<Instruction*>(var));
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->add_instruction(tmp_terminator);
+        }
         scope.push(node.name, var);
         scope.push_size(node.name, array_sizes);
         scope.push_const(node.name, initializer);
@@ -233,7 +251,16 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         }
       }
       else {
+        auto tmp_terminator = cur_fun_entry_block->get_terminator();
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->delete_instr(tmp_terminator);
+        }
         var = builder->create_alloca(var_type);
+        cur_fun_cur_block->delete_instr(dynamic_cast<Instruction*>(var));
+        cur_fun_entry_block->add_instruction(dynamic_cast<Instruction*>(var));
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->add_instruction(tmp_terminator);
+        }
         scope.push(node.name, var);
         if (node.is_inited) {
           node.initializers->accept(*this);
@@ -253,7 +280,7 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
       }
       int total_size = 1;
       for (auto iter = array_bounds.rbegin(); iter != array_bounds.rend();
-           iter++) {
+            iter++) {
         array_sizes.insert(array_sizes.begin(), total_size);
         total_size *= (*iter);
       }
@@ -280,7 +307,16 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         }
       }
       else {
+        auto tmp_terminator = cur_fun_entry_block->get_terminator();
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->delete_instr(tmp_terminator);
+        }
         var = builder->create_alloca(array_type);
+        cur_fun_cur_block->delete_instr(dynamic_cast<Instruction*>(var));
+        cur_fun_entry_block->add_instruction(dynamic_cast<Instruction*>(var));
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->add_instruction(tmp_terminator);
+        }
         scope.push(node.name, var);
         scope.push_size(node.name, array_sizes);
         if (node.is_inited) {
@@ -637,7 +673,9 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   else {
     builder->create_cond_br(cond_val, trueBB, falseBB);
   }
+  cur_basic_block_list.pop_back();
   builder->set_insert_point(trueBB);
+  cur_basic_block_list.push_back(trueBB);
   if (dynamic_cast<SyntaxTree::BlockStmt *>(node.if_statement.get())) {
     node.if_statement->accept(*this);
   }
@@ -647,14 +685,17 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
     scope.exit();
   }
 
-  if (builder->get_insert_block()->get_terminator() == nullptr)
+  if (builder->get_insert_block()->get_terminator() == nullptr) {
     builder->create_br(contBB);
+  }
+  cur_basic_block_list.pop_back();
 
   if (node.else_statement == nullptr) {
     falseBB->erase_from_parent();
   }
   else {
     builder->set_insert_point(falseBB);
+    cur_basic_block_list.push_back(falseBB);
     if (dynamic_cast<SyntaxTree::BlockStmt *>(node.else_statement.get())) {
       node.else_statement->accept(*this);
     }
@@ -663,11 +704,14 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
       node.else_statement->accept(*this);
       scope.exit();
     }
-    if (builder->get_insert_block()->get_terminator() == nullptr)
+    if (builder->get_insert_block()->get_terminator() == nullptr) {
       builder->create_br(contBB);
+    }
+    cur_basic_block_list.pop_back();
   }
 
   builder->set_insert_point(contBB);
+  cur_basic_block_list.push_back(contBB);
 }
 
 void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
@@ -675,8 +719,10 @@ void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
   auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
   auto contBB = BasicBlock::create(module.get(), "", cur_fun);
   While_Stack.push_back({whileBB, contBB});
-  if (builder->get_insert_block()->get_terminator() == nullptr)
+  if (builder->get_insert_block()->get_terminator() == nullptr) {
     builder->create_br(whileBB);
+  }
+  cur_basic_block_list.pop_back();
   builder->set_insert_point(whileBB);
   IF_While_Or_Cond_Stack.push_back({trueBB, contBB});
   node.cond_exp->accept(*this);
@@ -688,6 +734,7 @@ void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
   }
   builder->create_cond_br(cond_val, trueBB, contBB);
   builder->set_insert_point(trueBB);
+  cur_basic_block_list.push_back(trueBB);
   if (dynamic_cast<SyntaxTree::BlockStmt *>(node.statement.get())) {
     node.statement->accept(*this);
   }
@@ -696,9 +743,12 @@ void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
     node.statement->accept(*this);
     scope.exit();
   }
-  if (builder->get_insert_block()->get_terminator() == nullptr)
+  if (builder->get_insert_block()->get_terminator() == nullptr) {
     builder->create_br(whileBB);
+  }
+  cur_basic_block_list.pop_back();
   builder->set_insert_point(contBB);
+  cur_basic_block_list.push_back(contBB);
   While_Stack.pop_back();
 }
 
