@@ -65,12 +65,12 @@ public:
         return {};
     }
 
-    bool push_const(std::string name, Value* size){
+    bool push_const(std::string name, ConstantArray* size){
         auto result = inner_array_const[inner_array_const.size() - 1].insert({name,size});
         return result.second;
     }
 
-    Value* find_const(std::string name) {
+    ConstantArray* find_const(std::string name) {
         for (auto s = inner_array_const.rbegin(); s!=inner_array_const.rend(); s++){
             auto iter = s->find(name);
             if (iter != s->end()) {
@@ -78,13 +78,13 @@ public:
             }
         }
 
-        return {};
+        return nullptr;
     }
 
 private:
     std::vector<std::map<std::string, Value *>> inner;
     std::vector<std::map<std::string, std::vector<int>>> inner_array_size;
-    std::vector<std::map<std::string, Value *>> inner_array_const;
+    std::vector<std::map<std::string, ConstantArray *>> inner_array_const;
 };
 
 class MHSJBuilder: public SyntaxTree::Visitor

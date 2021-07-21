@@ -106,7 +106,8 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
     if (param.param_type == SyntaxTree::Type::INT) {
       if (param.array_index.empty()) {
         param_types.push_back(INT32_T);
-      } else {
+      }
+      else {
         param_types.push_back(INT32PTR_T);
       }
     }
@@ -129,7 +130,8 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
       alloc = builder->create_alloca(INT32_T);
       builder->create_store(args[i], alloc);
       scope.push(func_fparams[i].name, alloc);
-    } else {
+    }
+    else {
       Value *alloc_array;
       alloc_array = builder->create_alloca(INT32PTR_T);
       builder->create_store(args[i], alloc_array);
@@ -205,13 +207,15 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         for (int i = 0; i < array_sizes[0]; i++) {
           if (initval[i]) {
             builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
-          } else {
+          }
+          else {
             builder->create_store(CONST_INT(0), builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
           }
         }
       }
     }
-  } else {
+  }
+  else {
     var_type = INT32_T;
     if (node.array_length.empty()) {
       Value *var;
@@ -227,7 +231,8 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
           var = GlobalVariable::create(node.name, module.get(), var_type, false, initializer);
           scope.push(node.name, var);
         }
-      } else {
+      }
+      else {
         var = builder->create_alloca(var_type);
         scope.push(node.name, var);
         if (node.is_inited) {
@@ -235,7 +240,8 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
           builder->create_store(tmp_val, var);
         }
       }
-    } else {
+    }
+    else {
       // array
       array_bounds.clear();
       array_sizes.clear();
@@ -285,7 +291,8 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
           for (int i = 0; i < array_sizes[0]; i++) {
             if (initval[i]) {
               builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
-            } else {
+            }
+            else {
               builder->create_store(CONST_INT(0), builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
             }
           }
@@ -314,13 +321,16 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
     if (should_return_lvalue) {
       if (var->get_type()->get_pointer_element_type()->is_array_type()) {
         tmp_val = builder->create_gep(var, {CONST_INT(0), CONST_INT(0)});
-      } else if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
+      }
+      else if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
         tmp_val = builder->create_load(var);
-      } else {
+      }
+      else {
         tmp_val = var;
       }
       require_lvalue = false;
-    } else {
+    }
+    else {
       auto val_const = dynamic_cast<ConstantInt *>(var);
       if (val_const != nullptr){
         tmp_val = val_const;
@@ -329,51 +339,69 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
         tmp_val = builder->create_load(var);
       }
     }
-  } else {
+  }
+  else {
     auto var_sizes = scope.find_size(node.name);
+    std::vector<Value *>all_index;
     Value *var_index = nullptr;
-    for (int i = 0; i < node.array_index.size(); i++) {
+    int index_const = 1;
+    bool const_check = true;
+
+    auto const_array = scope.find_const(node.name);
+    if (const_array == nullptr){
+      const_check = false;
+    }
+
+    for (int i = 0; i < node.array_index.size(); i++){
       node.array_index[i]->accept(*this);
-      auto index_val = tmp_val;
-      if (node.array_index.size() == 1) {
-        // 1维数组
+      all_index.push_back(tmp_val);
+      if (const_check == true){
+        auto tmp_const = dynamic_cast<ConstantInt *>(tmp_val);
+        if (tmp_const == nullptr){
+          const_check = false;
+        }
+        else{
+          index_const = var_sizes[i + 1] * tmp_const->get_value() + index_const;
+        }
+      }
+    }
+
+    if (should_return_lvalue==false && const_check){
+      tmp_val = CONST_INT(index_const);
+    }
+    else{
+      for (int i = 0; i < all_index.size(); i++) {
+        auto index_val = all_index[i];
+        Value *one_index;
+        if (var_sizes[i + 1] > 1){
+          one_index = builder->create_imul(CONST_INT(var_sizes[i + 1]), index_val);
+        }
+        else{
+          one_index = index_val;
+        }
+        if (var_index == nullptr) {
+          var_index = one_index;
+        }
+        else {
+          var_index = builder->create_iadd(var_index, one_index);
+        }
+      } // end for
+      if (node.array_index.size() > 1 || 1) {
         Value * tmp_ptr;
         if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
           auto tmp_load = builder->create_load(var);
-          tmp_ptr = builder->create_gep(tmp_load, {index_val});
-        } else {
-          tmp_ptr = builder->create_gep(var, {CONST_INT(0), index_val});
+          tmp_ptr = builder->create_gep(tmp_load, {var_index});
+        }
+        else {
+          tmp_ptr = builder->create_gep(var, {CONST_INT(0), var_index});
         }
         if (should_return_lvalue) {
           tmp_val = tmp_ptr;
           require_lvalue = false;
-        } else {
+        }
+        else {
           tmp_val = builder->create_load(tmp_ptr);
         }
-      } else {
-        //多维数组
-        auto one_index =
-            builder->create_imul(CONST_INT(var_sizes[i + 1]), index_val);
-        if (var_index == nullptr) {
-          var_index = one_index;
-        } else {
-          var_index = builder->create_iadd(var_index, one_index);
-        }
-      }
-    } // end for
-    if (node.array_index.size() > 1) {
-      Value * tmp_ptr;
-      if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
-        auto tmp_load = builder->create_load(var);
-        tmp_ptr = builder->create_gep(tmp_load, {var_index});
-      } else {
-        tmp_ptr = builder->create_gep(var, {CONST_INT(0), var_index});
-      }
-      if (should_return_lvalue) {
-        tmp_val = tmp_ptr;
-        require_lvalue = false;
-      } else {
-        tmp_val = builder->create_load(tmp_ptr);
       }
     }
   }
@@ -386,7 +414,8 @@ void MHSJBuilder::visit(SyntaxTree::Literal &node) {
 void MHSJBuilder::visit(SyntaxTree::ReturnStmt &node) {
   if (node.ret == nullptr) {
     builder->create_void_ret();
-  } else {
+  }
+  else {
     //auto fun_ret_type = cur_fun->get_function_type()->get_return_type();
     node.ret->accept(*this);
     builder->create_ret(tmp_val);
@@ -397,7 +426,8 @@ void MHSJBuilder::visit(SyntaxTree::BlockStmt &node) {
   bool need_exit_scope = !pre_enter_scope;
   if (pre_enter_scope) {
     pre_enter_scope = false;
-  } else {
+  }
+  else {
     scope.enter();
   }
   for (auto &decl : node.body) {
@@ -440,7 +470,8 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
     builder->create_cond_br(cond_val, trueBB, IF_While_Or_Cond_Stack.back().falseBB);
     builder->set_insert_point(trueBB);
     node.rhs->accept(*this);
-  } else if (node.op == SyntaxTree::BinaryCondOp::LOR) {
+  }
+  else if (node.op == SyntaxTree::BinaryCondOp::LOR) {
     auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
     IF_While_Or_Cond_Stack.push_back({IF_While_Or_Cond_Stack.back().trueBB, falseBB});
     node.lhs->accept(*this);
@@ -453,7 +484,8 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
     builder->create_cond_br(cond_val, IF_While_Or_Cond_Stack.back().trueBB, falseBB);
     builder->set_insert_point(falseBB);
     node.rhs->accept(*this);
-  } else {
+  }
+  else {
     node.lhs->accept(*this);
     auto l_val = tmp_val;
     if (dynamic_cast<CmpInst*>(l_val)) {
@@ -493,7 +525,8 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
 void MHSJBuilder::visit(SyntaxTree::BinaryExpr &node) {
   if (node.rhs == nullptr) {
     node.lhs->accept(*this);
-  } else {
+  }
+  else {
     node.rhs->accept(*this);
     auto r_val_const = dynamic_cast<ConstantInt *>(tmp_val);
     auto r_val = tmp_val;
@@ -568,7 +601,8 @@ void MHSJBuilder::visit(SyntaxTree::FuncCallStmt &node) {
   for (auto &param : node.params) {
     if (fun->get_function_type()->get_param_type(i++)->is_integer_type()) {
       require_lvalue = false;
-    } else {
+    }
+    else {
       require_lvalue = true;
     }
     param->accept(*this);
@@ -586,7 +620,8 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   IF_While_Or_Cond_Stack.back().trueBB = trueBB;
   if (node.else_statement == nullptr) {
     IF_While_Or_Cond_Stack.back().falseBB = contBB;
-  } else {
+  }
+  else {
     IF_While_Or_Cond_Stack.back().falseBB = falseBB;
   }
   node.cond_exp->accept(*this);
@@ -598,13 +633,15 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   }
   if (node.else_statement == nullptr) {
     builder->create_cond_br(cond_val, trueBB, contBB);
-  } else {
+  }
+  else {
     builder->create_cond_br(cond_val, trueBB, falseBB);
   }
   builder->set_insert_point(trueBB);
   if (dynamic_cast<SyntaxTree::BlockStmt *>(node.if_statement.get())) {
     node.if_statement->accept(*this);
-  } else {
+  }
+  else {
     scope.enter();
     node.if_statement->accept(*this);
     scope.exit();
@@ -615,11 +652,13 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
 
   if (node.else_statement == nullptr) {
     falseBB->erase_from_parent();
-  } else {
+  }
+  else {
     builder->set_insert_point(falseBB);
     if (dynamic_cast<SyntaxTree::BlockStmt *>(node.else_statement.get())) {
       node.else_statement->accept(*this);
-    } else {
+    }
+    else {
       scope.enter();
       node.else_statement->accept(*this);
       scope.exit();
@@ -651,7 +690,8 @@ void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
   builder->set_insert_point(trueBB);
   if (dynamic_cast<SyntaxTree::BlockStmt *>(node.statement.get())) {
     node.statement->accept(*this);
-  } else {
+  }
+  else {
     scope.enter();
     node.statement->accept(*this);
     scope.exit();
