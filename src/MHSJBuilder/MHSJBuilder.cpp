@@ -380,7 +380,7 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
     auto var_sizes = scope.find_size(node.name);
     std::vector<Value *>all_index;
     Value *var_index = nullptr;
-    int index_const = 1;
+    int index_const = 0;
     bool const_check = true;
 
     auto const_array = scope.find_const(node.name);
@@ -403,7 +403,8 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
     }
 
     if (should_return_lvalue==false && const_check){
-      tmp_val = CONST_INT(index_const);
+      ConstantInt *tmp_const = dynamic_cast<ConstantInt *>(const_array->get_element_value(index_const));
+      tmp_val = CONST_INT(tmp_const->get_value());
     }
     else{
       for (int i = 0; i < all_index.size(); i++) {
