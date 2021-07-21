@@ -29,6 +29,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/ASTPrinter)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/StaticChecker)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/MHSJBuilder)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/mir)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/Optimize)
 
 
 # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -40,6 +41,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/ASTBuilder)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/ASTPrinter)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/StaticChecker)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/MHSJBuilder)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/Optimize)
 
 
 add_executable(
@@ -56,6 +58,7 @@ target_link_libraries(
     err_report
     checker
     ASTPrinter
+    pass
 )
 
 install(
