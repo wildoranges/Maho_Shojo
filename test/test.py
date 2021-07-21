@@ -66,8 +66,8 @@ def eval(EXE_PATH, TEST_BASE_PATH, timeout, optimization):
 if __name__ == "__main__":
     # you should only revise this
     TEST_BASE_PATH = './performance_test2021_pre/'
-    timeout = 10
-    optimization = "-O3"     # -O0 -O1 -O2 -O3 -O4(currently = -O3) -Ofast
+    timeout = 50             # generally less than 50s
+    optimization = "-O0"     # -O0 -O1 -O2 -O3 -O4(currently = -O3) -Ofast
     # you should only revise this
     testcases = {}  # { name: need_input }
     EXE_PATH = os.path.abspath('../build/compiler')
