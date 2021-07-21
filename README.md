@@ -31,7 +31,7 @@ $ make
 ## 魔法少女使用指南
 ```shell
 $ cd build
-$ ./MHSJ [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] <input-file>
+$ ./compiler [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] <input-file>
 ```
 
 ### flag说明:
@@ -49,4 +49,3 @@ $ ./MHSJ [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -e
 `-emit-ast`通过ast复原代码，直接打印出来
 
 `-nocheck`不进行静态检查
-
