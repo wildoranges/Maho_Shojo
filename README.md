@@ -18,6 +18,8 @@ https://gitlab.eduxiji.net/nscscc/compiler2021/-/tree/master
 
 > 07.18 完成MIR构建。准备进行目标平台代码生成。
 
+> 07.21 完成MIR测试，通过2020，2021全部公开的功能测试。
+
 ## 魔法少女育成指南
 ```shell
 $ mkdir build
