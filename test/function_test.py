@@ -3,7 +3,7 @@ import subprocess
 import os
 
 IRBuild_ptn = '"{}" "-nocheck" "-emit-mir" "-o" "{}" "{}"'
-ExeGen_ptn = '"clang" "-o" "{}" "{}" "../lib/libsysy_x86_64.a"'
+ExeGen_ptn = '"clang" "-o" "{}" "{}" "../lib/lib.c"'
 Exe_ptn = '"{}"'
 
 def eval(EXE_PATH, TEST_BASE_PATH):
@@ -42,7 +42,7 @@ def eval(EXE_PATH, TEST_BASE_PATH):
                             continue
                         if out[i] != line:
                             Success_flag == False
-                            print(result.stdout, result.returncode, out[i], line, end='')
+                            #print(result.stdout, result.returncode, out[i], line, end='')
                             print('\t\033[31mWrong Answer\033[0m')
                         i = i + 1
                     if Success_flag == True:
@@ -71,6 +71,9 @@ if __name__ == "__main__":
     # you should only revise this
     testcase_list = list(map(lambda x: x.split('.'), os.listdir(TEST_BASE_PATH)))
     testcase_list.sort()
+    for i in range(len(testcase_list)-1, -1, -1):
+        if len(testcase_list[i]) == 1:
+            testcase_list.remove(testcase_list[i])
     for i in range(len(testcase_list)):
         testcases[testcase_list[i][0]] = False
     for i in range(len(testcase_list)):
