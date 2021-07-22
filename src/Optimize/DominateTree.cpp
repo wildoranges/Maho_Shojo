@@ -6,6 +6,10 @@
 
 void DominateTree::execute() {
     for(auto f:module->get_functions()){
+        if(f->get_basic_blocks().size()==0){
+            continue;
+        }
+        //std::cout<<"here:"<<f->get_name()<<std::endl;
         get_bb_idom(f);
         get_bb_dom_front(f);
     }
@@ -14,7 +18,8 @@ void DominateTree::execute() {
 
 void DominateTree::get_post_order(BasicBlock *bb,std::set<BasicBlock*>& visited) {
     visited.insert(bb);
-    for(auto child : bb->get_succ_basic_blocks()){
+    auto children = bb->get_succ_basic_blocks();
+    for(auto child : children){
         auto is_visited = visited.find(child);
         if(is_visited == visited.end()){
             get_post_order(child, visited);
