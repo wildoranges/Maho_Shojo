@@ -3,4 +3,5 @@ add_library(
         Pass.cpp
         CFGSymplifiler.cpp
         DominateTree.cpp
-        mem2reg.cpp)
+        mem2reg.cpp
+        LIR.cpp)
