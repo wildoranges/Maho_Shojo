@@ -69,14 +69,19 @@ int main(int argc, char *argv[])
         std::cout << "passmgr\n";
         passmgr.addPass<DominateTree>();
         std::cout << "DomTree\n";
-        // // passmgr.addPass<Mem2Reg>();
+        passmgr.addPass<Mem2Reg>();
+        std::cout << "Mem2Reg\n";
+        m->set_print_name();
         passmgr.execute();
         std::cout << "exec\n";
         m->set_print_name();
+        std::cout << "setname\n";
         auto IR = m->print();
+        std::cout << "prtm\n";
         std::ofstream output_stream;
         output_stream.open(out_file, std::ios::out);
         output_stream << IR;
+        std::cout << "outputir\n";
         output_stream.close();
     }
     return 0;
