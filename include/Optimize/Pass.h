@@ -30,7 +30,7 @@ public:
         //TODO:Finish Pass Register
     };
     template <typename PassTy> void addPass(bool print_ir = true) {
-        std::cout << "add ";
+        //std::cout << "add ";
         pass_list.push_back(new PassTy(module));
     }
 
