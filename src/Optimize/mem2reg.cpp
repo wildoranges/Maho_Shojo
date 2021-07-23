@@ -9,7 +9,7 @@ void Mem2Reg::execute(){
         genPhi();
         module->set_print_name();
         valueDefineCounting();
-        std::cout << "VDC\n";
+        //std::cout << "VDC\n";
         valueForwarding(func_->get_entry_block());
     }
 }
@@ -54,19 +54,19 @@ void Mem2Reg::insideBlockForwarding(){
             }
         }
         // //debug
-        // std::cout << "new_value:\n";
+        // //std::cout << "new_value:\n";
         // for(auto p: new_value){
-        //     std::cout << p.first->get_name() << "<<>>" << p.second->get_name() << "\n";
+        //     //std::cout << p.first->get_name() << "<<>>" << p.second->get_name() << "\n";
         // }
-        // std::cout << "forwardlist:\n";
+        // //std::cout << "forwardlist:\n";
         // for(auto submap: forward_list){
-        //     std::cout << submap.first.first->get_name() << " " << submap.first.second->get_name() << "\n\t";
+        //     //std::cout << submap.first.first->get_name() << " " << submap.first.second->get_name() << "\n\t";
         //     for(auto inst: submap.second){
-        //         std::cout << inst->get_name() << " ";
+        //         //std::cout << inst->get_name() << " ";
         //     }
-        //     std::cout << "\n";
+        //     //std::cout << "\n";
         // }
-        // std::cout << "\n";
+        // //std::cout << "\n";
 
         for(auto submap: forward_list){
             // Value * lvalue = submap.first.first;
@@ -110,7 +110,7 @@ void Mem2Reg::genPhi(){
     std::map<BasicBlock *, std::set<Value *>> bb_phi_list;
 
     for(auto var: globals){
-        std::cout << var->get_name() << "\n";
+        //std::cout << var->get_name() << "\n";
         auto define_bbs = defined_in_block.find(var)->second;
         std::vector<BasicBlock *> queue;
         queue.assign(define_bbs.begin(), define_bbs.end());
@@ -163,7 +163,7 @@ void Mem2Reg::valueDefineCounting(){
 std::map<Value *, std::vector<Value *>> value_status;
 
 void Mem2Reg::valueForwarding(BasicBlock* bb){
-    std::cout << bb->get_name() << "\n";
+    //std::cout << bb->get_name() << "\n";
     std::set<Instruction *> delete_list;
     for(auto inst: bb->get_instructions()){
         if(inst->get_instr_type() != Instruction::OpID::phi)break;
@@ -212,12 +212,12 @@ void Mem2Reg::valueForwarding(BasicBlock* bb){
                         phi->add_phi_pair_operand(new_value, bb);
                     }
                     else{
-                        std::cout << "undefined value used: " << lvalue->get_name() << "\n";
+                        //std::cout << "undefined value used: " << lvalue->get_name() << "\n";
                         // exit(-1);
                     }
                 }
                 else{
-                    std::cout << "undefined value used: " << lvalue->get_name() << "\n";
+                    //std::cout << "undefined value used: " << lvalue->get_name() << "\n";
                     // exit(-1);
                 }
             }

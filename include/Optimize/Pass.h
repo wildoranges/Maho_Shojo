@@ -35,13 +35,13 @@ public:
     }
 
   void execute(bool print_ir = true) {
-    auto i = 0;
-    std::cout << "inexec\n";
+    //auto i = 0;
+    //std::cout << "inexec\n";
     for (auto pass : pass_list) {
-      i++;
-      std::cout << i << "\n";
+      //i++;
+      //std::cout << i << "\n";
       pass->execute();
-      std::cout << i + 1 << "\n";
+      //std::cout << i + 1 << "\n";
       if (print_ir) {
         module->print();
       }
