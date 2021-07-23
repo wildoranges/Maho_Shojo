@@ -4,6 +4,10 @@
 #include "SyntaxTreePrinter.h"
 #include "SyntaxTreeChecker.h"
 
+#include "Pass.h"
+#include "DominateTree.h"
+#include "mem2reg.h"
+
 void print_help(std::string exe_name) {
   std::cout << "Usage: " << exe_name
             << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] "
@@ -60,11 +64,24 @@ int main(int argc, char *argv[])
     if (print_IR) {
         root->accept(builder);
         auto m = builder.getModule();
+        std::cout << "module\n";
+        PassMgr passmgr(m.get());
+        std::cout << "passmgr\n";
+        passmgr.addPass<DominateTree>();
+        std::cout << "DomTree\n";
+        passmgr.addPass<Mem2Reg>();
+        std::cout << "Mem2Reg\n";
         m->set_print_name();
+        passmgr.execute();
+        std::cout << "exec\n";
+        m->set_print_name();
+        std::cout << "setname\n";
         auto IR = m->print();
+        std::cout << "prtm\n";
         std::ofstream output_stream;
         output_stream.open(out_file, std::ios::out);
         output_stream << IR;
+        std::cout << "outputir\n";
         output_stream.close();
     }
     return 0;
