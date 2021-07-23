@@ -13,6 +13,11 @@ class LIR:public Pass
 public:
     explicit LIR(Module* module): Pass(module){}
     void execute() final;
+    void merge_cmp_br(BasicBlock* bb);
+    void merge_mul_add(BasicBlock* bb);
+    void split_gep(BasicBlock* bb);
+    void split_srem(BasicBlock* bb);
+    void remove_unused_op(BasicBlock* bb);
 };
 
 #endif //MHSJS_LIR_H

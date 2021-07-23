@@ -7,17 +7,17 @@ void Mem2Reg::execute(){
         func_ = fun;
         insideBlockForwarding();
         genPhi();
-        module->set_print_name();
+        // module->set_print_name();
         valueDefineCounting();
-        //std::cout << "VDC\n";
         valueForwarding(func_->get_entry_block());
+        removeAlloc();
     }
 }
 
 void Mem2Reg::insideBlockForwarding(){
     for(auto bb: func_->get_basic_blocks()){
         std::map<Value *, Instruction *> defined_list;
-        std::map<std::pair<Value *, Value *>, std::set<Instruction *>> forward_list;
+        std::map<Instruction *, Value *> forward_list;
         std::map<Value *, Value *> new_value;
         std::set<Instruction *> delete_list;
         for(auto inst: bb->get_instructions()){
@@ -25,7 +25,10 @@ void Mem2Reg::insideBlockForwarding(){
             if(inst->get_instr_type() == Instruction::OpID::store){
                 Value* lvalue = static_cast<StoreInst *>(inst)->get_lval();
                 Value* rvalue = static_cast<StoreInst *>(inst)->get_rval();
-                // defined_list.insert(lvalue);
+                auto load_inst = dynamic_cast<Instruction*>(rvalue);
+                if(load_inst && forward_list.find(load_inst) != forward_list.end()){
+                    rvalue = forward_list.find(load_inst)->second;
+                }
                 if(defined_list.find(lvalue) != defined_list.end()){
                     auto pair = defined_list.find(lvalue);
                     delete_list.insert(pair->second);
@@ -45,12 +48,7 @@ void Mem2Reg::insideBlockForwarding(){
                 Value* lvalue = static_cast<LoadInst *>(inst)->get_lval();
                 if(defined_list.find(lvalue) == defined_list.end())continue;
                 Value* value = new_value.find(lvalue)->second;
-                if(forward_list.find({lvalue, value}) != forward_list.end()){
-                    forward_list.find({lvalue, value})->second.insert(inst);
-                }
-                else{
-                    forward_list.insert({{lvalue, value},{inst}});
-                }
+                forward_list.insert({inst, value});
             }
         }
         // //debug
@@ -70,14 +68,13 @@ void Mem2Reg::insideBlockForwarding(){
 
         for(auto submap: forward_list){
             // Value * lvalue = submap.first.first;
-            Value * value = submap.first.second;
-            for(Instruction* inst: submap.second){
-                for(auto use: inst->get_use_list()){
-                    Instruction * use_inst = dynamic_cast<Instruction *>(use.val_);
-                    use_inst->set_operand(use.arg_no_, value);
-                }
-                bb->delete_instr(inst);
+            Instruction * inst = submap.first; 
+            Value * value = submap.second;
+            for(auto use: inst->get_use_list()){
+                Instruction * use_inst = dynamic_cast<Instruction *>(use.val_);
+                use_inst->set_operand(use.arg_no_, value);
             }
+            bb->delete_instr(inst);
         } 
         for(auto inst:delete_list){
             bb->delete_instr(inst);
@@ -145,26 +142,28 @@ void Mem2Reg::valueDefineCounting(){
     define_var = std::map<BasicBlock *, std::vector<Value*>>();
     for(auto bb: func_->get_basic_blocks()){
         define_var.insert({bb, {}});
-        auto var_set = define_var.find(bb)->second;
+        // auto var_set = define_var.find(bb)->second;
         for(auto inst: bb->get_instructions()){
             if(inst->get_instr_type() == Instruction::OpID::phi){
                 auto lvalue = dynamic_cast<PhiInst *>(inst)->get_lval();
-                var_set.push_back(lvalue);
+                define_var.find(bb)->second.push_back(lvalue);
             }
             else if(inst->get_instr_type() == Instruction::OpID::store){
                 if(!isLocalVarOp(inst))continue;
                 auto lvalue = dynamic_cast<StoreInst *>(inst)->get_lval();
-                var_set.push_back(lvalue);
+                define_var.find(bb)->second.push_back(lvalue);
             }
         }
     }
 }
 
 std::map<Value *, std::vector<Value *>> value_status;
+std::set<BasicBlock *> visited;
 
 void Mem2Reg::valueForwarding(BasicBlock* bb){
     //std::cout << bb->get_name() << "\n";
     std::set<Instruction *> delete_list;
+    visited.insert(bb);
     for(auto inst: bb->get_instructions()){
         if(inst->get_instr_type() != Instruction::OpID::phi)break;
         auto lvalue = dynamic_cast<PhiInst *>(inst)->get_lval();
@@ -225,6 +224,7 @@ void Mem2Reg::valueForwarding(BasicBlock* bb){
     }
 
     for(auto succbb: bb->get_succ_basic_blocks()){
+        if(visited.find(succbb)!=visited.end())continue;
         valueForwarding(succbb);
     }
 
@@ -241,4 +241,18 @@ void Mem2Reg::valueForwarding(BasicBlock* bb){
         bb->delete_instr(inst);
     }
 } 
+
+void Mem2Reg::removeAlloc(){
+    for(auto bb: func_->get_basic_blocks()){
+        std::set<Instruction *> delete_list;
+        for(auto inst: bb->get_instructions()){
+            if(inst->get_instr_type() != Instruction::OpID::alloca)continue;
+            auto alloc_inst = dynamic_cast<AllocaInst *>(inst);
+            if(alloc_inst->get_alloca_type()->is_integer_type())delete_list.insert(inst);
+        }
+        for(auto inst: delete_list){
+            bb->delete_instr(inst);
+        }
+    }
+}
 
