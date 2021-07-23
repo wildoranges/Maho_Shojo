@@ -7,10 +7,10 @@ void Mem2Reg::execute(){
         func_ = fun;
         insideBlockForwarding();
         genPhi();
-        module->set_print_name();
+        // module->set_print_name();
         valueDefineCounting();
-        //std::cout << "VDC\n";
         valueForwarding(func_->get_entry_block());
+        removeAlloc();
     }
 }
 
@@ -241,4 +241,18 @@ void Mem2Reg::valueForwarding(BasicBlock* bb){
         bb->delete_instr(inst);
     }
 } 
+
+void Mem2Reg::removeAlloc(){
+    for(auto bb: func_->get_basic_blocks()){
+        std::set<Instruction *> delete_list;
+        for(auto inst: bb->get_instructions()){
+            if(inst->get_instr_type() != Instruction::OpID::alloca)continue;
+            auto alloc_inst = dynamic_cast<AllocaInst *>(inst);
+            if(alloc_inst->get_alloca_type()->is_integer_type())delete_list.insert(inst);
+        }
+        for(auto inst: delete_list){
+            bb->delete_instr(inst);
+        }
+    }
+}
 
