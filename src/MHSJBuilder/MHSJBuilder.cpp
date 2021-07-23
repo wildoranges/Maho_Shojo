@@ -33,15 +33,18 @@ struct true_false_BB {
   BasicBlock *falseBB = nullptr;
 };
 
-std::list<true_false_BB> IF_While_Stack; // used for Cond
+std::list<true_false_BB> IF_While_And_Cond_Stack; // used for Cond
+std::list<true_false_BB> IF_While_Or_Cond_Stack; // used for Cond
 std::list<true_false_BB> While_Stack;    // used for break and continue
 // used for backpatching
+std::vector<BasicBlock*> cur_basic_block_list;
 std::vector<SyntaxTree::FuncParam> func_fparams;
 std::vector<int> array_bounds;
 std::vector<int> array_sizes;
 int cur_pos;
 int cur_depth;
 std::map<int, Value *> initval;
+std::vector<Constant *> init_val;
 /* Global Variable */
 
 void MHSJBuilder::visit(SyntaxTree::Assembly &node) {
@@ -58,22 +61,32 @@ void MHSJBuilder::visit(SyntaxTree::InitVal &node) {
   if (node.isExp) {
     node.expr->accept(*this);
     initval[cur_pos] = tmp_val;
+    init_val.push_back(dynamic_cast<Constant *>(tmp_val));
     cur_pos++;
   }
   else {
-    for (const auto& elem : node.elementList) {
-      if (cur_depth>0){
-        if (cur_pos % array_sizes[cur_depth - 1]) {
-          cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) * array_sizes[cur_depth - 1];
-        }
+    if (cur_depth!=0){
+        while (cur_pos % array_sizes[cur_depth] != 0) {
+        init_val.push_back(CONST_INT(0));
+        cur_pos++;
       }
+    }
+    int cur_start_pos = cur_pos;
+    for (const auto& elem : node.elementList) {
       cur_depth++;
       elem->accept(*this);
       cur_depth--;
-      if (cur_depth>0){
-        if (cur_pos % array_sizes[cur_depth - 1]) {
-          cur_pos = (cur_pos / array_sizes[cur_depth - 1] + 1) * array_sizes[cur_depth - 1];
-        }
+    }
+    if (cur_depth!=0){
+      while (cur_pos < cur_start_pos + array_sizes[cur_depth]) {
+        init_val.push_back(CONST_INT(0));
+        cur_pos++;
+      }
+    }
+    if (cur_depth==0){
+      while (cur_pos < array_sizes[0]){
+        init_val.push_back(CONST_INT(0));
+        cur_pos++;
       }
     }
   }
@@ -94,7 +107,8 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
     if (param.param_type == SyntaxTree::Type::INT) {
       if (param.array_index.empty()) {
         param_types.push_back(INT32_T);
-      } else {
+      }
+      else {
         param_types.push_back(INT32PTR_T);
       }
     }
@@ -105,23 +119,47 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
   cur_fun = fun;
   auto funBB = BasicBlock::create(module.get(), "entry", fun);
   builder->set_insert_point(funBB);
+  cur_basic_block_list.push_back(funBB);
   scope.enter();
   pre_enter_scope = true;
   std::vector<Value *> args;
   for (auto arg = fun->arg_begin(); arg != fun->arg_end(); arg++) {
     args.push_back(*arg);
   }
-  for (int i = 0; i < func_fparams.size(); i++) {
+  int param_num = func_fparams.size();
+  for (int i = 0; i < param_num; i++) {
     if (func_fparams[i].array_index.empty()) {
       Value *alloc;
       alloc = builder->create_alloca(INT32_T);
       builder->create_store(args[i], alloc);
       scope.push(func_fparams[i].name, alloc);
-    } else {
+    }
+    else {
       Value *alloc_array;
       alloc_array = builder->create_alloca(INT32PTR_T);
       builder->create_store(args[i], alloc_array);
       scope.push(func_fparams[i].name, alloc_array);
+      array_bounds.clear();
+      array_sizes.clear();
+      for (auto bound_expr : func_fparams[i].array_index) {
+        int bound;
+        if (bound_expr==nullptr){
+          bound = 1;
+        }
+        else{
+          bound_expr->accept(*this);
+          auto bound_const = dynamic_cast<ConstantInt *>(tmp_val);
+          bound = bound_const->get_value();
+        }
+        array_bounds.push_back(bound);
+      }
+      int total_size = 1;
+      for (auto iter = array_bounds.rbegin(); iter != array_bounds.rend();iter++) {
+        array_sizes.insert(array_sizes.begin(), total_size);
+        total_size *= (*iter);
+      }
+      array_sizes.insert(array_sizes.begin(), total_size);
+      scope.push_size(func_fparams[i].name, array_sizes);
     }
   }
   node.body->accept(*this);
@@ -132,6 +170,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
       builder->create_ret(CONST_INT(0));
   }
   scope.exit();
+  cur_basic_block_list.pop_back();
 }
 
 void MHSJBuilder::visit(SyntaxTree::FuncFParamList &node) {
@@ -146,9 +185,77 @@ void MHSJBuilder::visit(SyntaxTree::FuncParam &node) {
 
 void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
   Type *var_type;
-  if (node.is_constant && 0) {
-    // TODO:constant
-  } else {
+  BasicBlock *cur_fun_entry_block;
+  BasicBlock *cur_fun_cur_block;
+  if (scope.in_global() == false) {
+    cur_fun_entry_block = cur_fun->get_entry_block();   // entry block
+    cur_fun_cur_block = cur_basic_block_list.back();                // current block
+  }
+  if (node.is_constant) {
+    // constant
+    Value *var;
+    if (node.array_length.empty()){
+      node.initializers->accept(*this);
+      auto initializer = dynamic_cast<ConstantInt *>(tmp_val)->get_value();
+      var = ConstantInt::get(initializer, module.get());
+      scope.push(node.name, var);
+    }
+    else {
+      //array
+      array_bounds.clear();
+      array_sizes.clear();
+      for (const auto& bound_expr : node.array_length) {
+        bound_expr->accept(*this);
+        auto bound_const = dynamic_cast<ConstantInt *>(tmp_val);
+        auto bound = bound_const->get_value();
+        array_bounds.push_back(bound);
+      }
+      int total_size = 1;
+      for (auto iter = array_bounds.rbegin(); iter != array_bounds.rend();
+            iter++) {
+        array_sizes.insert(array_sizes.begin(), total_size);
+        total_size *= (*iter);
+      }
+      array_sizes.insert(array_sizes.begin(), total_size);
+
+      var_type = INT32_T;
+      auto *array_type = ArrayType::get(var_type, total_size);
+
+      node.initializers->accept(*this);
+      auto initializer = ConstantArray::get(array_type, init_val);
+
+      if (scope.in_global()){
+        var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
+        scope.push(node.name, var);
+        scope.push_size(node.name, array_sizes);
+        scope.push_const(node.name, initializer);
+      }
+      else {
+        auto tmp_terminator = cur_fun_entry_block->get_terminator();
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->delete_instr(tmp_terminator);
+        }
+        var = builder->create_alloca(array_type);
+        cur_fun_cur_block->delete_instr(dynamic_cast<Instruction*>(var));
+        cur_fun_entry_block->add_instruction(dynamic_cast<Instruction*>(var));
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->add_instruction(tmp_terminator);
+        }
+        scope.push(node.name, var);
+        scope.push_size(node.name, array_sizes);
+        scope.push_const(node.name, initializer);
+        for (int i = 0; i < array_sizes[0]; i++) {
+          if (initval[i]) {
+            builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
+          }
+          else {
+            builder->create_store(CONST_INT(0), builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
+          }
+        }
+      }
+    }
+  }
+  else {
     var_type = INT32_T;
     if (node.array_length.empty()) {
       Value *var;
@@ -157,21 +264,33 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
           node.initializers->accept(*this);
           auto initializer = dynamic_cast<ConstantInt *>(tmp_val);
           var = GlobalVariable::create(node.name, module.get(), var_type, false, initializer);
+          scope.push(node.name, var);
         }
         else{
           auto initializer = ConstantZero::get(var_type, module.get());
           var = GlobalVariable::create(node.name, module.get(), var_type, false, initializer);
+          scope.push(node.name, var);
         }
-        scope.push(node.name, var);
-      } else {
+      }
+      else {
+        auto tmp_terminator = cur_fun_entry_block->get_terminator();
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->delete_instr(tmp_terminator);
+        }
         var = builder->create_alloca(var_type);
+        cur_fun_cur_block->delete_instr(dynamic_cast<Instruction*>(var));
+        cur_fun_entry_block->add_instruction(dynamic_cast<Instruction*>(var));
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->add_instruction(tmp_terminator);
+        }
         scope.push(node.name, var);
         if (node.is_inited) {
           node.initializers->accept(*this);
           builder->create_store(tmp_val, var);
         }
       }
-    } else {
+    }
+    else {
       // array
       array_bounds.clear();
       array_sizes.clear();
@@ -183,28 +302,22 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
       }
       int total_size = 1;
       for (auto iter = array_bounds.rbegin(); iter != array_bounds.rend();
-           iter++) {
+            iter++) {
         array_sizes.insert(array_sizes.begin(), total_size);
         total_size *= (*iter);
       }
+      array_sizes.insert(array_sizes.begin(), total_size);
       auto *array_type = ArrayType::get(var_type, total_size);
 
       Value *var;
       if (scope.in_global()) {
         if (node.is_inited ){
-          //TODO:global array initialization
-          //some thing to check:
-          //1.what's the ir like when there is initialization? ('@a = global [10 x i32] zeroinitializer' is no initialization)
-          //2.how to get  Constant *initializer with initialization
-          //necessary things:
-          //'initval' stores the index and init_value after accept, its type is map<int, Value*>
           cur_pos = 0;
           cur_depth = 0;
+          init_val.clear();
           node.initializers->accept(*this);
-          /*
-           * get initializer
-           */
-          //var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
+          auto initializer = ConstantArray::get(array_type, init_val);
+          var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
           scope.push(node.name, var);
           scope.push_size(node.name, array_sizes);
         }
@@ -216,17 +329,28 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         }
       }
       else {
+        auto tmp_terminator = cur_fun_entry_block->get_terminator();
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->delete_instr(tmp_terminator);
+        }
         var = builder->create_alloca(array_type);
+        cur_fun_cur_block->delete_instr(dynamic_cast<Instruction*>(var));
+        cur_fun_entry_block->add_instruction(dynamic_cast<Instruction*>(var));
+        if (tmp_terminator != nullptr) {
+          cur_fun_entry_block->add_instruction(tmp_terminator);
+        }
         scope.push(node.name, var);
         scope.push_size(node.name, array_sizes);
         if (node.is_inited) {
           cur_pos = 0;
           cur_depth = 0;
+          initval.clear();
           node.initializers->accept(*this);
-          for (int i = 0; i < array_bounds[0]; i++) {
+          for (int i = 0; i < array_sizes[0]; i++) {
             if (initval[i]) {
               builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
-            } else {
+            }
+            else {
               builder->create_store(CONST_INT(0), builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
             }
           }
@@ -253,58 +377,90 @@ void MHSJBuilder::visit(SyntaxTree::LVal &node) {
   require_lvalue = false;
   if (node.array_index.empty()) {
     if (should_return_lvalue) {
-      tmp_val = var;
+      if (var->get_type()->get_pointer_element_type()->is_array_type()) {
+        tmp_val = builder->create_gep(var, {CONST_INT(0), CONST_INT(0)});
+      }
+      else if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
+        tmp_val = builder->create_load(var);
+      }
+      else {
+        tmp_val = var;
+      }
       require_lvalue = false;
-    } else {
-      tmp_val = builder->create_load(var);
     }
-  } else {
+    else {
+      auto val_const = dynamic_cast<ConstantInt *>(var);
+      if (val_const != nullptr){
+        tmp_val = val_const;
+      }
+      else{
+        tmp_val = builder->create_load(var);
+      }
+    }
+  }
+  else {
     auto var_sizes = scope.find_size(node.name);
+    std::vector<Value *>all_index;
     Value *var_index = nullptr;
-    for (int i = 0; i < node.array_index.size(); i++) {
+    int index_const = 0;
+    bool const_check = true;
+
+    auto const_array = scope.find_const(node.name);
+    if (const_array == nullptr){
+      const_check = false;
+    }
+
+    for (int i = 0; i < node.array_index.size(); i++){
       node.array_index[i]->accept(*this);
-      auto index_val = tmp_val;
-      /*auto exceptBB = BasicBlock::create(module.get(), "", cur_fun);
-      auto contBB = BasicBlock::create(module.get(), "", cur_fun);
-      Value *is_neg = builder->create_icmp_lt(index_val, CONST_INT(0));
+      all_index.push_back(tmp_val);
+      if (const_check == true){
+        auto tmp_const = dynamic_cast<ConstantInt *>(tmp_val);
+        if (tmp_const == nullptr){
+          const_check = false;
+        }
+        else{
+          index_const = var_sizes[i + 1] * tmp_const->get_value() + index_const;
+        }
+      }
+    }
 
-      builder->create_cond_br(is_neg, exceptBB, contBB);
-      builder->set_insert_point(exceptBB);
-      auto neg_idx_except_fun = scope.find("neg_idx_except");
-      builder->create_call(static_cast<Function *>(neg_idx_except_fun), {});
-      if (cur_fun->get_return_type()->is_void_type())
-        builder->create_void_ret();
-      else
-        builder->create_ret(CONST_INT(0));
-
-      builder->set_insert_point(contBB);*/
-      if (node.array_index.size() == 1) {
-        // 1维数组
-        auto tmp_ptr = builder->create_gep(var, {CONST_INT(0), index_val});
+    if (should_return_lvalue==false && const_check){
+      ConstantInt *tmp_const = dynamic_cast<ConstantInt *>(const_array->get_element_value(index_const));
+      tmp_val = CONST_INT(tmp_const->get_value());
+    }
+    else{
+      for (int i = 0; i < all_index.size(); i++) {
+        auto index_val = all_index[i];
+        Value *one_index;
+        if (var_sizes[i + 1] > 1){
+          one_index = builder->create_imul(CONST_INT(var_sizes[i + 1]), index_val);
+        }
+        else{
+          one_index = index_val;
+        }
+        if (var_index == nullptr) {
+          var_index = one_index;
+        }
+        else {
+          var_index = builder->create_iadd(var_index, one_index);
+        }
+      } // end for
+      if (node.array_index.size() > 1 || 1) {
+        Value * tmp_ptr;
+        if (var->get_type()->get_pointer_element_type()->is_pointer_type()) {
+          auto tmp_load = builder->create_load(var);
+          tmp_ptr = builder->create_gep(tmp_load, {var_index});
+        }
+        else {
+          tmp_ptr = builder->create_gep(var, {CONST_INT(0), var_index});
+        }
         if (should_return_lvalue) {
           tmp_val = tmp_ptr;
           require_lvalue = false;
-        } else {
+        }
+        else {
           tmp_val = builder->create_load(tmp_ptr);
         }
-      } else {
-        //多维数组
-        auto one_index =
-            builder->create_imul(CONST_INT(var_sizes[i]), index_val);
-        if (var_index == nullptr) {
-          var_index = one_index;
-        } else {
-          var_index = builder->create_iadd(var_index, one_index);
-        }
-      }
-    } // end for
-    if (node.array_index.size() > 1) {
-      auto tmp_ptr = builder->create_gep(var, {CONST_INT(0), var_index});
-      if (should_return_lvalue) {
-        tmp_val = tmp_ptr;
-        require_lvalue = false;
-      } else {
-        tmp_val = builder->create_load(tmp_ptr);
       }
     }
   }
@@ -317,7 +473,8 @@ void MHSJBuilder::visit(SyntaxTree::Literal &node) {
 void MHSJBuilder::visit(SyntaxTree::ReturnStmt &node) {
   if (node.ret == nullptr) {
     builder->create_void_ret();
-  } else {
+  }
+  else {
     //auto fun_ret_type = cur_fun->get_function_type()->get_return_type();
     node.ret->accept(*this);
     builder->create_ret(tmp_val);
@@ -328,7 +485,8 @@ void MHSJBuilder::visit(SyntaxTree::BlockStmt &node) {
   bool need_exit_scope = !pre_enter_scope;
   if (pre_enter_scope) {
     pre_enter_scope = false;
-  } else {
+  }
+  else {
     scope.enter();
   }
   for (auto &decl : node.body) {
@@ -341,7 +499,7 @@ void MHSJBuilder::visit(SyntaxTree::BlockStmt &node) {
   }
 }
 
-void MHSJBuilder::visit(SyntaxTree::EmptyStmt &node) {}
+void MHSJBuilder::visit(SyntaxTree::EmptyStmt &node) { tmp_val = nullptr; }
 
 void MHSJBuilder::visit(SyntaxTree::ExprStmt &node) { node.exp->accept(*this); }
 
@@ -349,7 +507,10 @@ void MHSJBuilder::visit(SyntaxTree::UnaryCondExpr &node) {
   if (node.op == SyntaxTree::UnaryCondOp::NOT) {
     node.rhs->accept(*this);
     auto r_val = tmp_val;
-    tmp_val = builder->create_icmp_ne(r_val, CONST_INT(0));
+    if (dynamic_cast<CmpInst*>(r_val)) {
+      r_val = builder->create_zext(r_val, INT32_T);
+    }
+    tmp_val = builder->create_icmp_eq(r_val, CONST_INT(0));
   }
 }
 
@@ -357,27 +518,33 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
   CmpInst *cond_val;
   if (node.op == SyntaxTree::BinaryCondOp::LAND) {
     auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
+    IF_While_And_Cond_Stack.push_back({trueBB, IF_While_Or_Cond_Stack.back().falseBB});
     node.lhs->accept(*this);
+    IF_While_And_Cond_Stack.pop_back();
     auto ret_val = tmp_val;
     cond_val = dynamic_cast<CmpInst *>(ret_val);
     if (cond_val == nullptr) {
       cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
     }
-    builder->create_cond_br(cond_val, trueBB, IF_While_Stack.back().falseBB);
+    builder->create_cond_br(cond_val, trueBB, IF_While_Or_Cond_Stack.back().falseBB);
     builder->set_insert_point(trueBB);
     node.rhs->accept(*this);
-  } else if (node.op == SyntaxTree::BinaryCondOp::LOR) {
+  }
+  else if (node.op == SyntaxTree::BinaryCondOp::LOR) {
     auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
+    IF_While_Or_Cond_Stack.push_back({IF_While_Or_Cond_Stack.back().trueBB, falseBB});
     node.lhs->accept(*this);
+    IF_While_Or_Cond_Stack.pop_back();
     auto ret_val = tmp_val;
     cond_val = dynamic_cast<CmpInst *>(ret_val);
     if (cond_val == nullptr) {
       cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
     }
-    builder->create_cond_br(cond_val, IF_While_Stack.back().trueBB, falseBB);
+    builder->create_cond_br(cond_val, IF_While_Or_Cond_Stack.back().trueBB, falseBB);
     builder->set_insert_point(falseBB);
     node.rhs->accept(*this);
-  } else {
+  }
+  else {
     node.lhs->accept(*this);
     auto l_val = tmp_val;
     if (dynamic_cast<CmpInst*>(l_val)) {
@@ -408,6 +575,7 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
     case SyntaxTree::BinaryCondOp::NEQ:
       cmp = builder->create_icmp_ne(l_val, r_val);
       break;
+    default: break;
     }
     tmp_val = cmp;
   }
@@ -416,26 +584,54 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
 void MHSJBuilder::visit(SyntaxTree::BinaryExpr &node) {
   if (node.rhs == nullptr) {
     node.lhs->accept(*this);
-  } else {
+  }
+  else {
     node.rhs->accept(*this);
+    auto r_val_const = dynamic_cast<ConstantInt *>(tmp_val);
     auto r_val = tmp_val;
     node.lhs->accept(*this);
+    auto l_val_const = dynamic_cast<ConstantInt *>(tmp_val);
     auto l_val = tmp_val;
     switch (node.op) {
     case SyntaxTree::BinOp::PLUS:
-      tmp_val = builder->create_iadd(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() + r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_iadd(l_val, r_val);
+      }
       break;
     case SyntaxTree::BinOp::MINUS:
-      tmp_val = builder->create_isub(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() - r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_isub(l_val, r_val);
+      }
       break;
     case SyntaxTree::BinOp::MULTIPLY:
-      tmp_val = builder->create_imul(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() * r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_imul(l_val, r_val);
+      }
       break;
     case SyntaxTree::BinOp::DIVIDE:
-      tmp_val = builder->create_isdiv(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() / r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_isdiv(l_val, r_val);
+      }
       break;
     case SyntaxTree::BinOp::MODULO:
-      tmp_val = builder->create_isrem(l_val, r_val);
+      if (r_val_const != nullptr && l_val_const != nullptr){
+        tmp_val = CONST_INT(l_val_const->get_value() % r_val_const->get_value());
+      }
+      else{
+        tmp_val = builder->create_isrem(l_val, r_val);
+      }
     }
   }
 }
@@ -443,19 +639,34 @@ void MHSJBuilder::visit(SyntaxTree::BinaryExpr &node) {
 void MHSJBuilder::visit(SyntaxTree::UnaryExpr &node) {
   node.rhs->accept(*this);
   if (node.op == SyntaxTree::UnaryOp::MINUS) {
+    auto val_const = dynamic_cast<ConstantInt *>(tmp_val);
     auto r_val = tmp_val;
-    tmp_val = builder->create_isub(CONST_INT(0), r_val);
+    if (val_const != nullptr){
+      tmp_val = CONST_INT(0 - val_const->get_value());
+    }
+    else{
+      if (dynamic_cast<CmpInst*>(r_val) != nullptr) {
+        r_val = builder->create_zext(r_val, INT32_T);
+      }
+      tmp_val = builder->create_isub(CONST_INT(0), r_val);
+    }
   }
 }
 
 void MHSJBuilder::visit(SyntaxTree::FuncCallStmt &node) {
   auto fun = static_cast<Function *>(scope.find(node.name));//FIXME:STATIC OR DYNAMIC?
   std::vector<Value *> params;
-  auto param_type = fun->get_function_type()->param_begin();
+  int i = 0;
   for (auto &param : node.params) {
+    if (fun->get_function_type()->get_param_type(i++)->is_integer_type()) {
+      require_lvalue = false;
+    }
+    else {
+      require_lvalue = true;
+    }
     param->accept(*this);
+    require_lvalue = false;
     params.push_back(tmp_val);
-    param_type++;
   }
   tmp_val = builder->create_call(static_cast<Function *>(fun), params);
 }
@@ -464,14 +675,16 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
   auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
   auto contBB = BasicBlock::create(module.get(), "", cur_fun);
-  IF_While_Stack.push_back({nullptr, nullptr});
-  IF_While_Stack.back().trueBB = trueBB;
+  IF_While_Or_Cond_Stack.push_back({nullptr, nullptr});
+  IF_While_Or_Cond_Stack.back().trueBB = trueBB;
   if (node.else_statement == nullptr) {
-    IF_While_Stack.back().falseBB = contBB;
-  } else {
-    IF_While_Stack.back().falseBB = falseBB;
+    IF_While_Or_Cond_Stack.back().falseBB = contBB;
+  }
+  else {
+    IF_While_Or_Cond_Stack.back().falseBB = falseBB;
   }
   node.cond_exp->accept(*this);
+  IF_While_Or_Cond_Stack.pop_back();
   auto ret_val = tmp_val;
   auto *cond_val = dynamic_cast<CmpInst *>(ret_val);
   if (cond_val == nullptr) {
@@ -479,50 +692,64 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   }
   if (node.else_statement == nullptr) {
     builder->create_cond_br(cond_val, trueBB, contBB);
-  } else {
+  }
+  else {
     builder->create_cond_br(cond_val, trueBB, falseBB);
   }
+  cur_basic_block_list.pop_back();
   builder->set_insert_point(trueBB);
+  cur_basic_block_list.push_back(trueBB);
   if (dynamic_cast<SyntaxTree::BlockStmt *>(node.if_statement.get())) {
     node.if_statement->accept(*this);
-  } else {
+  }
+  else {
     scope.enter();
     node.if_statement->accept(*this);
     scope.exit();
   }
 
-  if (builder->get_insert_block()->get_terminator() == nullptr)
+  if (builder->get_insert_block()->get_terminator() == nullptr) {
     builder->create_br(contBB);
+  }
+  cur_basic_block_list.pop_back();
 
   if (node.else_statement == nullptr) {
     falseBB->erase_from_parent();
-  } else {
+  }
+  else {
     builder->set_insert_point(falseBB);
+    cur_basic_block_list.push_back(falseBB);
     if (dynamic_cast<SyntaxTree::BlockStmt *>(node.else_statement.get())) {
       node.else_statement->accept(*this);
-    } else {
+    }
+    else {
       scope.enter();
       node.else_statement->accept(*this);
       scope.exit();
     }
-    if (builder->get_insert_block()->get_terminator() == nullptr)
+    if (builder->get_insert_block()->get_terminator() == nullptr) {
       builder->create_br(contBB);
+    }
+    cur_basic_block_list.pop_back();
   }
 
   builder->set_insert_point(contBB);
-  IF_While_Stack.pop_back();
+  cur_basic_block_list.push_back(contBB);
 }
 
 void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
   auto whileBB = BasicBlock::create(module.get(), "", cur_fun);
   auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
   auto contBB = BasicBlock::create(module.get(), "", cur_fun);
-  IF_While_Stack.push_back({trueBB, contBB});
   While_Stack.push_back({whileBB, contBB});
-  if (builder->get_insert_block()->get_terminator() == nullptr)
+  if (builder->get_insert_block()->get_terminator() == nullptr) {
     builder->create_br(whileBB);
+  }
+  cur_basic_block_list.pop_back();
   builder->set_insert_point(whileBB);
+  IF_While_Or_Cond_Stack.push_back({trueBB, contBB});
   node.cond_exp->accept(*this);
+  IF_While_Or_Cond_Stack.pop_back();
   auto ret_val = tmp_val;
   auto *cond_val = dynamic_cast<CmpInst *>(ret_val);
   if (cond_val == nullptr) {
@@ -530,17 +757,21 @@ void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
   }
   builder->create_cond_br(cond_val, trueBB, contBB);
   builder->set_insert_point(trueBB);
+  cur_basic_block_list.push_back(trueBB);
   if (dynamic_cast<SyntaxTree::BlockStmt *>(node.statement.get())) {
     node.statement->accept(*this);
-  } else {
+  }
+  else {
     scope.enter();
     node.statement->accept(*this);
     scope.exit();
   }
-  if (builder->get_insert_block()->get_terminator() == nullptr)
+  if (builder->get_insert_block()->get_terminator() == nullptr) {
     builder->create_br(whileBB);
+  }
+  cur_basic_block_list.pop_back();
   builder->set_insert_point(contBB);
-  IF_While_Stack.pop_back();
+  cur_basic_block_list.push_back(contBB);
   While_Stack.pop_back();
 }
 

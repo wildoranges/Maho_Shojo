@@ -3,8 +3,8 @@ import subprocess
 import os
 
 IRBuild_ptn = '"{}" "-nocheck" "-emit-mir" "-o" "{}" "{}"'
-codegen_ptn = '"clang" "-o" "{}" "{}" "../lib/libsysy_x86_64.a"'
-exe_ptn = '"{}"'
+ExeGen_ptn = '"clang" "-o" "{}" "{}" "../lib/libsysy_x86_64.a"'
+Exe_ptn = '"{}"'
 
 def eval(EXE_PATH, TEST_BASE_PATH):
     print('===========TEST START===========')
@@ -25,8 +25,8 @@ def eval(EXE_PATH, TEST_BASE_PATH):
                     input_option = fin.read()
 
             try:
-                subprocess.run(codegen_ptn.format(TEST_PATH, LL_PATH), shell=True, stderr=subprocess.PIPE)
-                result = subprocess.run(exe_ptn.format(TEST_PATH), shell=True, input=input_option, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=1)
+                subprocess.run(ExeGen_ptn.format(TEST_PATH, LL_PATH), shell=True, stderr=subprocess.PIPE)
+                result = subprocess.run(Exe_ptn.format(TEST_PATH), shell=True, input=input_option, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=1)
                 out = result.stdout.split(b'\n')
                 if result.returncode != b'':
                     out.append(str(result.returncode).encode())
@@ -35,19 +35,21 @@ def eval(EXE_PATH, TEST_BASE_PATH):
                         out.remove(b'')
                 with open(OUTPUT_PATH, "rb") as fout:
                     i = 0
+                    Success_flag = True
                     for line in fout.readlines():
                         line = line.strip(b'\n')
                         if line == '':
                             continue
-                        if out[i] == line:
-                            print('\t\033[32mSuccess\033[0m')
-                        else:
+                        if out[i] != line:
+                            Success_flag == False
                             print(result.stdout, result.returncode, out[i], line, end='')
                             print('\t\033[31mWrong Answer\033[0m')
                         i = i + 1
+                    if Success_flag == True:
+                        print('\t\033[32mSuccess\033[0m')
             except Exception as _:
                 print(_, end='')
-                print('\t\033[31mCodeGen or Execute Fail\033[0m')
+                print('\t\033[31mExeGen or Execute Fail\033[0m')
             finally:
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH])
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH + ".o"])
@@ -65,7 +67,7 @@ if __name__ == "__main__":
     testcases = {}
     EXE_PATH = os.path.abspath('../build/compiler')
     # you should only revise this
-    TEST_BASE_PATH = './function_test2020/'
+    TEST_BASE_PATH = './function_test2021/'
     # you should only revise this
     testcase_list = list(map(lambda x: x.split('.'), os.listdir(TEST_BASE_PATH)))
     testcase_list.sort()

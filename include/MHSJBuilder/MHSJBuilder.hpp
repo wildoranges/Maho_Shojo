@@ -16,12 +16,14 @@ public:
     void enter() {
         inner.push_back({});
         inner_array_size.push_back({});
+        inner_array_const.push_back({});
     }
 
     // exit a scope
     void exit() {
         inner.pop_back();
         inner_array_size.pop_back();
+        inner_array_const.pop_back();
     }
 
     bool in_global() {
@@ -49,9 +51,6 @@ public:
 
     bool push_size(std::string name, std::vector<int> size){
         auto result = inner_array_size[inner_array_size.size() - 1].insert({name,size});
-        /*for (auto size_one: size){
-            inner_array_size[inner_array_size.size() - 1][name].push_back(size_one);
-        }*/
         return result.second;
     }
 
@@ -66,9 +65,26 @@ public:
         return {};
     }
 
+    bool push_const(std::string name, ConstantArray* size){
+        auto result = inner_array_const[inner_array_const.size() - 1].insert({name,size});
+        return result.second;
+    }
+
+    ConstantArray* find_const(std::string name) {
+        for (auto s = inner_array_const.rbegin(); s!=inner_array_const.rend(); s++){
+            auto iter = s->find(name);
+            if (iter != s->end()) {
+                return iter->second;
+            }
+        }
+
+        return nullptr;
+    }
+
 private:
     std::vector<std::map<std::string, Value *>> inner;
     std::vector<std::map<std::string, std::vector<int>>> inner_array_size;
+    std::vector<std::map<std::string, ConstantArray *>> inner_array_const;
 };
 
 class MHSJBuilder: public SyntaxTree::Visitor
@@ -161,11 +177,18 @@ public:
                     "putarray",
                     module.get());
 
-        auto neg_idx_except_type = FunctionType::get(TyVoid, {});
-        auto neg_idx_except_fun =
+        auto time_type = FunctionType::get(TyVoid, {});
+        auto start_time =
             Function::create(
-                    neg_idx_except_type,
-                    "neg_idx_except",
+                    time_type,
+                    "starttime",
+                    module.get());
+
+        time_type = FunctionType::get(TyVoid, {});
+        auto stop_time =
+            Function::create(
+                    time_type,
+                    "stoptime",
                     module.get());
 
         scope.enter();
@@ -175,7 +198,8 @@ public:
         scope.push("putint", put_int);
         scope.push("putch", put_char);
         scope.push("putarray", put_array);
-        scope.push("neg_idx_except", neg_idx_except_fun);
+        scope.push("starttime", start_time);
+        scope.push("stoptime", stop_time);
     }
     std::unique_ptr<Module> getModule() {
         return std::move(module);
