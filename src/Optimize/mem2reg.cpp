@@ -3,6 +3,7 @@
 
 void Mem2Reg::execute(){
     for(auto fun: module->get_functions()){
+        if(fun->get_basic_blocks().size()==0)continue;
         func_ = fun;
         insideBlockForwarding();
         genPhi();
@@ -120,7 +121,7 @@ void Mem2Reg::genPhi(){
                     auto phis = bb_phi_list.find(bb_domfront);
                     if(phis->second.find(var) == phis->second.end()){
                         phis->second.insert(var);
-                        auto newphi = PhiInst::create_phi(var->get_type()->get_array_element_type(), 
+                        auto newphi = PhiInst::create_phi(var->get_type()->get_pointer_element_type(), 
                             bb_domfront);
                         newphi->set_lval(var);
                         bb_domfront->add_instr_begin(newphi);
@@ -128,7 +129,7 @@ void Mem2Reg::genPhi(){
                     }
                 }
                 else{
-                    auto newphi = PhiInst::create_phi(var->get_type()->get_array_element_type(), 
+                    auto newphi = PhiInst::create_phi(var->get_type()->get_pointer_element_type(), 
                             bb_domfront);
                     newphi->set_lval(var);
                     bb_domfront->add_instr_begin(newphi);                  
