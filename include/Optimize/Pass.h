@@ -30,18 +30,18 @@ public:
         //TODO:Finish Pass Register
     };
     template <typename PassTy> void addPass(bool print_ir = true) {
-        std::cout << "add ";
+        //std::cout << "add ";
         pass_list.push_back(new PassTy(module));
     }
 
   void execute(bool print_ir = true) {
-    auto i = 0;
-    std::cout << "inexec\n";
+    //auto i = 0;
+    //std::cout << "inexec\n";
     for (auto pass : pass_list) {
-      i++;
-      std::cout << i << "\n";
+      //i++;
+      //std::cout << i << "\n";
       pass->execute();
-      std::cout << i + 1 << "\n";
+      //std::cout << i + 1 << "\n";
       if (print_ir) {
         module->print();
       }
