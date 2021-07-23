@@ -12,6 +12,7 @@ class Mem2Reg: public Pass{
 private:
   Function *func_;
   IRBuilder *builder;
+  std::map<BasicBlock *, std::vector<Value*>> define_var;
 
 public:
   explicit Mem2Reg(Module *m): Pass(m){}
@@ -19,8 +20,9 @@ public:
   void execute()final;
   void genPhi();
   void insideBlockForwarding();
+  void valueDefineCounting();
   void valueForwarding(BasicBlock *bb);
-  
+
   bool isLocalVarOp(Instruction* inst){
     if(inst->get_instr_type() == Instruction::OpID::store){
       StoreInst* sinst = static_cast<StoreInst *>(inst);
