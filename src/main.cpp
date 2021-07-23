@@ -8,7 +8,7 @@
 #include "DominateTree.h"
 #include "mem2reg.h"
 
-void print_help(std::string exe_name) {
+void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
             << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] "
             << "<input-file>"
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     bool print_IR = false;
     bool check = true;
     std::string out_file = "a.ll";
-    std::string filename = "test.sysy";
+    std::string filename = "test.sy";
     for (int i = 1; i < argc; ++i) {
         if (argv[i] == std::string("-h") || argv[i] == std::string("--help")) {
             print_help(argv[0]);
@@ -64,24 +64,38 @@ int main(int argc, char *argv[])
     if (print_IR) {
         root->accept(builder);
         auto m = builder.getModule();
+#ifdef DEBUG
         std::cout << "module\n";
+#endif
         PassMgr passmgr(m.get());
+#ifdef DEBUG
         std::cout << "passmgr\n";
+#endif
         passmgr.addPass<DominateTree>();
+#ifdef DEBUG
         std::cout << "DomTree\n";
+#endif
         passmgr.addPass<Mem2Reg>();
+#ifdef DEBUG
         std::cout << "Mem2Reg\n";
+#endif
         m->set_print_name();
         passmgr.execute();
+#ifdef DEBUG
         std::cout << "exec\n";
+#endif
         m->set_print_name();
+#ifdef DEBUG
         std::cout << "setname\n";
+#endif
         auto IR = m->print();
+#ifdef DEBUG
         std::cout << "prtm\n";
+#endif
         std::ofstream output_stream;
         output_stream.open(out_file, std::ios::out);
         output_stream << IR;
-        std::cout << "outputir\n";
+        //std::cout << "outputir\n";
         output_stream.close();
     }
     return 0;

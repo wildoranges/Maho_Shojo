@@ -18,6 +18,8 @@ https://gitlab.eduxiji.net/nscscc/compiler2021/-/tree/master
 
 > 07.18 完成MIR构建。准备进行目标平台代码生成。
 
+> 07.21 完成MIR测试，通过2020，2021全部公开的功能测试。
+
 ## 魔法少女育成指南
 ```shell
 $ mkdir build
@@ -29,7 +31,7 @@ $ make
 ## 魔法少女使用指南
 ```shell
 $ cd build
-$ ./MHSJ [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] <input-file>
+$ ./compiler [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] <input-file>
 ```
 
 ### flag说明:
@@ -47,4 +49,3 @@ $ ./MHSJ [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -e
 `-emit-ast`通过ast复原代码，直接打印出来
 
 `-nocheck`不进行静态检查
-

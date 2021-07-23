@@ -30,6 +30,7 @@ void DominateTree::get_post_order(BasicBlock *bb,std::set<BasicBlock*>& visited)
 }
 
 void DominateTree::get_revserse_post_order(Function *f) {
+    doms.clear();
     reverse_post_order.clear();
     bb2int.clear();
     auto entry = f->get_entry_block();
@@ -51,7 +52,9 @@ void DominateTree::get_bb_idom(Function *f) {
     doms.push_back(root);
 
     bool changed = true;
+    //int cnt = 1;
     while(changed){
+        //std::cout << "current:"<<cnt++<<std::endl;
         changed = false;
         for(auto bb:reverse_post_order){
             if(bb == root){
