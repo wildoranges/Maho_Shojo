@@ -49,7 +49,10 @@ public:
     }
     
     void add_instruction(Instruction *instr);
+    void add_instruction(std::list<Instruction *>::iterator instr_pos, Instruction *instr);
     void add_instr_begin(Instruction *instr);
+
+    std::list<Instruction *>::iterator find_instruction(Instruction *instr);
 
     void delete_instr(Instruction *instr);
 
