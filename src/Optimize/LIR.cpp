@@ -3,7 +3,6 @@
 //
 
 #include "LIR.h"
-#include <algorithm>
 
 void LIR::execute() {
     for (auto func : module->get_functions()){
