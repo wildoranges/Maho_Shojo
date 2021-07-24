@@ -7,6 +7,7 @@
 #include "Pass.h"
 #include "DominateTree.h"
 #include "mem2reg.h"
+#include "LIR.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
@@ -79,6 +80,7 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
         std::cout << "Mem2Reg\n";
 #endif
+        passmgr.addPass<LIR>();
         m->set_print_name();
         passmgr.execute();
 #ifdef DEBUG

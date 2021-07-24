@@ -56,31 +56,3 @@ std::string print_cmp_type( CmpInst::CmpOp op )
     }
     return "wrong cmpop";
 }
-
-std::string print_cmp_type( CmpBrInst::CmpOp op )
-{
-    switch (op)
-    {
-    case CmpBrInst::GE:
-        return "sge";
-        break;
-    case CmpBrInst::GT:
-        return "sgt";
-        break;
-    case CmpBrInst::LE:
-        return "sle";
-        break;
-    case CmpBrInst::LT:
-        return "slt";
-        break;
-    case CmpBrInst::EQ:
-        return "eq";
-        break;
-    case CmpBrInst::NE:
-        return "ne";
-        break;
-    default:
-        break;
-    }
-    return "wrong cmpop";
-}

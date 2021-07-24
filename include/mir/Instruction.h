@@ -254,15 +254,7 @@ private:
 class CmpBrInst : public Instruction
 {
 public:
-    enum CmpOp
-    {
-        EQ, // ==
-        NE, // !=
-        GT, // >
-        GE, // >=
-        LT, // <
-        LE  // <=
-    };
+    using CmpOp = CmpInst::CmpOp;
 
 private:
     CmpBrInst(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false,
