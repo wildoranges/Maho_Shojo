@@ -32,9 +32,19 @@ public:
         call,
         getelementptr, 
         // Logical operators
-        sand,
-        sor,
-        zext, // zero extend
+        land,
+        lor,
+        lxor,
+        // Zero extend
+        zext,
+        // Shift operators
+        asr,
+        lsl,
+        lsr,
+        // LIR operators
+        cmpbr,
+        muladd,
+        mulsub,
 
     };
     // create instruction, auto insert to bb
@@ -60,16 +70,23 @@ public:
             case mul: return "mul"; break;
             case sdiv: return "sdiv"; break;
             case srem: return "srem"; break;
-            case sand: return "and"; break;
-            case sor: return "or"; break;
+            case land: return "and"; break;
+            case lor: return "or"; break;
+            case lxor: return "xor"; break;
             case alloca: return "alloca"; break;
             case load: return "load"; break;
             case store: return "store"; break;
             case cmp: return "cmp"; break;
+            case cmpbr: return "cmpbr"; break;
             case phi: return "phi"; break;
             case call: return "call"; break;
             case getelementptr: return "getelementptr"; break;
             case zext: return "zext"; break;
+            case asr: return "asr"; break;
+            case lsl: return "lsl"; break;
+            case lsr: return "lsr"; break;
+            case muladd: return "muladd"; break;
+            case mulsub: return "mulsub"; break;
         
         default: return ""; break;
         }
@@ -92,10 +109,19 @@ public:
     bool is_div() { return op_id_ == sdiv; }
     bool is_rem() { return op_id_ == srem; }
 
-    bool is_and() { return op_id_ == sand; }
-    bool is_or() { return op_id_ == sor; }
+    bool is_muladd() { return op_id_ == muladd; }
+    bool is_mulsub() { return op_id_ == mulsub; }
+
+    bool is_and() { return op_id_ == land; }
+    bool is_or() { return op_id_ == lor; }
+    bool is_xor() { return op_id_ == lxor; }
+
+    bool is_asr() { return op_id_ == asr; }
+    bool is_lsl() { return op_id_ == lsl; }
+    bool is_lsr() { return op_id_ == lsr; }
 
     bool is_cmp() { return op_id_ == cmp; }
+    bool is_cmpbr() { return op_id_ == cmpbr; }
 
     bool is_call() { return op_id_ == call; }
     bool is_gep() { return op_id_ == getelementptr; }
@@ -104,11 +130,13 @@ public:
 
     bool isBinary()
     {
-        return (is_add() || is_sub() || is_mul() || is_div() || is_rem() || is_and() || is_or()) && 
+        return (is_add() || is_sub() || is_mul() || is_div() || is_rem() || 
+                is_and() || is_or() || is_xor() || 
+                is_asr() || is_lsl() || is_lsr()) && 
                 (get_num_operand() == 2);
     }
 
-    bool isTerminator() { return is_br() || is_ret(); }
+    bool isTerminator() { return is_br() || is_ret() || is_cmpbr(); }
 
 private:
     BasicBlock *parent_;
@@ -144,6 +172,48 @@ public:
     // create or instruction, auto insert to bb
     static BinaryInst *create_or(Value *v1, Value *v2, BasicBlock *bb, Module *m);
 
+    // create xor instruction, auto insert to bb
+    static BinaryInst *create_xor(Value *v1, Value *v2, BasicBlock *bb, Module *m);
+
+    // create asr instruction, auto insert to bb
+    static BinaryInst *create_asr(Value *v1, Value *v2, BasicBlock *bb, Module *m);
+
+    // create lsl instruction, auto insert to bb
+    static BinaryInst *create_lsl(Value *v1, Value *v2, BasicBlock *bb, Module *m);
+
+    // create lsr instruction, auto insert to bb
+    static BinaryInst *create_lsr(Value *v1, Value *v2, BasicBlock *bb, Module *m);
+
+    virtual std::string print() override;
+
+private:
+    void assertValid();
+};
+
+class MulAddInst : public Instruction
+{
+private:
+    MulAddInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3,
+               BasicBlock *bb);
+
+public:
+    static MulAddInst *create_muladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
+
+    virtual std::string print() override;
+
+private:
+    void assertValid();
+};
+
+class MulSubInst : public Instruction
+{
+private:
+    MulSubInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3,
+               BasicBlock *bb);
+
+public:
+    static MulSubInst *create_mulsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
+
     virtual std::string print() override;
 
 private:
@@ -172,6 +242,39 @@ public:
                                BasicBlock *bb, Module *m);
 
     CmpOp get_cmp_op() { return cmp_op_; }
+
+    virtual std::string print() override;
+
+private:
+    CmpOp cmp_op_;
+
+    void assertValid();
+};
+
+class CmpBrInst : public Instruction
+{
+public:
+    enum CmpOp
+    {
+        EQ, // ==
+        NE, // !=
+        GT, // >
+        GE, // >=
+        LT, // <
+        LE  // <=
+    };
+
+private:
+    CmpBrInst(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false,
+            BasicBlock *bb);
+
+public:
+    static CmpBrInst *create_cmpbr(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false,
+                               BasicBlock *bb, Module *m);
+
+    CmpOp get_cmp_op() { return cmp_op_; }
+
+    bool is_cmp_br() const;
 
     virtual std::string print() override;
 
