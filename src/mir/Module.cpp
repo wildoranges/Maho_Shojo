@@ -30,6 +30,13 @@ Module::Module(std::string name)
     instr_id2string_.insert({ Instruction::lsl, "lsl" });
     instr_id2string_.insert({ Instruction::lsr, "lsr" });
 
+    instr_id2string_.insert({ Instruction::asr, "asradd" });
+    instr_id2string_.insert({ Instruction::lsl, "lsladd" });
+    instr_id2string_.insert({ Instruction::lsr, "lsradd" });
+    instr_id2string_.insert({ Instruction::asr, "asrsub" });
+    instr_id2string_.insert({ Instruction::lsl, "lslsub" });
+    instr_id2string_.insert({ Instruction::lsr, "lsrsub" });
+
     instr_id2string_.insert({ Instruction::alloca, "alloca" });
     instr_id2string_.insert({ Instruction::load, "load" });
     instr_id2string_.insert({ Instruction::store, "store" });

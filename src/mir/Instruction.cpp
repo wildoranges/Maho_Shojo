@@ -242,6 +242,87 @@ std::string MulSubInst::print()
     return instr_ir;
 }
 
+ShiftBinaryInst::ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Constant *v3, 
+                    BasicBlock *bb)
+    : Instruction(ty, id, 3, bb)
+{
+    set_operand(0, v1);
+    set_operand(1, v2);
+    set_operand(2, v3);
+    // assertValid();
+}
+
+void ShiftBinaryInst::assertValid()
+{
+    assert(get_operand(0)->get_type()->is_integer_type());
+    assert(get_operand(1)->get_type()->is_integer_type());
+    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
+        static_cast<Constant *>(get_operand(2)));
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_asradd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::asradd, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_lsladd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsladd, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_lsradd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsradd, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_asrsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::asrsub, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_lslsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lslsub, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_lsrsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsrsub, v1, v2, v3, bb);
+}
+
+std::string ShiftBinaryInst::print()
+{
+    std::string instr_ir;
+    instr_ir += "%";
+    instr_ir += this->get_name();
+    instr_ir += " = ";
+    instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
+    instr_ir += " ";
+    instr_ir += this->get_operand(0)->get_type()->print();
+    instr_ir += " ";
+    instr_ir += print_as_op(this->get_operand(0), false);
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(1)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(1), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(1), true);
+    }
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(2)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(2), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(2), true);
+    }
+    return instr_ir;
+}
+
 CmpInst::CmpInst(Type *ty, CmpOp op, Value *lhs, Value *rhs, 
             BasicBlock *bb)
     : Instruction(ty, Instruction::cmp, 2, bb), cmp_op_(op)
