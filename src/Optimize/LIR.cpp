@@ -8,8 +8,13 @@ void LIR::execute() {
     for (auto func : module->get_functions()){
         if (func->get_num_basic_blocks()>0){
             for (auto bb : func->get_basic_blocks()){
-                merge_cmp_br(bb);
+                // split instr
+                split_gep(bb);
+                // convert instr
+                // remove meaningless instr
+                // merge instr
                 merge_mul_add(bb);
+                merge_cmp_br(bb);
             }
         }
     }
@@ -55,6 +60,7 @@ void LIR::merge_mul_add(BasicBlock* bb) {
                     bb->add_instruction(iter,mul_add);
                     bb->delete_instr(op_ins1);
                     iter--;
+                    instruction->replace_all_use_with(mul_add);
                     bb->delete_instr(instruction);
                     continue;
                 }
@@ -66,6 +72,7 @@ void LIR::merge_mul_add(BasicBlock* bb) {
                     bb->add_instruction(iter,mul_add);
                     bb->delete_instr(op_ins2);
                     iter--;
+                    instruction->replace_all_use_with(mul_add);
                     bb->delete_instr(instruction);
                     continue;
                 }
@@ -84,11 +91,12 @@ void LIR::merge_mul_sub(BasicBlock* bb) {
             auto op_ins2 = dynamic_cast<Instruction *>(op2);
             if (op_ins2!=nullptr){
                 if (op_ins2->is_mul() && op_ins2->get_parent() == bb && op_ins2->get_use_list().size() == 1){
-                    auto mul_add = MulAddInst::create_muladd(op_ins2->get_operand(0),op_ins2->get_operand(1),op1,bb,module);
-                    bb->delete_instr(mul_add);
-                    bb->add_instruction(iter,mul_add);
+                    auto mul_sub = MulSubInst::create_mulsub(op_ins2->get_operand(0),op_ins2->get_operand(1),op1,bb,module);
+                    bb->delete_instr(mul_sub);
+                    bb->add_instruction(iter,mul_sub);
                     bb->delete_instr(op_ins2);
                     iter--;
+                    instruction->replace_all_use_with(mul_sub);
                     bb->delete_instr(instruction);
                     continue;
                 }
@@ -98,7 +106,25 @@ void LIR::merge_mul_sub(BasicBlock* bb) {
 }
 
 void LIR::split_gep(BasicBlock* bb) {
-    
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin(); iter != instructions.end(); iter++) {
+        auto instruction = *iter;
+        if (instruction->is_gep() && (instruction->get_num_operand() == 3)) {
+            auto size = ConstantInt::get(instruction->get_type()->get_pointer_element_type()->get_size(), module);
+            auto offset = instruction->get_operand(2);
+            instruction->remove_use(offset);
+            instruction->set_operand(2, ConstantInt::get(0, module));
+            auto real_offset = BinaryInst::create_mul(offset, size, bb, module);
+            bb->add_instruction(++iter, instructions.back());
+            instructions.pop_back();
+            auto real_ptr = BinaryInst::create_add(instruction, real_offset, bb, module);
+            bb->add_instruction(iter--, instructions.back());
+            instructions.pop_back();
+            real_ptr->remove_use(instruction);
+            instruction->replace_all_use_with(real_ptr);
+            real_ptr->set_operand(0,instruction);
+        }
+    }
 }
 
 void LIR::split_srem(BasicBlock* bb) {
