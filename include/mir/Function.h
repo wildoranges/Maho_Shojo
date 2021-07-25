@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <map>
 #include <cassert>
+#include <set>
 
 #include "User.h"
 #include "Module.h"
@@ -44,6 +45,7 @@ public:
 
     std::list<BasicBlock *> &get_basic_blocks() { return basic_blocks_; }
     std::list<Argument *> &get_args() { return arguments_; }
+    std::vector<std::set<Value *>> &get_vreg_set(){ return vreg_set_;}
     
     bool is_declaration() { return basic_blocks_.empty(); }
     
@@ -56,6 +58,7 @@ private:
 private:
     std::list<BasicBlock *> basic_blocks_;    // basic blocks
     std::list<Argument *> arguments_;         // arguments
+    std::vector<std::set<Value *>> vreg_set_;
     Module *parent_;
     unsigned seq_cnt_;
     // unsigned num_args_;
