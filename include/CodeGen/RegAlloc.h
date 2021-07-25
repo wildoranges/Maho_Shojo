@@ -16,10 +16,6 @@
 const std::set<int> param_reg_id = {0,1,2,3};
 const std::set<int> ret_reg_id = {0};
 
-//const std::set<CodeGen::reg> param_regs = {CodeGen::reg(0),CodeGen::reg(1),
-//                                           CodeGen::reg(2),CodeGen::reg(3)};
-//
-//const std::set<CodeGen::reg> ret_regs = {CodeGen::reg(0)};
 
 class Interval;
 class RegAlloc;
@@ -30,29 +26,25 @@ struct Range{
     int to;
 };
 
-//struct cmp_range{
-//    bool operator()(Range* a, Range* b){
-//        return a->from > b->from;
-//    }
-//};
 
 class Interval{
 public:
     explicit Interval(Value* value):val(value){}
-    int reg_num;
+    int reg_num = -1;
     Value* val;
-    int assigned_reg;
+    //int assigned_reg;
     std::list<Range*> range_list;
-    //std::priority_queue<Range*,std::list<Range*>,cmp_range> range_list;
     std::list<int> position_list;
-    Interval* parent;
-    std::list<Interval*> children;
+    //Interval* parent;
+    //std::list<Interval*> children;
     void add_range(int from,int to);
     void add_use_pos(int pos);
-    Interval* split(int id);
-    bool covers(int id);
+    //Interval* split(int id);
+    //bool covers(int id);
+    //bool covers(int from,int to);
     bool intersects(Interval* interval);
-    Interval* child_at(int id);
+    void union_interval(Interval* interval);
+    //Interval* child_at(int id);
 };
 
 
@@ -62,29 +54,36 @@ struct cmp_interval{
     }
 };
 
+const std::vector<int> general_reg_id = {12,11,10,9,8,7,6,5,4};
+const std::vector<int> func_reg_id = {3,2,1,0};
+
+class RegAllocDriver{
+public:
+    RegAllocDriver(Module* m):module(m){}
+private:
+    Module* module;
+};
 
 class RegAlloc{
 public:
-    RegAlloc(Module* m):module(m){}
-    int get_reg(Value* value);
-    void compute_block_order(Function* f);
+    RegAlloc(Function* f):func(f){}
+    //int get_reg(Value* value);
+    void compute_block_order();
     void get_dfs_order(BasicBlock* bb,std::set<BasicBlock*>& visited);
     void number_operations();
-    //void compute_local_live_sets();
     void build_intervals();
     void walk_intervals();
     void add_interval(Interval* interval){interval_list.push(interval);}
     bool try_alloc_free_reg();
-    void try_alloc_blocked_reg();
+    void add_reg_to_pool(int reg_id);
+    void union_phi_val();
 private:
-    std::set<int> remained_reg_id = {12,11,10,9,8,7,6,5,4,3,2,1,0};
+    std::priority_queue<int> remained_general_reg_id = {general_reg_id.begin(),general_reg_id.end()};
+    std::priority_queue<int> remained_func_reg_id = {func_reg_id.begin(),func_reg_id.end()};
     std::set<Interval *> active = {};
-    std::set<Interval *> inactive = {};
-    std::set<Interval *> handled = {};
     Interval* current = nullptr;
     std::map<Value*, Interval*> val2Inter;
-    Module* module;
-    //std::map<Value*,int> val2reg;
+    Function* func;
     std::list<BasicBlock*> block_order;
     std::priority_queue<Interval*,std::list<Interval*>,cmp_interval> interval_list;
 };
