@@ -102,7 +102,26 @@ void LIR::split_gep(BasicBlock* bb) {
 }
 
 void LIR::split_srem(BasicBlock* bb) {
-    
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin();iter != instructions.end();iter++){
+        auto instruction = *iter;
+        if (instruction->is_rem()){
+            auto op1 = instruction->get_operand(0);
+            auto op2 = instruction->get_operand(1);
+            auto div_ins = BinaryInst::create_sdiv(op1,op2,bb,module);
+            instructions.pop_back();
+            auto mul_ins = BinaryInst::create_mul(div_ins,op2,bb,module);
+            instructions.pop_back();
+            auto sub_ins = BinaryInst::create_sub(op1,mul_ins,bb,module);
+            instructions.pop_back();
+            bb->add_instruction(iter,div_ins);
+            bb->add_instruction(iter,mul_ins);
+            bb->add_instruction(iter,sub_ins);
+            instruction->replace_all_use_with(sub_ins);
+            iter--;
+            bb->delete_instr(instruction);
+        }
+    }
 }
 
 void LIR::mul_const2shift(BasicBlock* bb) {
