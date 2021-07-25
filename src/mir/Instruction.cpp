@@ -50,7 +50,7 @@ void BinaryInst::assertValid()
 
 BinaryInst *BinaryInst::create_add(Value *v1, Value *v2, BasicBlock *bb, Module *m)
 {
-    return new BinaryInst(Type::get_int32_type(m), Instruction::add, v1, v2, bb);
+    return new BinaryInst(v1->get_type()->is_pointer_type() ? v1->get_type() : v2->get_type(), Instruction::add, v1, v2, bb);
 }
 
 BinaryInst *BinaryInst::create_sub(Value *v1, Value *v2, BasicBlock *bb, Module *m)
@@ -149,7 +149,7 @@ void MulAddInst::assertValid()
 
 MulAddInst *MulAddInst::create_muladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
-    return new MulAddInst(Type::get_int32_type(m), Instruction::muladd, v1, v2, v3, bb);
+    return new MulAddInst(v3->get_type(), Instruction::muladd, v1, v2, v3, bb);
 }
 
 std::string MulAddInst::print()
