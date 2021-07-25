@@ -161,5 +161,5 @@ void LIR::div_const2shift(BasicBlock* bb) {
 }
 
 void LIR::remove_unused_op(BasicBlock* bb) {
-    
+    // TODO: x+0, x-0, x-x, x*0, x*1, x/1, x asr 0, x lsl 0, x lsr 0, and so on
 }
