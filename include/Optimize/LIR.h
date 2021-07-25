@@ -19,7 +19,7 @@ public:
     void split_gep(BasicBlock* bb);
     void split_srem(BasicBlock* bb);
     void mul_const2shift(BasicBlock* bb);
-    void div_const2shift(BasicBlock* bb);
+    void div_const2mul(BasicBlock* bb);
     void remove_unused_op(BasicBlock* bb);
 };
 
