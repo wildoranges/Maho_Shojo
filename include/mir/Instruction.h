@@ -164,9 +164,14 @@ public:
 
     bool isTerminator() { return is_br() || is_ret() || is_cmpbr(); }
 
+    void set_id(int id){id_ = id;}
+    int get_id() const{return id_;}
+
+
 private:
     BasicBlock *parent_;
     OpID op_id_;
+    int id_;
     unsigned num_ops_;
 };
 

@@ -68,7 +68,10 @@ public:
     BasicBlock* get_idom(){return idom_;}
     void add_dom_frontier(BasicBlock* bb){dom_frontier_.insert(bb);}
     std::set<BasicBlock *> &get_dom_frontier(){return dom_frontier_;}
-
+    std::set<Value*>& get_live_in(){return live_in;}
+    std::set<Value*>& get_live_out(){return live_out;}
+    void insert_live_in(Value* in){live_in.insert(in);}
+    void insert_live_out(Value* out){live_out.insert(out);}
 private:
     explicit BasicBlock(Module *m, const std::string &name ,
                         Function *parent );
@@ -78,6 +81,8 @@ private:
     Function *parent_;
     BasicBlock* idom_ = nullptr;
     std::set<BasicBlock*> dom_frontier_;
+    std::set<Value*> live_in;//TODO:ADD API
+    std::set<Value*> live_out;
 };
 
 #endif // SYSY_BASICBLOCK_H
