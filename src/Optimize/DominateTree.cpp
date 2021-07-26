@@ -6,7 +6,7 @@
 
 void DominateTree::execute() {
     for(auto f:module->get_functions()){
-        if(f->get_basic_blocks().size()==0){
+        if(f->get_basic_blocks().empty()){
             continue;
         }
         //std::cout<<"here:"<<f->get_name()<<std::endl;
