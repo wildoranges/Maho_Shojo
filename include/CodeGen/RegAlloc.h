@@ -22,6 +22,7 @@ class RegAlloc;
 
 
 struct Range{
+    Range(int f,int t):from(f),to(t){}
     int from;
     int to;
 };
@@ -38,7 +39,7 @@ public:
     //Interval* parent;
     //std::list<Interval*> children;
     void add_range(int from,int to);
-    void add_use_pos(int pos);
+    void add_use_pos(int pos){position_list.push_front(pos);}
     //Interval* split(int id);
     //bool covers(int id);
     //bool covers(int from,int to);
@@ -60,7 +61,10 @@ const std::vector<int> func_reg_id = {3,2,1,0};
 class RegAllocDriver{
 public:
     RegAllocDriver(Module* m):module(m){}
+    void compute_reg_alloc();
+    std::map<Value*, Interval*>& get_reg_alloc_in_func(Function* f){return reg_alloc[f];}
 private:
+    std::map<Function*,std::map<Value*,Interval*>> reg_alloc;
     Module* module;
 };
 
@@ -68,16 +72,18 @@ class RegAlloc{
 public:
     RegAlloc(Function* f):func(f){}
     //int get_reg(Value* value);
+    void execute();
     void compute_block_order();
-    void get_dfs_order(BasicBlock* bb,std::set<BasicBlock*>& visited);
     void number_operations();
     void build_intervals();
-    void walk_intervals();
-    void add_interval(Interval* interval){interval_list.push(interval);}
-    bool try_alloc_free_reg();
-    void add_reg_to_pool(int reg_id);
     void union_phi_val();
+    void walk_intervals();
+    std::map<Value*,Interval*>& get_reg_alloc(){return val2Inter;}
 private:
+    void get_dfs_order(BasicBlock* bb,std::set<BasicBlock*>& visited);
+    void add_interval(Interval* interval){interval_list.insert(interval);}
+    void add_reg_to_pool(int reg_id);
+    bool try_alloc_free_reg();
     std::priority_queue<int> remained_general_reg_id = {general_reg_id.begin(),general_reg_id.end()};
     std::priority_queue<int> remained_func_reg_id = {func_reg_id.begin(),func_reg_id.end()};
     std::set<Interval *> active = {};
@@ -85,7 +91,7 @@ private:
     std::map<Value*, Interval*> val2Inter;
     Function* func;
     std::list<BasicBlock*> block_order;
-    std::priority_queue<Interval*,std::list<Interval*>,cmp_interval> interval_list;
+    std::multiset<Interval*,cmp_interval> interval_list;
 };
 
 #endif //MHSJ_REG_ALLOC_H
