@@ -4,4 +4,6 @@ add_library(
         CFGSymplifiler.cpp
         DominateTree.cpp
         mem2reg.cpp
-        LIR.cpp)
+        LIR.cpp
+        ActiveVar.cpp
+)
