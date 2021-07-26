@@ -15,8 +15,8 @@ void LIR::execute() {
                 split_srem(bb);
                 // convert instr
                 // remove meaningless instr
-                // merge instr
-                merge_mul_add(bb);
+                // merge instr (when all optimization finished)
+                //merge_mul_add(bb);
                 merge_mul_sub(bb);
                 merge_cmp_br(bb);
             }
@@ -116,7 +116,6 @@ void LIR::split_gep(BasicBlock* bb) {
         if (inst_gep->is_gep() && (inst_gep->get_num_operand() == 3)) {
             auto size = ConstantInt::get(inst_gep->get_type()->get_pointer_element_type()->get_size(), module);
             auto offset = inst_gep->get_operand(2);
-            inst_gep->remove_use(offset);
             inst_gep->set_operand(2, ConstantInt::get(0, module));
             auto real_offset = BinaryInst::create_mul(offset, size, bb, module);
             bb->add_instruction(++iter, instructions.back());
@@ -126,7 +125,7 @@ void LIR::split_gep(BasicBlock* bb) {
             instructions.pop_back();
             real_ptr->remove_use(inst_gep);
             inst_gep->replace_all_use_with(real_ptr);
-            real_ptr->set_operand(0,inst_gep);
+            real_ptr->set_operand(0, inst_gep);
         }
     }
 }
