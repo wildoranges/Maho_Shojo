@@ -11,6 +11,19 @@ void Mem2Reg::execute(){
         valueDefineCounting();
         valueForwarding(func_->get_entry_block());
         removeAlloc();
+
+#ifdef DEBUG
+        module->set_print_name();
+#endif
+        phiStatistic();
+#ifdef DEBUG
+        for(auto set: func_->get_vreg_set()){
+            for(auto reg: set){
+                std::cout << reg->get_name() << " ";
+            }
+            std::cout << "\n";
+        }
+#endif
     }
 }
 
@@ -253,6 +266,58 @@ void Mem2Reg::removeAlloc(){
         for(auto inst: delete_list){
             bb->delete_instr(inst);
         }
+    }
+}
+
+void Mem2Reg::phiStatistic(){
+    std::map<Value *, Value *> value_map;
+    for(auto bb: func_->get_basic_blocks()){
+        for(auto inst: bb->get_instructions()){
+            if(!inst->is_phi())continue;
+            auto phi_value = dynamic_cast<Value *>(inst);
+#ifdef DEBUG
+            std::cout << "phi find: " << phi_value->get_name() << "\n";
+#endif
+            Value * reduced_value;
+            if(value_map.find(phi_value) != value_map.end()){
+                reduced_value = value_map.find(phi_value)->second;
+            }
+            else{
+                reduced_value = dynamic_cast<PhiInst *>(inst)->get_lval();
+                value_map.insert({phi_value, reduced_value});
+            }
+            for(auto opr: inst->get_operands()){
+                if(dynamic_cast<BasicBlock *>(opr))continue;
+                if(dynamic_cast<Constant *>(opr))continue;
+                if(value_map.find(opr) != value_map.end()){
+                    auto opr_reduced_value = value_map.find(opr)->second;
+                    if(opr_reduced_value != reduced_value){
+                        std::cout << "conflict! " << opr->get_name() << " -> " << opr_reduced_value->get_name();
+                        std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
+                    }
+                }
+                else{
+                    value_map.insert({opr, reduced_value});
+                }
+            }
+        }
+    }
+
+    std::map<Value *, std::set<Value *>> reversed_value_map;
+
+    for(auto map_item: value_map){
+        Value* vreg = map_item.first;
+        Value* lvalue = map_item.second;
+        if(reversed_value_map.find(lvalue) != reversed_value_map.end()){
+            reversed_value_map.find(lvalue)->second.insert(vreg);
+        }
+        else{
+            reversed_value_map.insert({lvalue, {vreg}});
+        }
+    }
+
+    for(auto iter: reversed_value_map){
+        func_->get_vreg_set().push_back(iter.second);
     }
 }
 

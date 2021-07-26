@@ -23,6 +23,7 @@ public:
 	void valueDefineCounting();
 	void valueForwarding(BasicBlock *bb);
 	void removeAlloc();
+	void phiStatistic();
 
 	bool isLocalVarOp(Instruction *inst){
 		if (inst->get_instr_type() == Instruction::OpID::store){
