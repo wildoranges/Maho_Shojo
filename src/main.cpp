@@ -9,6 +9,7 @@
 #include "mem2reg.h"
 #include "LIR.h"
 #include "ActiveVar.h"
+#include "ConstPropagation.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
@@ -83,6 +84,7 @@ int main(int argc, char *argv[])
 #endif
         passmgr.addPass<LIR>();
         passmgr.addPass<ActiveVar>();
+        passmgr.addPass<ConstPropagation>();
         m->set_print_name();
         passmgr.execute();
 #ifdef DEBUG
