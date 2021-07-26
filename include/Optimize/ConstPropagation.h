@@ -1,10 +1,9 @@
-#ifndef CONSTPROPAGATION_HPP
-#define CONSTPROPAGATION_HPP
+#ifndef MHSJ_CONSTPROPAGATION_H
+#define MHSJ_CONSTPROPAGATION_H
 #include "Pass.h"
 #include "Constant.h"
 #include "Instruction.h"
 #include "Module.h"
-
 #include "Value.h"
 #include "IRBuilder.h"
 
@@ -43,4 +42,4 @@ public:
     Constant *set_global_const_val(Value *value, ConstantInt *const_val);
 };
 
-#endif
+#endif  // MHSJ_CONSTPROPAGATION_H
