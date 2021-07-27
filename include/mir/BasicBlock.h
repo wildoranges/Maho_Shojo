@@ -67,7 +67,10 @@ public:
     void set_idom(BasicBlock* bb){idom_ = bb;}
     BasicBlock* get_idom(){return idom_;}
     void add_dom_frontier(BasicBlock* bb){dom_frontier_.insert(bb);}
+    void add_rdom_frontier(BasicBlock* bb){rdom_frontier_.insert(bb);}
+    auto add_rdom(BasicBlock* bb){return rdoms_.insert(bb);}
     std::set<BasicBlock *> &get_dom_frontier(){return dom_frontier_;}
+    std::set<BasicBlock *> &get_rdom_frontier(){return rdom_frontier_;}
     std::set<Value*>& get_live_in(){return live_in;}
     std::set<Value*>& get_live_out(){return live_out;}
     void set_live_in(std::set<Value*> in){live_in = in;}
@@ -92,7 +95,9 @@ private:
     Function *parent_;
     BasicBlock* idom_ = nullptr;
     std::set<BasicBlock*> dom_frontier_;
-    std::set<Value*> live_in;
+    std::set<BasicBlock*> rdom_frontier_;
+    std::set<BasicBlock*> rdoms_;
+    std::set<Value*> live_in;//TODO:ADD API
     std::set<Value*> live_out;
 
     int incoming_branch = 0;
