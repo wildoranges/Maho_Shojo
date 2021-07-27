@@ -83,6 +83,7 @@ void RDominateTree::get_revserse_post_order(Function *f) {
     ret_instr.clear();
     exit_block = BasicBlock::create(module,"",f);//tmp exit_block;
     for(auto bb:f->get_basic_blocks()){
+        if(bb==exit_block) continue;
         auto terminate_instr = bb->get_terminator();
         if(terminate_instr->is_ret()){
             ret_instr.push_back(terminate_instr);

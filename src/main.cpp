@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
         std::cout << "passmgr\n";
 #endif
         passmgr.addPass<DominateTree>();
+        passmgr.addPass<RDominateTree>();
 #ifdef DEBUG
         std::cout << "DomTree\n";
 #endif
