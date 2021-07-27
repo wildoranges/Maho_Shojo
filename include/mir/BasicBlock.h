@@ -71,8 +71,11 @@ public:
     auto add_rdom(BasicBlock* bb){return rdoms_.insert(bb);}
     std::set<BasicBlock *> &get_dom_frontier(){return dom_frontier_;}
     std::set<BasicBlock *> &get_rdom_frontier(){return rdom_frontier_;}
+    std::set<BasicBlock *> &get_rdoms(){return rdoms_;}
     std::set<Value*>& get_live_in(){return live_in;}
     std::set<Value*>& get_live_out(){return live_out;}
+    void set_live_in(std::set<Value*> in){live_in = in;}
+    void set_live_out(std::set<Value*> out){live_out = out;}
     void insert_live_in(Value* in){live_in.insert(in);}
     void insert_live_out(Value* out){live_out.insert(out);}
 
