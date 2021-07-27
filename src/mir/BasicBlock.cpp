@@ -3,6 +3,7 @@
 #include "Function.h"
 #include "IRprinter.h"
 #include <cassert>
+#include <algorithm>
 
 BasicBlock::BasicBlock(Module *m, const std::string &name = "",
                       Function *parent = nullptr)
@@ -22,9 +23,19 @@ void BasicBlock::add_instruction(Instruction *instr)
     instr_list_.push_back(instr);
 }
 
+void BasicBlock::add_instruction(std::list<Instruction *>::iterator instr_pos, Instruction *instr)
+{
+    instr_list_.insert(instr_pos, instr);
+}
+
 void BasicBlock::add_instr_begin(Instruction *instr)
 {
     instr_list_.push_front(instr);
+}
+
+std::list<Instruction *>::iterator BasicBlock::find_instruction(Instruction *instr)
+{
+    return std::find(instr_list_.begin(), instr_list_.end(), instr);
 }
 
 void BasicBlock::delete_instr( Instruction *instr )

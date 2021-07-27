@@ -50,7 +50,7 @@ void BinaryInst::assertValid()
 
 BinaryInst *BinaryInst::create_add(Value *v1, Value *v2, BasicBlock *bb, Module *m)
 {
-    return new BinaryInst(Type::get_int32_type(m), Instruction::add, v1, v2, bb);
+    return new BinaryInst(v1->get_type()->is_pointer_type() ? v1->get_type() : v2->get_type(), Instruction::add, v1, v2, bb);
 }
 
 BinaryInst *BinaryInst::create_sub(Value *v1, Value *v2, BasicBlock *bb, Module *m)
@@ -75,12 +75,32 @@ BinaryInst *BinaryInst::create_srem(Value *v1, Value *v2, BasicBlock *bb, Module
 
 BinaryInst *BinaryInst::create_and(Value *v1, Value *v2, BasicBlock *bb, Module *m)
 {
-    return new BinaryInst(Type::get_int32_type(m), Instruction::sand, v1, v2, bb);
+    return new BinaryInst(Type::get_int32_type(m), Instruction::land, v1, v2, bb);
 }
 
 BinaryInst *BinaryInst::create_or(Value *v1, Value *v2, BasicBlock *bb, Module *m)
 {
-    return new BinaryInst(Type::get_int32_type(m), Instruction::sor, v1, v2, bb);
+    return new BinaryInst(Type::get_int32_type(m), Instruction::lor, v1, v2, bb);
+}
+
+BinaryInst *BinaryInst::create_xor(Value *v1, Value *v2, BasicBlock *bb, Module *m)
+{
+    return new BinaryInst(Type::get_int32_type(m), Instruction::lxor, v1, v2, bb);
+}
+
+BinaryInst *BinaryInst::create_asr(Value *v1, Value *v2, BasicBlock *bb, Module *m)
+{
+    return new BinaryInst(Type::get_int32_type(m), Instruction::asr, v1, v2, bb);
+}
+
+BinaryInst *BinaryInst::create_lsl(Value *v1, Value *v2, BasicBlock *bb, Module *m)
+{
+    return new BinaryInst(Type::get_int32_type(m), Instruction::lsl, v1, v2, bb);
+}
+
+BinaryInst *BinaryInst::create_lsr(Value *v1, Value *v2, BasicBlock *bb, Module *m)
+{
+    return new BinaryInst(Type::get_int32_type(m), Instruction::lsr, v1, v2, bb);
 }
 
 std::string BinaryInst::print()
@@ -102,6 +122,203 @@ std::string BinaryInst::print()
     else
     {
         instr_ir += print_as_op(this->get_operand(1), true);
+    }
+    return instr_ir;
+}
+
+MulAddInst::MulAddInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3, 
+                    BasicBlock *bb)
+    : Instruction(ty, id, 3, bb)
+{
+    set_operand(0, v1);
+    set_operand(1, v2);
+    set_operand(2, v3);
+    // assertValid();
+}
+
+void MulAddInst::assertValid()
+{
+    assert(get_operand(0)->get_type()->is_integer_type());
+    assert(get_operand(1)->get_type()->is_integer_type());
+    assert(get_operand(2)->get_type()->is_integer_type());
+    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
+        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
+        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
+}
+
+MulAddInst *MulAddInst::create_muladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
+{
+    return new MulAddInst(v3->get_type(), Instruction::muladd, v1, v2, v3, bb);
+}
+
+std::string MulAddInst::print()
+{
+    std::string instr_ir;
+    instr_ir += "%";
+    instr_ir += this->get_name();
+    instr_ir += " = ";
+    instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
+    instr_ir += " ";
+    instr_ir += this->get_operand(0)->get_type()->print();
+    instr_ir += " ";
+    instr_ir += print_as_op(this->get_operand(0), false);
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(1)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(1), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(1), true);
+    }
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(2)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(2), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(2), true);
+    }
+    return instr_ir;
+}
+
+MulSubInst::MulSubInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3, 
+                    BasicBlock *bb)
+    : Instruction(ty, id, 3, bb)
+{
+    set_operand(0, v1);
+    set_operand(1, v2);
+    set_operand(2, v3);
+    // assertValid();
+}
+
+void MulSubInst::assertValid()
+{
+    assert(get_operand(0)->get_type()->is_integer_type());
+    assert(get_operand(1)->get_type()->is_integer_type());
+    assert(get_operand(2)->get_type()->is_integer_type());
+    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
+        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
+        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
+}
+
+MulSubInst *MulSubInst::create_mulsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
+{
+    return new MulSubInst(Type::get_int32_type(m), Instruction::mulsub, v1, v2, v3, bb);
+}
+
+std::string MulSubInst::print()
+{
+    std::string instr_ir;
+    instr_ir += "%";
+    instr_ir += this->get_name();
+    instr_ir += " = ";
+    instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
+    instr_ir += " ";
+    instr_ir += this->get_operand(0)->get_type()->print();
+    instr_ir += " ";
+    instr_ir += print_as_op(this->get_operand(0), false);
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(1)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(1), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(1), true);
+    }
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(2)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(2), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(2), true);
+    }
+    return instr_ir;
+}
+
+ShiftBinaryInst::ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Constant *v3, 
+                    BasicBlock *bb)
+    : Instruction(ty, id, 3, bb)
+{
+    set_operand(0, v1);
+    set_operand(1, v2);
+    set_operand(2, v3);
+    // assertValid();
+}
+
+void ShiftBinaryInst::assertValid()
+{
+    assert(get_operand(0)->get_type()->is_integer_type());
+    assert(get_operand(1)->get_type()->is_integer_type());
+    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
+        static_cast<Constant *>(get_operand(2)));
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_asradd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::asradd, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_lsladd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsladd, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_lsradd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsradd, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_asrsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::asrsub, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_lslsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lslsub, v1, v2, v3, bb);
+}
+
+ShiftBinaryInst *ShiftBinaryInst::create_lsrsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+{
+    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsrsub, v1, v2, v3, bb);
+}
+
+std::string ShiftBinaryInst::print()
+{
+    std::string instr_ir;
+    instr_ir += "%";
+    instr_ir += this->get_name();
+    instr_ir += " = ";
+    instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
+    instr_ir += " ";
+    instr_ir += this->get_operand(0)->get_type()->print();
+    instr_ir += " ";
+    instr_ir += print_as_op(this->get_operand(0), false);
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(1)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(1), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(1), true);
+    }
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(2)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(2), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(2), true);
     }
     return instr_ir;
 }
@@ -150,6 +367,73 @@ std::string CmpInst::print()
     else
     {
         instr_ir += print_as_op(this->get_operand(1), true);
+    }
+    return instr_ir;
+}
+
+CmpBrInst::CmpBrInst(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false, 
+            BasicBlock *bb)
+    : Instruction(Type::get_void_type(if_true->get_module()), Instruction::cmpbr, 4, bb), cmp_op_(op)
+{
+    set_operand(0, lhs);
+    set_operand(1, rhs);
+    set_operand(2, if_true);
+    set_operand(3, if_false);
+    // assertValid();
+}
+
+void CmpBrInst::assertValid()
+{
+    assert(get_operand(0)->get_type()->is_integer_type());
+    assert(get_operand(1)->get_type()->is_integer_type());
+    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
+}
+
+CmpBrInst *CmpBrInst::create_cmpbr(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false, 
+                        BasicBlock *bb, Module *m)
+{
+    if_true->add_pre_basic_block(bb);
+    if_false->add_pre_basic_block(bb);
+    bb->add_succ_basic_block(if_false);
+    bb->add_succ_basic_block(if_true);
+
+    return new CmpBrInst(op, lhs, rhs, if_true, if_false, bb);
+}
+
+bool CmpBrInst::is_cmp_br() const
+{
+    return get_num_operand() == 4;
+}
+
+std::string CmpBrInst::print()
+{
+    std::string instr_ir;
+    instr_ir += "%";
+    instr_ir += this->get_name();
+    instr_ir += " = ";
+    instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
+    instr_ir += " ";
+    instr_ir += print_cmp_type(this->cmp_op_);
+    instr_ir += " ";
+    instr_ir += this->get_operand(0)->get_type()->print();
+    instr_ir += " ";
+    instr_ir += print_as_op(this->get_operand(0), false);
+    instr_ir += ", ";
+    if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(1)->get_type()))
+    {
+        instr_ir += print_as_op(this->get_operand(1), false);
+    }
+    else
+    {
+        instr_ir += print_as_op(this->get_operand(1), true);
+    }
+    if( is_cmp_br() )
+    {
+        instr_ir += ", ";
+        instr_ir += print_as_op(this->get_operand(2), true);
+        instr_ir += ", ";
+        instr_ir += print_as_op(this->get_operand(3), true);
     }
     return instr_ir;
 }

@@ -6,32 +6,125 @@
 #include <set>
 
 void Interval::add_range(int from, int to) {
-
-}
-
-
-void Interval::add_use_pos(int pos) {
-
+    auto top_range = *range_list.begin();
+    if(from>=top_range->from && from<=top_range->to){
+        top_range->to = to > top_range->to?to:top_range->to;
+    }else if(from < top_range->from){
+        if(to <= top_range->to && to>=top_range->from){
+            top_range->from = from;
+        }else{
+            auto new_range = new Range(from,to);
+            range_list.push_front(new_range);
+        }
+    }else{
+        auto new_range = new Range(from,to);
+        range_list.push_front(new_range);
+    }
 }
 
 
 bool Interval::intersects(Interval *interval) {
-
+    auto taget_it = range_list.begin();
+    auto with_it = interval->range_list.begin();
+    while(with_it!=interval->range_list.end()&&taget_it!=range_list.end()){
+        auto target_range = *taget_it;
+        auto with_range = *with_it;
+        if(target_range->to<=with_range->from){
+            taget_it++;
+            continue;
+        }else if(with_range->to<=target_range->from){
+            with_it++;
+            continue;
+        }else{
+            return true;
+        }
+    }
+    return false;
 }
 
+
+struct cmp_range{
+    bool operator()(Range* a,Range* b){
+        return a->from > b->from;
+    }
+};
 
 void Interval::union_interval(Interval *interval) {
-
+    std::priority_queue<Range*, std::list<Range*>, cmp_range> all_range;
+    for(auto range:range_list){
+        all_range.push(range);
+    }
+    for(auto range:interval->range_list){
+        all_range.push(range);
+    }
+    if(all_range.empty()){
+        return;
+    }
+    range_list.clear();
+    auto cur_range = all_range.top();
+    all_range.pop();
+    while(!all_range.empty()){
+        auto merge_range = all_range.top();
+        all_range.pop();
+        if(merge_range->from > cur_range->to){
+            range_list.push_back(cur_range);
+            cur_range = merge_range;
+        }else{
+            cur_range->to = cur_range->to >= merge_range->to?cur_range->to:merge_range->to;
+        }
+    }
+    range_list.push_back(cur_range);
 }
+
+
+void RegAllocDriver::compute_reg_alloc() {
+    for(auto func:module->get_functions()){
+        if(func->get_basic_blocks().empty()){
+            continue;
+        }else{
+            auto allocator = new RegAlloc(func);
+            allocator->execute();
+            reg_alloc[func] = allocator->get_reg_alloc();
+        }
+    }
+}
+
+void RegAlloc::execute() {
+    compute_block_order();
+    number_operations();
+    build_intervals();
+    union_phi_val();
+    walk_intervals();
+}
+
+struct cmp_block_depth{
+    bool operator()(BasicBlock* a,BasicBlock* b){
+        return a->get_loop_depth() < b->get_loop_depth();
+    }
+};
 
 //ref: https://ssw.jku.at/Research/Papers/Wimmer04Master/Wimmer04Master.pdf
 void RegAlloc::compute_block_order() {
 //TODO:USE LOOP INFO
 //TODO:CHECK CLEAR
+    std::priority_queue<BasicBlock*,std::list<BasicBlock*>,cmp_block_depth>work_list;
     block_order.clear();
     auto entry = func->get_entry_block();
-    std::set<BasicBlock*> visited = {};
-    get_dfs_order(entry,visited);
+    work_list.push(entry);
+    while(!work_list.empty()){
+        auto bb = work_list.top();
+        work_list.pop();
+        block_order.push_back(bb);
+
+        for(auto sux : bb->get_succ_basic_blocks()){
+            sux->incoming_decrement();
+            if(sux->is_incoming_zero()){
+                work_list.push(sux);
+            }
+        }
+    }
+//    std::set<BasicBlock*> visited = {};
+//    get_dfs_order(entry,visited);
 }
 
 void RegAlloc::get_dfs_order(BasicBlock *bb, std::set<BasicBlock *> &visited) {
@@ -67,6 +160,9 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         auto lst_instr = instrs.rbegin();
         int block_to = (*(lst_instr))->get_id() + 2;
         for(auto opr:bb->get_live_out()){//TODO:NEW
+            if(!dynamic_cast<Instruction*>(opr)){
+                continue;
+            }
             if(val2Inter.find(opr)==val2Inter.end()){
                 auto new_interval = new Interval(opr);
                 val2Inter[opr] = new_interval;
@@ -79,10 +175,10 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
 //            if(instr->is_phi()){
 //                continue;
 //            }//TODO:SAME COLOR OF PHI?
-            //TODO:ADD FUN CALL
+            //TODO:ADD FUN CALL?
 
 //            if(instr->is_call()){
-//                //TODO:ADD PHYSICAL REG
+//                //TODO:ADD PHYSICAL REG?
 //            }
 
             if(!instr->is_void()){
@@ -100,7 +196,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
             }
 
             for(auto opr:instr->get_operands()){
-                if(dynamic_cast<Constant*>(opr)){
+                if(!dynamic_cast<Instruction*>(opr)){
                     continue;
                 }
                 if(val2Inter.find(opr)==val2Inter.end()){
@@ -120,8 +216,10 @@ void RegAlloc::walk_intervals() {
     //inactive = {};
     //handled = {};
     while(!interval_list.empty()){
-        current = interval_list.top();
-        interval_list.pop();
+        auto current_it = interval_list.begin();
+        current = *current_it;//TODO:CHECK WARNING
+        interval_list.erase(current_it);
+        //interval_list.pop();
         auto position = (*current->range_list.begin())->from;
 
         for(auto it = active.begin();it != active.end();it++){
@@ -203,5 +301,19 @@ void RegAlloc::add_reg_to_pool(int reg_id) {
 }
 
 void RegAlloc::union_phi_val() {
-
+    auto vreg_sets = func->get_vreg_set();
+    for(auto set:vreg_sets){
+        Value* final_vreg = nullptr;
+        for(auto vreg:set){
+            if(final_vreg == nullptr){
+                final_vreg = vreg;
+            }else{
+                auto vreg_ptr = val2Inter[vreg];
+                auto final_ptr = val2Inter[final_vreg];
+                final_ptr->union_interval(vreg_ptr);
+                val2Inter[vreg] = final_ptr;
+                interval_list.erase(vreg_ptr);
+            }
+        }
+    }
 }
