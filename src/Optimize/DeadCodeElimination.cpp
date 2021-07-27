@@ -8,6 +8,7 @@ void DeadCodeElimination::execute() {
             continue;
         }
         func_ = func;
+        instr_mark.clear();
         mark();
         sweep();
     }
@@ -48,7 +49,6 @@ BasicBlock *DeadCodeElimination::get_nearest_marked_postdominator(Instruction *i
 
 void DeadCodeElimination::mark() {
     std::vector<Instruction *> work_list;
-    instr_mark.clear();
     for (auto bb : func_->get_basic_blocks()) {
         for (auto instr : bb->get_instructions()) {
             if (is_critical(instr)) {
