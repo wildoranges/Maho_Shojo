@@ -97,14 +97,34 @@ void RegAlloc::execute() {
     walk_intervals();
 }
 
+struct cmp_block_depth{
+    bool operator()(BasicBlock* a,BasicBlock* b){
+        return a->get_loop_depth() < b->get_loop_depth();
+    }
+};
+
 //ref: https://ssw.jku.at/Research/Papers/Wimmer04Master/Wimmer04Master.pdf
 void RegAlloc::compute_block_order() {
 //TODO:USE LOOP INFO
 //TODO:CHECK CLEAR
+    std::priority_queue<BasicBlock*,std::list<BasicBlock*>,cmp_block_depth>work_list;
     block_order.clear();
     auto entry = func->get_entry_block();
-    std::set<BasicBlock*> visited = {};
-    get_dfs_order(entry,visited);
+    work_list.push(entry);
+    while(!work_list.empty()){
+        auto bb = work_list.top();
+        work_list.pop();
+        block_order.push_back(bb);
+
+        for(auto sux : bb->get_succ_basic_blocks()){
+            sux->incoming_decrement();
+            if(sux->is_incoming_zero()){
+                work_list.push(sux);
+            }
+        }
+    }
+//    std::set<BasicBlock*> visited = {};
+//    get_dfs_order(entry,visited);
 }
 
 void RegAlloc::get_dfs_order(BasicBlock *bb, std::set<BasicBlock *> &visited) {
