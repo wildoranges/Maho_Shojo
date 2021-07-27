@@ -5,4 +5,5 @@ add_library(
         DominateTree.cpp
         mem2reg.cpp
         LIR.cpp
-        CFG_analyse.cpp)
+        CFG_analyse.cpp
+        LoopInvariant.cpp)

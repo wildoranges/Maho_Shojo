@@ -45,16 +45,18 @@ void CFG_analyse::loop_find(Function *func){
     while(!loop_stack.empty()){
         auto loop = loop_stack.top();
         loop_stack.pop();
+        if (bb_loop[find_loop_entry(loop)]!=nullptr){
+            outer_loop[loop] = bb_loop[find_loop_entry(loop)];
+        }
         for (auto BB : *loop){
-            
             BB->loop_depth_add();
             bb_loop[BB] = loop;
         }
-        color[loop_entry(loop)] = 1;
+        color[find_loop_entry(loop)] = 1;
         DFN = 0;
         BB_DFN.clear();
         BB_LOW.clear();
-        for (auto succ : loop_entry(loop)->get_succ_basic_blocks()){
+        for (auto succ : find_loop_entry(loop)->get_succ_basic_blocks()){
             if (bb_loop[succ] == loop){
                 tarjan_DFS(succ);
             }
@@ -94,12 +96,4 @@ void CFG_analyse::tarjan_DFS(BasicBlock *BB){
             loop_stack.push(BBs);
         }
     }
-}
-
-BasicBlock* CFG_analyse::loop_entry(std::vector<BasicBlock *> *loop){
-    return *(*loop).rbegin();
-}
-
-std::vector<BasicBlock *>* CFG_analyse::find_bb_loop(BasicBlock *BB){
-    return bb_loop[BB];
 }
