@@ -10,6 +10,7 @@
 #include "LIR.h"
 #include "ActiveVar.h"
 #include "ConstPropagation.h"
+#include "DeadCodeElimination.h"
 #include "CFG_analyse.h"
 
 void print_help(const std::string& exe_name) {
@@ -83,9 +84,10 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
         std::cout << "Mem2Reg\n";
 #endif
-        passmgr.addPass<LIR>();
+        //passmgr.addPass<LIR>();
         passmgr.addPass<ActiveVar>();
         passmgr.addPass<ConstPropagation>();
+        passmgr.addPass<DeadCodeElimination>();
         passmgr.addPass<CFG_analyse>();
         m->set_print_name();
         passmgr.execute();

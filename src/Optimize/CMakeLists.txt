@@ -7,4 +7,5 @@ add_library(
         LIR.cpp
         ActiveVar.cpp
         ConstPropagation.cpp
+        DeadCodeElimination.cpp
         CFG_analyse.cpp)
