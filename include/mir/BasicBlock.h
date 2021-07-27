@@ -76,6 +76,8 @@ public:
     /*******CFG_analyse*******/
     int get_incoming_branch(){return incoming_branch;}
     void incoming_add(){incoming_branch++;}
+    void incoming_decrement(){incoming_branch--;}
+    bool is_incoming_zero(){return incoming_branch==0;}
     int get_loop_depth(){return loop_depth;}
     void loop_depth_add(){loop_depth++;}
     /*******CFG_analyse*******/
