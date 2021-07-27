@@ -317,3 +317,16 @@ void RegAlloc::union_phi_val() {
         }
     }
 }
+
+void RegAlloc::set_unused_reg_num() {
+    auto union_set = new std::set<int>();
+    while (!remained_general_reg_id.empty()){
+        union_set->insert(remained_general_reg_id.top());
+        remained_general_reg_id.pop();
+    }
+    while(!remained_func_reg_id.empty()){
+        union_set->insert(remained_func_reg_id.top());
+        remained_func_reg_id.pop();
+    }
+    func->set_unused_reg_num(*union_set);//TODO:CHECK ACC?
+}

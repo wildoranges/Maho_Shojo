@@ -78,6 +78,7 @@ public:
     void build_intervals();
     void union_phi_val();
     void walk_intervals();
+    void set_unused_reg_num();
     std::map<Value*,Interval*>& get_reg_alloc(){return val2Inter;}
 private:
     void get_dfs_order(BasicBlock* bb,std::set<BasicBlock*>& visited);
