@@ -17,8 +17,25 @@ Module::Module(std::string name)
     instr_id2string_.insert({ Instruction::sdiv, "sdiv" });
     instr_id2string_.insert({ Instruction::srem, "srem" });
 
-    instr_id2string_.insert({ Instruction::sand, "and" });
-    instr_id2string_.insert({ Instruction::sor, "or" });
+    instr_id2string_.insert({ Instruction::muladd, "muladd" });
+    instr_id2string_.insert({ Instruction::mulsub, "mulsub" });
+
+    instr_id2string_.insert({ Instruction::cmpbr, "cmpbr" });
+
+    instr_id2string_.insert({ Instruction::land, "and" });
+    instr_id2string_.insert({ Instruction::lor, "or" });
+    instr_id2string_.insert({ Instruction::lxor, "xor" });
+
+    instr_id2string_.insert({ Instruction::asr, "asr" });
+    instr_id2string_.insert({ Instruction::lsl, "lsl" });
+    instr_id2string_.insert({ Instruction::lsr, "lsr" });
+
+    instr_id2string_.insert({ Instruction::asr, "asradd" });
+    instr_id2string_.insert({ Instruction::lsl, "lsladd" });
+    instr_id2string_.insert({ Instruction::lsr, "lsradd" });
+    instr_id2string_.insert({ Instruction::asr, "asrsub" });
+    instr_id2string_.insert({ Instruction::lsl, "lslsub" });
+    instr_id2string_.insert({ Instruction::lsr, "lsrsub" });
 
     instr_id2string_.insert({ Instruction::alloca, "alloca" });
     instr_id2string_.insert({ Instruction::load, "load" });

@@ -42,7 +42,7 @@ def eval(EXE_PATH, TEST_BASE_PATH, timeout, optimization):
                             continue
                         if out[i] != line:
                             Success_flag == False
-                            print(result.stdout, result.returncode, out[i], line, end='')
+                            print(result.stdout[:100], result.returncode, out[i][:100], line[:100], end='')
                             print('\t\033[31mWrong Answer\033[0m')
                         i = i + 1
                     if Success_flag == True:
