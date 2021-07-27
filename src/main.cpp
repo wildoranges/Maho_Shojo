@@ -82,11 +82,12 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
         std::cout << "Mem2Reg\n";
 #endif
-        passmgr.addPass<LIR>();
-        
         /****passmgr.addPass<CFG_analyse>();****
          ***this is executed in LoopInvariant***/
         passmgr.addPass<LoopInvariant>();
+
+        passmgr.addPass<LIR>();
+
         m->set_print_name();
         passmgr.execute();
 #ifdef DEBUG

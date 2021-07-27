@@ -43,38 +43,43 @@ void LoopInvariant::execute(){
 }
 
 void LoopInvariant::invariants_find(std::vector<BasicBlock *>* loop){
-    std::set<Value *> need_defined;
-    std::set<Instruction *> invariant_BB;
+    std::set<Value *> defined_in_loop;
+    std::set<Instruction *> invariant;
     for (auto BB : *loop){
         for (auto inst : BB->get_instructions()){
-            need_defined.insert(inst);
+            if (inst->is_store()){
+                defined_in_loop.insert(inst->get_operand(1));
+            }
+            else{
+                defined_in_loop.insert(inst);
+            }
         }
     }
     bool change = false;
     do {
         change = false;
         for (auto BB : *loop){
-            invariant_BB.clear();
+            invariant.clear();
             for (auto inst : BB->get_instructions()){
                 bool invariant_check = true;
-                if (inst->is_call()||inst->is_alloca()||inst->is_ret()||inst->is_br()||inst->is_cmp()||inst->is_phi()){
+                if (inst->is_call()||inst->is_alloca()||inst->is_ret()||inst->is_br()||inst->is_cmp()||inst->is_phi()||inst->is_load()){
                     continue;
                 }
-                if (need_defined.find(inst) == need_defined.end()){
+                if (defined_in_loop.find(inst) == defined_in_loop.end()){
                     continue;
                 }
                 for (auto operand : inst->get_operands()){
-                    if (need_defined.find(operand) != need_defined.end()){
+                    if (defined_in_loop.find(operand) != defined_in_loop.end()){
                         invariant_check = false;
                     }
                 }
                 if (invariant_check){
-                    need_defined.erase(inst);
-                    invariant_BB.insert(inst);
+                    defined_in_loop.erase(inst);
+                    invariant.insert(inst);
                     change = true;
                 }
             }
-            invariants.push_back({BB,invariant_BB});
+            invariants.push_back({BB,invariant});
         }
     }while (change);
 }
