@@ -50,7 +50,7 @@ def eval(EXE_PATH, TEST_BASE_PATH, timeout, optimization):
                 print(result.stderr.decode())
             except Exception as _:
                 print(_, end='')
-                print('\t\033[31mExeGen or Execute Fail\033[0m')
+                print('\t\033[31mCodeGen or CodeExecute Fail\033[0m')
             finally:
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH])
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH + ".o"])

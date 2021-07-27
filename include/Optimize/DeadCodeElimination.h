@@ -14,7 +14,7 @@ public:
     bool is_critical(Instruction *);
     BasicBlock* get_nearest_marked_postdominator(Instruction *);
 private:
-    BasicBlock *bb_;
+    Function *func_;
     std::map<Instruction *, bool> instr_mark;
 };
 
