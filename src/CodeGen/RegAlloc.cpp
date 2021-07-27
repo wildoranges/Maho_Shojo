@@ -160,6 +160,9 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         auto lst_instr = instrs.rbegin();
         int block_to = (*(lst_instr))->get_id() + 2;
         for(auto opr:bb->get_live_out()){//TODO:NEW
+            if(!dynamic_cast<Instruction*>(opr)){
+                continue;
+            }
             if(val2Inter.find(opr)==val2Inter.end()){
                 auto new_interval = new Interval(opr);
                 val2Inter[opr] = new_interval;
@@ -193,7 +196,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
             }
 
             for(auto opr:instr->get_operands()){
-                if(dynamic_cast<Constant*>(opr)){
+                if(!dynamic_cast<Instruction*>(opr)){
                     continue;
                 }
                 if(val2Inter.find(opr)==val2Inter.end()){
