@@ -9,3 +9,5 @@ add_library(
         ConstPropagation.cpp
         DeadCodeElimination.cpp
         CFG_analyse.cpp)
+        CFG_analyse.cpp
+        LoopInvariant.cpp)

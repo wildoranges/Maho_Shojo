@@ -13,6 +13,7 @@
 #include "DeadCodeElimination.h"
 #include "CFGSimplifier.h"
 #include "CFG_analyse.h"
+#include "LoopInvariant.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
@@ -92,6 +93,12 @@ int main(int argc, char *argv[])
         passmgr.addPass<DeadCodeElimination>();
         passmgr.addPass<CFGSimplifier>();
         passmgr.addPass<CFG_analyse>();
+        /****passmgr.addPass<CFG_analyse>();****
+         ***this is executed in LoopInvariant***/
+        passmgr.addPass<LoopInvariant>();
+
+        passmgr.addPass<LIR>();
+
         m->set_print_name();
         passmgr.execute();
 #ifdef DEBUG
