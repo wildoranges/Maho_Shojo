@@ -55,7 +55,7 @@ struct cmp_interval{
     }
 };
 
-const std::vector<int> general_reg_id = {12,11,10,9,8,7,6,5,4};
+const std::vector<int> general_reg_id = {11,10,9,8,7,6,5,4};
 const std::vector<int> func_reg_id = {3,2,1,0};
 
 class RegAllocDriver{

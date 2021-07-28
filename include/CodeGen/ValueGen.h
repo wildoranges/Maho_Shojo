@@ -39,7 +39,7 @@ namespace IR2asm {
 
         bool is_reg() final {return true;}
         bool is_const() final {return false;}
-        std::string get_code() { return reg_name[id]; }
+        std::string get_code(){ return reg_name[id]; }
     };
 
     class Regbase: public Location{
