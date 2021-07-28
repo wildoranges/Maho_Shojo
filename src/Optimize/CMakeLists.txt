@@ -1,7 +1,7 @@
 add_library(
         pass STATIC
         Pass.cpp
-        CFGSymplifiler.cpp
+        CFGSimplifier.cpp
         DominateTree.cpp
         mem2reg.cpp
         LIR.cpp

@@ -34,7 +34,7 @@ public:
     }
     ~ConstPropagation() { delete folder; }
 
-    void execute();
+    void execute() final;
     void const_propagation();
     void reduce_redundant_cond_br();
 
