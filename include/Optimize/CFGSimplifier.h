@@ -11,6 +11,8 @@ public:
     void compute_postorder();
     bool one_pass();
     void combine_bb(BasicBlock*, BasicBlock*);
+    bool bb_can_delete(BasicBlock*);
+    void replace_phi(BasicBlock*, std::list<BasicBlock*>, BasicBlock*);
 private:
     Function *func_;
     std::vector<BasicBlock*> postorder_bb_list;

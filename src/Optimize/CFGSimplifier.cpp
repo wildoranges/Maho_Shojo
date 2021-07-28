@@ -1,5 +1,7 @@
 #include "CFGSimplifier.h"
 
+// FIXME: may have bugs
+
 void CFGSimplifier::execute() {
     for (auto func : module->get_functions()) {
         if (func->get_num_basic_blocks() == 0) {
@@ -46,32 +48,83 @@ void CFGSimplifier::compute_postorder() {
     return ;
 }
 
+bool CFGSimplifier::bb_can_delete(BasicBlock *bb) {
+    // for bb end with br (not condbr)
+    auto terminator = bb->get_terminator();
+    auto target_bb = terminator->get_operand(0);
+    for (auto pre_bb : bb->get_pre_basic_blocks()) {
+        auto pre_terminator = pre_bb->get_terminator();
+        BasicBlock *pre_true_bb;
+        BasicBlock *pre_false_bb;
+        if (pre_terminator->is_br() && pre_terminator->get_num_operand() == 3) {
+            pre_true_bb = dynamic_cast<BasicBlock*>(pre_terminator->get_operand(1));
+            pre_false_bb = dynamic_cast<BasicBlock*>(pre_terminator->get_operand(2));
+        } else if (pre_terminator->is_cmpbr() && pre_terminator->get_num_operand() == 4) {
+            pre_true_bb = dynamic_cast<BasicBlock*>(pre_terminator->get_operand(2));
+            pre_false_bb = dynamic_cast<BasicBlock*>(pre_terminator->get_operand(3));
+        }
+        if ((pre_true_bb == bb && pre_false_bb == target_bb) || (pre_false_bb == bb && pre_true_bb == target_bb)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void CFGSimplifier::replace_phi(BasicBlock *victim_bb, std::list<BasicBlock*> pre_bb_list, BasicBlock *succ_bb) {
+    for (auto instr : succ_bb->get_instructions()) {
+        if (instr->is_phi()) {
+            for (int i = 1; i < instr->get_num_operand(); i+=2) {
+                auto target_bb = dynamic_cast<BasicBlock*>(instr->get_operand(i));
+                if (target_bb == victim_bb) {
+                    auto val = instr->get_operand(i - 1);
+                    for (auto pre_bb : pre_bb_list) {
+                        dynamic_cast<PhiInst*>(instr)->add_phi_pair_operand(val, pre_bb);
+                    }
+                    instr->remove_operands(i - 1, i);
+                }
+            }
+        }
+    }
+}
+
 void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
     // bb has only one successor succ_bb and succ_bb has only one predecessor bb
+    std::vector<Instruction*> wait_delete_instr;
     bb->remove_succ_basic_block(succ_bb);
     succ_bb->remove_pre_basic_block(bb);
     for (auto succ_succ_bb : succ_bb->get_succ_basic_blocks()) {
         succ_succ_bb->remove_pre_basic_block(succ_bb);
         bb->add_succ_basic_block(succ_succ_bb);
         succ_succ_bb->add_pre_basic_block(bb);
-        for (auto instr : succ_succ_bb->get_instructions()) {
-            if (instr->is_phi()) {
-                for (int i = 1; i < instr->get_num_operand(); i+=2) {
-                    auto target_bb = dynamic_cast<BasicBlock*>(instr->get_operand(i));
-                    if (target_bb != nullptr && target_bb == succ_bb) {
-                        instr->set_operand(i, bb);
+        replace_phi(succ_bb, {bb}, succ_succ_bb);
+    }
+    bb->delete_instr(bb->get_terminator());
+    std::list<Instruction*>::iterator phi_pos = bb->get_instructions().begin();
+    for (auto iter = bb->get_instructions().begin(); iter != bb->get_instructions().end(); iter++) {
+        if ((*iter)->is_phi() == false) {
+            phi_pos = iter;
+            break;
+        }
+    }
+    for (auto instr : succ_bb->get_instructions()) {
+        if (instr->is_phi()) {
+            for (int i = 1; i < instr->get_num_operand(); i+=2) {
+                if (instr->get_operand(i) == bb) {
+                    if (instr->get_num_operand() == 2) {
+                        instr->replace_all_use_with(instr->get_operand(i - 1));
+                        wait_delete_instr.push_back(instr);
+                    } else {
+                        instr->remove_operands(i - 1, i);
                     }
                 }
             }
-        }
-    }
-    bb->delete_instr(bb->get_terminator());
-    for (auto instr : succ_bb->get_instructions()) {
-        if (instr->is_phi()) {
-            bb->add_instr_begin(instr);
+            bb->add_instruction(phi_pos, instr);
         } else {
             bb->add_instruction(instr);
         }
+    }
+    for (auto delete_instr : wait_delete_instr) {
+        bb->delete_instr(delete_instr);
     }
     return ;
 }
@@ -96,6 +149,7 @@ bool CFGSimplifier::one_pass() {
             }
         }
         if (terminator->is_br() && terminator->get_num_operand() == 1) {
+            if (bb_can_delete(bb) == false) continue;
             auto succ_bb = dynamic_cast<BasicBlock*>(terminator->get_operand(0));
             auto succ_bb_terminator = dynamic_cast<Instruction*>(succ_bb->get_terminator());
             if (bb->get_num_of_instr() == 1) {  // empty bb
@@ -110,17 +164,8 @@ bool CFGSimplifier::one_pass() {
                             pre_terminator->set_operand(i, succ_bb);
                         }
                     }
-                    for (auto instr : succ_bb->get_instructions()) {
-                        if (instr->is_phi()) {
-                            for (int i = 1; i < instr->get_num_operand(); i+=2) {
-                                auto target_bb = dynamic_cast<BasicBlock*>(instr->get_operand(i));
-                                if (target_bb != nullptr && target_bb == bb) {
-                                    instr->set_operand(i, pre_bb);
-                                }
-                            }
-                        }
-                    }
                 }
+                replace_phi(bb, bb->get_pre_basic_blocks(), succ_bb);
                 wait_delete_bb.push_back(bb);
                 changed = true;
             }
@@ -136,33 +181,13 @@ bool CFGSimplifier::one_pass() {
                     succ_succ_bb->remove_pre_basic_block(succ_bb);
                     bb->add_succ_basic_block(succ_succ_bb);
                     succ_succ_bb->add_pre_basic_block(bb);
-                    for (auto instr : succ_succ_bb->get_instructions()) {
-                        if (instr->is_phi()) {
-                            for (int i = 1; i < instr->get_num_operand(); i+=2) {
-                                auto target_bb = dynamic_cast<BasicBlock*>(instr->get_operand(i));
-                                if (target_bb != nullptr && target_bb == succ_bb) {
-                                    instr->set_operand(i, bb);
-                                }
-                            }
-                        }
-                    }
+                    replace_phi(succ_bb, {bb}, succ_succ_bb);
                 }
                 changed = true;
             }
         }
     }
     for (auto delete_bb : wait_delete_bb) {
-        for (auto bb : func_->get_basic_blocks()) {
-            for (auto instr : bb->get_instructions()) {
-                if (instr->is_phi()) {
-                    for (int i = 1; i < instr->get_num_operand(); i+=2) {
-                        if (instr->get_operand(i) == delete_bb) {
-                            instr->remove_operands(i - 1, i);
-                        }
-                    }
-                }
-            }
-        }
         func_->remove(delete_bb);
     }
     return changed;
