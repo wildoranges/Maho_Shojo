@@ -110,8 +110,8 @@ void ConstPropagation::reduce_redundant_cond_br() {
                             surviveBB = dynamic_cast<BasicBlock *>(falseBB);
                         }
                         for (auto succBB : bb->get_succ_basic_blocks()) {
+                            succBB->remove_pre_basic_block(bb);
                             if (succBB != surviveBB) {
-                                succBB->remove_pre_basic_block(bb);
                                 for (auto instr : succBB->get_instructions()) {
                                     if (instr->is_phi()) {
                                         for (int i = 1; i < instr->get_num_operand(); i+=2) {
