@@ -15,8 +15,8 @@ void LIR::execute() {
                 split_srem(bb);
                 // convert instr
                 // remove meaningless instr
-                // merge instr
-                merge_mul_add(bb);
+                // merge instr (when all optimization finished)
+                //merge_mul_add(bb);
                 merge_mul_sub(bb);
                 merge_cmp_br(bb);
             }
@@ -37,8 +37,14 @@ void LIR::merge_cmp_br(BasicBlock* bb) {
                 if (inst_cmp->get_parent() == bb && inst_cmp->get_use_list().size() == 1) {
                     auto cmp_ops = inst_cmp->get_operands();
                     auto cmp_op = inst_cmp->get_cmp_op();
+                    auto true_bb = dynamic_cast<BasicBlock* >(br_operands[1]);
+                    auto false_bb = dynamic_cast<BasicBlock* >(br_operands[2]);
+                    true_bb->remove_pre_basic_block(bb);
+                    false_bb->remove_pre_basic_block(bb);
+                    bb->remove_succ_basic_block(true_bb);
+                    bb->remove_succ_basic_block(false_bb);
                     auto cmp_br = CmpBrInst::create_cmpbr(cmp_op,cmp_ops[0],cmp_ops[1],
-                                                        dynamic_cast<BasicBlock* >(br_operands[1]),dynamic_cast<BasicBlock* >(br_operands[2]),
+                                                        true_bb,false_bb,
                                                         bb,module);
                     bb->delete_instr(inst_cmp);
                     bb->delete_instr(br);
@@ -116,7 +122,6 @@ void LIR::split_gep(BasicBlock* bb) {
         if (inst_gep->is_gep() && (inst_gep->get_num_operand() == 3)) {
             auto size = ConstantInt::get(inst_gep->get_type()->get_pointer_element_type()->get_size(), module);
             auto offset = inst_gep->get_operand(2);
-            inst_gep->remove_use(offset);
             inst_gep->set_operand(2, ConstantInt::get(0, module));
             auto real_offset = BinaryInst::create_mul(offset, size, bb, module);
             bb->add_instruction(++iter, instructions.back());
@@ -126,7 +131,7 @@ void LIR::split_gep(BasicBlock* bb) {
             instructions.pop_back();
             real_ptr->remove_use(inst_gep);
             inst_gep->replace_all_use_with(real_ptr);
-            real_ptr->set_operand(0,inst_gep);
+            real_ptr->set_operand(0, inst_gep);
         }
     }
 }

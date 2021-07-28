@@ -97,14 +97,34 @@ void RegAlloc::execute() {
     walk_intervals();
 }
 
+struct cmp_block_depth{
+    bool operator()(BasicBlock* a,BasicBlock* b){
+        return a->get_loop_depth() < b->get_loop_depth();
+    }
+};
+
 //ref: https://ssw.jku.at/Research/Papers/Wimmer04Master/Wimmer04Master.pdf
 void RegAlloc::compute_block_order() {
 //TODO:USE LOOP INFO
 //TODO:CHECK CLEAR
+    std::priority_queue<BasicBlock*,std::list<BasicBlock*>,cmp_block_depth>work_list;
     block_order.clear();
     auto entry = func->get_entry_block();
-    std::set<BasicBlock*> visited = {};
-    get_dfs_order(entry,visited);
+    work_list.push(entry);
+    while(!work_list.empty()){
+        auto bb = work_list.top();
+        work_list.pop();
+        block_order.push_back(bb);
+
+        for(auto sux : bb->get_succ_basic_blocks()){
+            sux->incoming_decrement();
+            if(sux->is_incoming_zero()){
+                work_list.push(sux);
+            }
+        }
+    }
+//    std::set<BasicBlock*> visited = {};
+//    get_dfs_order(entry,visited);
 }
 
 void RegAlloc::get_dfs_order(BasicBlock *bb, std::set<BasicBlock *> &visited) {
@@ -140,6 +160,9 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         auto lst_instr = instrs.rbegin();
         int block_to = (*(lst_instr))->get_id() + 2;
         for(auto opr:bb->get_live_out()){//TODO:NEW
+            if(!dynamic_cast<Instruction*>(opr)){
+                continue;
+            }
             if(val2Inter.find(opr)==val2Inter.end()){
                 auto new_interval = new Interval(opr);
                 val2Inter[opr] = new_interval;
@@ -173,7 +196,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
             }
 
             for(auto opr:instr->get_operands()){
-                if(dynamic_cast<Constant*>(opr)){
+                if(!dynamic_cast<Instruction*>(opr)){
                     continue;
                 }
                 if(val2Inter.find(opr)==val2Inter.end()){
@@ -293,4 +316,17 @@ void RegAlloc::union_phi_val() {
             }
         }
     }
+}
+
+void RegAlloc::set_unused_reg_num() {
+    auto union_set = new std::set<int>();
+    while (!remained_general_reg_id.empty()){
+        union_set->insert(remained_general_reg_id.top());
+        remained_general_reg_id.pop();
+    }
+    while(!remained_func_reg_id.empty()){
+        union_set->insert(remained_func_reg_id.top());
+        remained_func_reg_id.pop();
+    }
+    func->set_unused_reg_num(*union_set);//TODO:CHECK ACC?
 }

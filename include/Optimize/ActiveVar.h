@@ -4,9 +4,6 @@
 #include "Pass.h"
 #include "Module.h"
 
-#include <set>
-#include <map>
-
 class ActiveVar : public Pass
 {
 public:

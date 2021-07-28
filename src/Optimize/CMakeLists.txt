@@ -6,4 +6,6 @@ add_library(
         mem2reg.cpp
         LIR.cpp
         ActiveVar.cpp
-)
+        ConstPropagation.cpp
+        DeadCodeElimination.cpp
+        CFG_analyse.cpp)
