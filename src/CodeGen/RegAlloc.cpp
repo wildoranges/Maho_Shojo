@@ -44,13 +44,13 @@ bool Interval::intersects(Interval *interval) {
 
 
 struct cmp_range{
-    bool operator()(Range* a,Range* b){
+    bool operator()(const Range* a,const Range* b) const {
         return a->from > b->from;
     }
 };
 
 void Interval::union_interval(Interval *interval) {
-    std::priority_queue<Range*, std::list<Range*>, cmp_range> all_range;
+    std::priority_queue<Range*, std::vector<Range*>, cmp_range> all_range;
     for(auto range:range_list){
         all_range.push(range);
     }

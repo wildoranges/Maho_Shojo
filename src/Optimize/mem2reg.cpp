@@ -7,7 +7,7 @@ void Mem2Reg::execute(){
         func_ = fun;
         insideBlockForwarding();
         genPhi();
-        // module->set_print_name();
+        module->set_print_name();
         valueDefineCounting();
         valueForwarding(func_->get_entry_block());
         removeAlloc();
@@ -89,9 +89,9 @@ void Mem2Reg::insideBlockForwarding(){
             }
             bb->delete_instr(inst);
         } 
-        for(auto inst:delete_list){
-            bb->delete_instr(inst);
-        }       
+        // for(auto inst:delete_list){
+        //     bb->delete_instr(inst);
+        // }       
     }
 }
 
@@ -250,9 +250,9 @@ void Mem2Reg::valueForwarding(BasicBlock* bb){
         }
     // }
 
-    for(auto inst: delete_list){
-        bb->delete_instr(inst);
-    }
+    // for(auto inst: delete_list){
+    //     bb->delete_instr(inst);
+    // }
 } 
 
 void Mem2Reg::removeAlloc(){
@@ -263,9 +263,9 @@ void Mem2Reg::removeAlloc(){
             auto alloc_inst = dynamic_cast<AllocaInst *>(inst);
             if(alloc_inst->get_alloca_type()->is_integer_type())delete_list.insert(inst);
         }
-        for(auto inst: delete_list){
-            bb->delete_instr(inst);
-        }
+        // for(auto inst: delete_list){
+        //     bb->delete_instr(inst);
+        // }
     }
 }
 
@@ -292,8 +292,10 @@ void Mem2Reg::phiStatistic(){
                 if(value_map.find(opr) != value_map.end()){
                     auto opr_reduced_value = value_map.find(opr)->second;
                     if(opr_reduced_value != reduced_value){
+#ifdef DEBUG
                         std::cout << "conflict! " << opr->get_name() << " -> " << opr_reduced_value->get_name();
                         std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
+#endif
                     }
                 }
                 else{
