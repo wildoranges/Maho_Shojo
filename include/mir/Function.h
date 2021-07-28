@@ -48,7 +48,9 @@ public:
     std::vector<std::set<Value *>> &get_vreg_set(){ return vreg_set_;}
     
     bool is_declaration() { return basic_blocks_.empty(); }
-    
+    void set_unused_reg_num(std::set<int>& set){unused_reg_num_ = set;}
+    std::set<int>& get_unused_reg_num(){return unused_reg_num_;}
+
     void set_instr_name();
     std::string print();
 
@@ -60,6 +62,7 @@ private:
     std::list<Argument *> arguments_;         // arguments
     std::vector<std::set<Value *>> vreg_set_;
     Module *parent_;
+    std::set<int> unused_reg_num_;
     unsigned seq_cnt_;
     // unsigned num_args_;
     // We don't need this, all value inside function should be unnamed
