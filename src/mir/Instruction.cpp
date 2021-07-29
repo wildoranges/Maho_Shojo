@@ -254,7 +254,7 @@ std::string MulSubInst::print()
 
 ShiftBinaryInst::ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Constant *v3, 
                     BasicBlock *bb)
-    : Instruction(ty, id, 3, bb)
+    : Instruction(ty, id, 3, bb), v3_(v3)
 {
     set_operand(0, v1);
     set_operand(1, v2);
@@ -383,7 +383,7 @@ std::string CmpInst::print()
 
 CmpBrInst::CmpBrInst(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false, 
             BasicBlock *bb)
-    : Instruction(Type::get_void_type(if_true->get_module()), Instruction::cmpbr, 4, bb), cmp_op_(op)
+    : Instruction(Type::get_void_type(if_true->get_module()), Instruction::cmpbr, 4, bb), cmp_op_(op), true_BB_(if_true), false_BB_(if_false)
 {
     set_operand(0, lhs);
     set_operand(1, rhs);
@@ -449,7 +449,7 @@ std::string CmpBrInst::print()
 }
 
 CallInst::CallInst(Function *func, std::vector<Value *> args, BasicBlock *bb)
-    : Instruction(func->get_return_type(), Instruction::call, args.size() + 1, bb), args_(args)
+    : Instruction(func->get_return_type(), Instruction::call, args.size() + 1, bb)
 {
     assert(func->get_num_of_args() == args.size());
     int num_ops = args.size() + 1; 
@@ -502,7 +502,7 @@ std::string CallInst::print()
 
 BranchInst::BranchInst(Value *cond, BasicBlock *if_true, BasicBlock *if_false,
                     BasicBlock *bb)
-    : Instruction(Type::get_void_type(if_true->get_module()), Instruction::br, 3, bb)
+    : Instruction(Type::get_void_type(if_true->get_module()), Instruction::br, 3, bb), true_BB_(if_true), false_BB_(if_false)
 {
     set_operand(0, cond);
     set_operand(1, if_true);
@@ -510,7 +510,7 @@ BranchInst::BranchInst(Value *cond, BasicBlock *if_true, BasicBlock *if_false,
 }
 
 BranchInst::BranchInst(BasicBlock *if_true, BasicBlock *bb)
-    : Instruction(Type::get_void_type(if_true->get_module()), Instruction::br, 1, bb)
+    : Instruction(Type::get_void_type(if_true->get_module()), Instruction::br, 1, bb), true_BB_(if_true), false_BB_(nullptr)
 {
     set_operand(0, if_true);
 }
@@ -604,7 +604,7 @@ std::string ReturnInst::print()
 
 GetElementPtrInst::GetElementPtrInst(Value *ptr, std::vector<Value *> idxs, BasicBlock *bb)
     : Instruction(PointerType::get(get_element_type(ptr, idxs)), Instruction::getelementptr, 
-                1 + idxs.size(), bb),idxs_(idxs)
+                1 + idxs.size(), bb)
 {
     set_operand(0, ptr);
     for (int i = 0; i < idxs.size(); i++) {

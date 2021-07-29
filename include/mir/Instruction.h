@@ -269,10 +269,12 @@ public:
     virtual std::string print() override;
 
     Instruction *copy(BasicBlock *BB){
-        return new ShiftBinaryInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),dynamic_cast<Constant *>(get_operand(2)),BB);
+        return new ShiftBinaryInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),v3_,BB);
     }
 
 private:
+    Constant *v3_;
+
     void assertValid();
 };
 
@@ -331,11 +333,13 @@ public:
     virtual std::string print() override;
 
     Instruction *copy(BasicBlock *BB){
-        return new CmpBrInst(cmp_op_,get_operand(0),get_operand(1),dynamic_cast<BasicBlock*>(get_operand(2)),dynamic_cast<BasicBlock*>(get_operand(3)),BB);
+        return new CmpBrInst(cmp_op_,get_operand(0),get_operand(1),true_BB_,false_BB_,BB);
     }
 
 private:
     CmpOp cmp_op_;
+    BasicBlock* true_BB_;
+    BasicBlock* false_BB_;
 
     void assertValid();
 };
@@ -376,8 +380,17 @@ public:
     virtual std::string print() override;
 
     Instruction *copy(BasicBlock *BB){
-        return new BranchInst(get_operand(0),dynamic_cast<BasicBlock*>(get_operand(1)),dynamic_cast<BasicBlock*>(get_operand(2)),BB);
+        if (get_num_operand() == 1){
+            return new BranchInst(true_BB_,BB);
+        }
+        else{
+            return new BranchInst(get_operand(0),true_BB_,false_BB_,BB);
+        }
     }
+
+private:
+    BasicBlock* true_BB_;
+    BasicBlock* false_BB_;
 
 };
 
@@ -524,14 +537,7 @@ public:
     virtual std::string print() override;
 
     Instruction *copy(BasicBlock *BB){
-        std::vector<Value *> vals;
-        std::vector<BasicBlock *> val_bbs;
-        auto ops = get_operands();
-        for (auto i = 0; i < get_num_operand(); i = i+2){
-            vals.push_back(ops[i]);
-            val_bbs.push_back(dynamic_cast<BasicBlock *>(ops[i+1]));
-        }
-        return new PhiInst(get_instr_type(),vals,val_bbs,get_type(),BB);
+        return nullptr;
     }
 
 };
