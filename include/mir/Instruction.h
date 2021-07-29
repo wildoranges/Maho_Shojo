@@ -52,6 +52,8 @@ public:
         asrsub,
         lslsub,
         lsrsub,
+        smul_lo,
+        smul_hi,
 
     };
     // create instruction, auto insert to bb
@@ -100,6 +102,8 @@ public:
             case asrsub: return "asrsub"; break;
             case lslsub: return "lslsub"; break;
             case lsrsub: return "lsrsub"; break;
+            case smul_lo: return "smul_lo"; break;
+            case smul_hi: return "smul_hi"; break;
         
         default: return ""; break;
         }
@@ -107,7 +111,7 @@ public:
 
 
 
-    bool is_void() { return ((op_id_ == ret) || (op_id_ == br) || (op_id_ == store) || (op_id_ == call && this->get_type()->is_void_type())); }
+    bool is_void() { return ((op_id_ == cmpbr) || (op_id_ == ret) || (op_id_ == br) || (op_id_ == store) || (op_id_ == call && this->get_type()->is_void_type())); }
 
     bool is_phi() { return op_id_ == phi; }
     bool is_store() { return op_id_ == store; }
@@ -121,6 +125,9 @@ public:
     bool is_mul() { return op_id_ == mul; }
     bool is_div() { return op_id_ == sdiv; }
     bool is_rem() { return op_id_ == srem; }
+
+    bool is_smul_lo() { return op_id_ == smul_lo; }
+    bool is_smul_hi() { return op_id_ == smul_hi; }
 
     bool is_muladd() { return op_id_ == muladd; }
     bool is_mulsub() { return op_id_ == mulsub; }
@@ -183,38 +190,19 @@ private:
                BasicBlock *bb);
 
 public:
-    // create add instruction, auto insert to bb
     static BinaryInst *create_add(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create sub instruction, auto insert to bb
     static BinaryInst *create_sub(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create mul instruction, auto insert to bb
     static BinaryInst *create_mul(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create Div instruction, auto insert to bb
     static BinaryInst *create_sdiv(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create srem instruction, auto insert to bb
     static BinaryInst *create_srem(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create and instruction, auto insert to bb
     static BinaryInst *create_and(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create or instruction, auto insert to bb
     static BinaryInst *create_or(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create xor instruction, auto insert to bb
     static BinaryInst *create_xor(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create asr instruction, auto insert to bb
     static BinaryInst *create_asr(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create lsl instruction, auto insert to bb
     static BinaryInst *create_lsl(Value *v1, Value *v2, BasicBlock *bb, Module *m);
-
-    // create lsr instruction, auto insert to bb
     static BinaryInst *create_lsr(Value *v1, Value *v2, BasicBlock *bb, Module *m);
+    static BinaryInst *create_smul_lo(Value *v1, Value *v2, BasicBlock *bb, Module *m);
+    static BinaryInst *create_smul_hi(Value *v1, Value *v2, BasicBlock *bb, Module *m);
 
     virtual std::string print() override;
 

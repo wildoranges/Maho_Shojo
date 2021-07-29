@@ -19,6 +19,7 @@ private:
     std::map<std::vector<BasicBlock *>*,std::vector<BasicBlock *>*> outer_loop;
 
     std::map<BasicBlock*,int>color;
+    std::string name = "CFG_analyse";
     
 
 
@@ -34,6 +35,7 @@ public:
     std::vector<BasicBlock *>* find_bb_loop(BasicBlock* BB){return bb_loop[BB];};
     std::vector<BasicBlock *>* find_outer_loop(std::vector<BasicBlock *>* loop){return outer_loop[loop];};
     std::vector<std::vector<BasicBlock *>*>* get_loops(){return &loops;};
+    const std::string get_name() const override {return name;}
 };
 
 

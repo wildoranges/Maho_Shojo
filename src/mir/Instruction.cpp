@@ -103,6 +103,16 @@ BinaryInst *BinaryInst::create_lsr(Value *v1, Value *v2, BasicBlock *bb, Module 
     return new BinaryInst(Type::get_int32_type(m), Instruction::lsr, v1, v2, bb);
 }
 
+BinaryInst *BinaryInst::create_smul_lo(Value *v1, Value *v2, BasicBlock *bb, Module *m)
+{
+    return new BinaryInst(Type::get_int32_type(m), Instruction::smul_lo, v1, v2, bb);
+}
+
+BinaryInst *BinaryInst::create_smul_hi(Value *v1, Value *v2, BasicBlock *bb, Module *m)
+{
+    return new BinaryInst(Type::get_int32_type(m), Instruction::smul_hi, v1, v2, bb);
+}
+
 std::string BinaryInst::print()
 {
     std::string instr_ir;
