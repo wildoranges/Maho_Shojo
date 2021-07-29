@@ -31,8 +31,8 @@ __attribute((constructor)) void before_main(){
 }  
 __attribute((destructor)) void after_main(){
   for(int i=1;i<_sysy_idx;i++){
-    fprintf(stderr,"Timer@%04d-%04d: %dh %dm %ds %dms %dus\n",\
-      _sysy_l1[i],_sysy_l2[i],_sysy_h[i],_sysy_m[i],_sysy_s[i],_sysy_ms[i],_sysy_us[i]);
+//    fprintf(stderr,"Timer@%04d-%04d: %dh %dm %ds %dms %dus\n",\
+//      _sysy_l1[i],_sysy_l2[i],_sysy_h[i],_sysy_m[i],_sysy_s[i],_sysy_ms[i],_sysy_us[i]);
     _sysy_us[0]+= _sysy_us[i]; 
     _sysy_ms[0] += _sysy_ms[i]; _sysy_us[0] %= 1000;
     _sysy_s[0] += _sysy_s[i]; _sysy_ms[0] %= 1000;

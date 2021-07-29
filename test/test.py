@@ -8,6 +8,7 @@ Exe_ptn = '"{}"'
 
 def eval(EXE_PATH, TEST_BASE_PATH, timeout, optimization):
     print('===========TEST START===========')
+    print('now in {}'.format(TEST_BASE_PATH))
     succ = True
     for case in testcases:
         print('Case %s:' % case, end='')
