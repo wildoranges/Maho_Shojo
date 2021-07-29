@@ -38,11 +38,9 @@ public:
   void execute(bool print_ir = true) {
     //auto i = 0;
     //std::cout << "inexec\n";
-    std::cerr<<pass_list.size()<<std::endl;
     for (auto pass : pass_list) {
       //i++;
       //std::cout << i << "\n";
-      std::cerr<<pass->get_name()<<std::endl;
       pass->execute();
       //std::cout << i + 1 << "\n";
       if (print_ir) {
