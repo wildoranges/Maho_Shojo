@@ -82,6 +82,7 @@ void CFGSimplifier::replace_phi(BasicBlock *victim_bb, std::list<BasicBlock*> pr
                         dynamic_cast<PhiInst*>(instr)->add_phi_pair_operand(val, pre_bb);
                     }
                     instr->remove_operands(i - 1, i);
+                    i -= 2;
                     if (instr->get_num_operand() == 2) {
                         instr->replace_all_use_with(instr->get_operand(0));
                         wait_delete_instr.push_back(instr);
@@ -119,10 +120,11 @@ void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
             for (int i = 1; i < instr->get_num_operand(); i+=2) {
                 if (instr->get_operand(i) == bb) {
                     if (instr->get_num_operand() == 2) {
-                        instr->replace_all_use_with(instr->get_operand(i - 1));
+                        instr->replace_all_use_with(instr->get_operand(0));
                         wait_delete_instr.push_back(instr);
                     } else {
                         instr->remove_operands(i - 1, i);
+                        i -= 2;
                         if (instr->get_num_operand() == 2) {
                             instr->replace_all_use_with(instr->get_operand(0));
                             wait_delete_instr.push_back(instr);

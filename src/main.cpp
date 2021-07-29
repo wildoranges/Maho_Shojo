@@ -78,7 +78,11 @@ int main(int argc, char *argv[])
     if (print_IR) {
         root->accept(builder);
         auto m = builder.getModule();
-        if (no_optimize == false) {
+        if (no_optimize == true) {
+            PassMgr passmgr(m.get());
+            passmgr.addPass<DominateTree>();
+            passmgr.addPass<Mem2Reg>();
+        } else {
             PassMgr passmgr(m.get());
 
             passmgr.addPass<CFGSimplifier>();
