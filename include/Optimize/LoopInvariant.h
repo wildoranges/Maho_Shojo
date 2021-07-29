@@ -16,11 +16,13 @@ private:
     /* data */
     std::unique_ptr<CFG_analyse> CFG_analyser;
     std::vector<std::pair<BasicBlock *, std::set<Instruction *>>> invariants;
+    std::string name = "LoopInvariant";
 
 public:
     explicit LoopInvariant(Module* module): Pass(module){}
     void execute() final;
     void invariants_find(std::vector<BasicBlock *>* );
+    const std::string get_name() const override {return name;}
 };
 
 
