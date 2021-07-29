@@ -174,7 +174,6 @@ public:
     void set_id(int id){id_ = id;}
     int get_id() const{return id_;}
 
-    virtual Instruction *copy(BasicBlock *){}
 
 private:
     BasicBlock *parent_;
@@ -206,10 +205,6 @@ public:
 
     virtual std::string print() override;
 
-    Instruction *copy(BasicBlock *BB){
-        return new BinaryInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),BB);
-    }
-
 private:
     void assertValid();
 };
@@ -225,10 +220,6 @@ public:
 
     virtual std::string print() override;
 
-    Instruction *copy(BasicBlock *BB){
-        return new MulAddInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),get_operand(2),BB);
-    }
-
 private:
     void assertValid();
 };
@@ -243,10 +234,6 @@ public:
     static MulSubInst *create_mulsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
 
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        return new MulSubInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),get_operand(2),BB);
-    }
 
 private:
     void assertValid();
@@ -268,13 +255,7 @@ public:
 
     virtual std::string print() override;
 
-    Instruction *copy(BasicBlock *BB){
-        return new ShiftBinaryInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),v3_,BB);
-    }
-
 private:
-    Constant *v3_;
-
     void assertValid();
 };
 
@@ -303,10 +284,6 @@ public:
 
     virtual std::string print() override;
 
-    Instruction *copy(BasicBlock *BB){
-        return new CmpInst(get_type(),cmp_op_,get_operand(0),get_operand(1),BB);
-    }
-
 private:
     CmpOp cmp_op_;
 
@@ -332,14 +309,8 @@ public:
 
     virtual std::string print() override;
 
-    Instruction *copy(BasicBlock *BB){
-        return new CmpBrInst(cmp_op_,get_operand(0),get_operand(1),true_BB_,false_BB_,BB);
-    }
-
 private:
     CmpOp cmp_op_;
-    BasicBlock* true_BB_;
-    BasicBlock* false_BB_;
 
     void assertValid();
 };
@@ -354,13 +325,6 @@ public:
     FunctionType *get_function_type() const;
 
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        return new CallInst(get_function(),args_,BB);
-    }
-
-private:
-    std::vector<Value *> args_;
 };
 
 class BranchInst : public Instruction
@@ -378,20 +342,6 @@ public:
     bool is_cond_br() const;
 
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        if (get_num_operand() == 1){
-            return new BranchInst(true_BB_,BB);
-        }
-        else{
-            return new BranchInst(get_operand(0),true_BB_,false_BB_,BB);
-        }
-    }
-
-private:
-    BasicBlock* true_BB_;
-    BasicBlock* false_BB_;
-
 };
 
 class ReturnInst : public Instruction
@@ -406,16 +356,6 @@ public:
     bool is_void_ret() const;
 
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        if (is_void_ret()){
-            return new ReturnInst(BB);
-        }
-        else{
-            return new ReturnInst(get_operand(0),BB);
-        }
-    }
-
 };
 
 class GetElementPtrInst : public Instruction
@@ -430,13 +370,8 @@ public:
 
     virtual std::string print() override;
 
-    Instruction *copy(BasicBlock *BB){
-        return new GetElementPtrInst(get_operand(0),idxs_,BB);
-    }
-
 private:
     Type *element_ty_;
-    std::vector<Value *> idxs_;
 };
 
 class StoreInst : public Instruction
@@ -451,11 +386,6 @@ public:
     Value *get_lval() { return this->get_operand(1); }
 
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        return new StoreInst(get_operand(0),get_operand(1),BB);
-    }
-
 };
 
 class LoadInst : public Instruction
@@ -470,11 +400,6 @@ public:
     Type *get_load_type() const;
 
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        return new LoadInst(get_type(),get_operand(0),BB);
-    }
-
 };
 
 class AllocaInst : public Instruction
@@ -488,10 +413,6 @@ public:
     Type *get_alloca_type() const;
 
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        return new AllocaInst(alloca_ty_,BB);
-    }
 
 private:
     Type *alloca_ty_;
@@ -508,10 +429,6 @@ public:
     Type *get_dest_type() const;
 
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        return new ZextInst(get_instr_type(),get_operand(0),dest_ty_,BB);
-    }
 
 private:
     Type *dest_ty_;
@@ -535,11 +452,6 @@ public:
         this->add_operand(pre_bb);
     }
     virtual std::string print() override;
-
-    Instruction *copy(BasicBlock *BB){
-        return nullptr;
-    }
-
 };
 
 #endif // SYSY_INSTRUCTION_H

@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
-            //passmgr.addPass<LoopInvariant>();
+            passmgr.addPass<LoopInvariant>();
             passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<AvailableExpr>();
