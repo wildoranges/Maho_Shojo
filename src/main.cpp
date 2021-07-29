@@ -13,7 +13,10 @@
 #include "DeadCodeElimination.h"
 #include "CFGSimplifier.h"
 #include "CFG_analyse.h"
+
 #include "LoopInvariant.h"
+#include "AvailableExpr.h"
+
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
@@ -75,7 +78,11 @@ int main(int argc, char *argv[])
     if (print_IR) {
         root->accept(builder);
         auto m = builder.getModule();
-        if (no_optimize == false) {
+        if (no_optimize == true) {
+            PassMgr passmgr(m.get());
+            passmgr.addPass<DominateTree>();
+            passmgr.addPass<Mem2Reg>();
+        } else {
             PassMgr passmgr(m.get());
 
             passmgr.addPass<CFGSimplifier>();
@@ -93,6 +100,8 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
+            passmgr.addPass<AvailableExpr>();
+
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
@@ -104,9 +113,10 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
-            passmgr.addPass<LoopInvariant>();
+            //passmgr.addPass<LoopInvariant>();
             passmgr.addPass<CFGSimplifier>();
 
+            passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
@@ -117,6 +127,7 @@ int main(int argc, char *argv[])
 
             //passmgr.addPass<LIR>();
             passmgr.addPass<DeadCodeElimination>();
+            passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();
 
             passmgr.addPass<ActiveVar>();
