@@ -12,6 +12,7 @@
 #include "ConstPropagation.h"
 #include "DeadCodeElimination.h"
 #include "CFG_analyse.h"
+#include "AvailableExpr.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
