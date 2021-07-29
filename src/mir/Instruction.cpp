@@ -439,7 +439,7 @@ std::string CmpBrInst::print()
 }
 
 CallInst::CallInst(Function *func, std::vector<Value *> args, BasicBlock *bb)
-    : Instruction(func->get_return_type(), Instruction::call, args.size() + 1, bb)
+    : Instruction(func->get_return_type(), Instruction::call, args.size() + 1, bb), args_(args)
 {
     assert(func->get_num_of_args() == args.size());
     int num_ops = args.size() + 1; 
@@ -451,7 +451,9 @@ CallInst::CallInst(Function *func, std::vector<Value *> args, BasicBlock *bb)
 
 CallInst *CallInst::create(Function *func, std::vector<Value *> args, BasicBlock *bb)
 {
-    return new CallInst(func, args, bb);
+    auto self = new CallInst(func, args, bb);
+    bb->get_parent()->calling_add(self,func);
+    return self;
 }
 
 FunctionType *CallInst::get_function_type() const
@@ -592,7 +594,7 @@ std::string ReturnInst::print()
 
 GetElementPtrInst::GetElementPtrInst(Value *ptr, std::vector<Value *> idxs, BasicBlock *bb)
     : Instruction(PointerType::get(get_element_type(ptr, idxs)), Instruction::getelementptr, 
-                1 + idxs.size(), bb)
+                1 + idxs.size(), bb),idxs_(idxs)
 {
     set_operand(0, ptr);
     for (int i = 0; i < idxs.size(); i++) {
