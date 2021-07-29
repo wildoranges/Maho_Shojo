@@ -13,7 +13,10 @@
 #include "DeadCodeElimination.h"
 #include "CFGSimplifier.h"
 #include "CFG_analyse.h"
+
 #include "LoopInvariant.h"
+#include "AvailableExpr.h"
+
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
