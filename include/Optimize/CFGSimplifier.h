@@ -7,7 +7,8 @@
 class CFGSimplifier :public Pass{
 public:
     explicit CFGSimplifier(Module *m) : Pass(m) {}
-    virtual void execute() override final;
+    void execute() override final;
+    const std::string get_name() const override {return name;}
     void compute_postorder();
     bool one_pass();
     void combine_bb(BasicBlock*, BasicBlock*);
@@ -16,6 +17,7 @@ public:
 private:
     Function *func_;
     std::vector<BasicBlock*> postorder_bb_list;
+    std::string name = "CFGSimplifier";
 };
 
 #endif //MHSJ_CFGSIMPLIFIER_H
