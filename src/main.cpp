@@ -96,6 +96,8 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
+            //passmgr.addPass<AvailableExpr>();
+
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
@@ -107,9 +109,10 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
-            passmgr.addPass<LoopInvariant>();
+            //passmgr.addPass<LoopInvariant>();
             passmgr.addPass<CFGSimplifier>();
 
+            //passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
@@ -120,6 +123,7 @@ int main(int argc, char *argv[])
 
             //passmgr.addPass<LIR>();
             passmgr.addPass<DeadCodeElimination>();
+            //passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();
 
             passmgr.addPass<ActiveVar>();
