@@ -154,8 +154,10 @@ void AvailableExpr::compute_global_common_expr(Function *f) {
             if (is_valid_expr(instr)) {
                 auto common_exp = bb_in[bb].find(instr);
                 if (common_exp != bb_in[bb].end()) {
-                    instr->replace_all_use_with(*common_exp);
-                    delete_list.push_back(instr);
+                    if(*common_exp!=instr){
+                        instr->replace_all_use_with(*common_exp);
+                        delete_list.push_back(instr);
+                    }
 //                instr_iter = instrs.erase(instr_iter);
 //                instr_iter --;
 //                instr->remove_use_of_ops();
