@@ -21,6 +21,10 @@ void RDominateTree::execute() {
         if(f->get_basic_blocks().empty()){
             continue;
         }
+        for(auto bb:f->get_basic_blocks()){
+            bb->clear_rdom();
+            bb->clear_rdom_frontier();
+        }
         get_bb_irdom(f);
         get_bb_rdom_front(f);
         get_bb_rdoms(f);

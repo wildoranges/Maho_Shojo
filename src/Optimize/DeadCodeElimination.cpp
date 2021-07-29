@@ -9,6 +9,8 @@ void DeadCodeElimination::execute() {
         }
         func_ = func;
         instr_mark.clear();
+        RDominateTree r_dom_tree(module);
+        r_dom_tree.execute();
         mark();
         sweep();
     }

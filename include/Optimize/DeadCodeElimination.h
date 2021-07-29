@@ -3,6 +3,7 @@
 
 #include "Pass.h"
 #include "Module.h"
+#include "DominateTree.h"
 
 class DeadCodeElimination : public Pass
 {

@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
             passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DominateTree>();
-            passmgr.addPass<RDominateTree>();
             passmgr.addPass<Mem2Reg>();
             passmgr.addPass<DeadCodeElimination>();
 
