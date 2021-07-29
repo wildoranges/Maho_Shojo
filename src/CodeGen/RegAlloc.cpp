@@ -95,6 +95,7 @@ void RegAlloc::execute() {
     build_intervals();
     union_phi_val();
     walk_intervals();
+    set_unused_reg_num();
 }
 
 struct cmp_block_depth{
@@ -222,15 +223,17 @@ void RegAlloc::walk_intervals() {
         //interval_list.pop();
         auto position = (*current->range_list.begin())->from;
 
-        for(auto it = active.begin();it != active.end();it++){
-            if((*((*it)->range_list.rbegin()))->to < position){//TODO:CHECK equal?
-                add_reg_to_pool((*it)->reg_num);
+        std::vector<Interval *> delete_list = {};
+        for(auto it : active){
+            if((*(it->range_list.rbegin()))->to < position){//TODO:CHECK equal?
+                add_reg_to_pool(it->reg_num);
                 //handled.insert(*it);
-                it = active.erase(it);
-                it--;
+                delete_list.push_back(it);
             }
         }
-
+        for(auto inter:delete_list){
+            active.erase(inter);
+        }
 //        for(auto it = inactive.begin();it != inactive.end();it++){
 //            if((*((*it)->range_list.rbegin()))->to < position){
 //                handled.insert(*it);
@@ -256,12 +259,14 @@ bool RegAlloc::try_alloc_free_reg() {
         int assigned_id = remained_general_reg_id.top();
         remained_general_reg_id.pop();
         current->reg_num = assigned_id;
+        unused_reg_id.erase(assigned_id);
         active.insert(current);
         return true;
     }else if(!remained_func_reg_id.empty()){
         int assigned_id = remained_func_reg_id.top();
         remained_func_reg_id.pop();
         current->reg_num = assigned_id;
+        unused_reg_id.erase(assigned_id);
         active.insert(current);
         return true;
     }else{
@@ -275,6 +280,7 @@ bool RegAlloc::try_alloc_free_reg() {
             }
             if(!it->intersects(current)){
                 current->reg_num = it->reg_num;
+                unused_reg_id.erase(it->reg_num);
                 active.insert(current);
                 return true;
             }
@@ -285,6 +291,7 @@ bool RegAlloc::try_alloc_free_reg() {
         }else{
             current->reg_num = spill_val->reg_num;
             spill_val->reg_num = -1;
+            unused_reg_id.erase(spill_val->reg_num);
             active.insert(current);
             active.erase(spill_val);//TODO:CHECK ERASE?
             return true;
@@ -302,7 +309,7 @@ void RegAlloc::add_reg_to_pool(int reg_id) {
 
 void RegAlloc::union_phi_val() {
     auto vreg_sets = func->get_vreg_set();
-    for(auto set:vreg_sets){
+    for(const auto& set:vreg_sets){
         Value* final_vreg = nullptr;
         for(auto vreg:set){
             if(final_vreg == nullptr){
@@ -319,14 +326,15 @@ void RegAlloc::union_phi_val() {
 }
 
 void RegAlloc::set_unused_reg_num() {
-    auto union_set = new std::set<int>();
-    while (!remained_general_reg_id.empty()){
-        union_set->insert(remained_general_reg_id.top());
-        remained_general_reg_id.pop();
-    }
-    while(!remained_func_reg_id.empty()){
-        union_set->insert(remained_func_reg_id.top());
-        remained_func_reg_id.pop();
-    }
-    func->set_unused_reg_num(*union_set);//TODO:CHECK ACC?
+//    auto union_set = new std::set<int>();
+//    *union_set = unused_reg_id;
+//    while (!remained_general_reg_id.empty()){
+//        union_set->insert(remained_general_reg_id.top());
+//        remained_general_reg_id.pop();
+//    }
+//    while(!remained_func_reg_id.empty()){
+//        union_set->insert(remained_func_reg_id.top());
+//        remained_func_reg_id.pop();
+//    }
+    func->set_unused_reg_num(unused_reg_id);//TODO:CHECK ACC?
 }

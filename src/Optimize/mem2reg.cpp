@@ -292,10 +292,8 @@ void Mem2Reg::phiStatistic(){
                 if(value_map.find(opr) != value_map.end()){
                     auto opr_reduced_value = value_map.find(opr)->second;
                     if(opr_reduced_value != reduced_value){
-#ifdef DEBUG
-                        std::cout << "conflict! " << opr->get_name() << " -> " << opr_reduced_value->get_name();
-                        std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
-#endif
+//                        std::cout << "conflict! " << opr->get_name() << " -> " << opr_reduced_value->get_name();
+//                        std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
                     }
                 }
                 else{

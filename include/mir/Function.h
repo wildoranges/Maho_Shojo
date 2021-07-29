@@ -54,6 +54,11 @@ public:
     void set_instr_name();
     std::string print();
 
+    /***for calling chain***/
+    void calling_add(Instruction * inst_call,Function * func){call_func.insert({inst_call,func});};
+    std::set<std::pair<Instruction *,Function *>> get_calling_func(){return call_func;};
+    /***for calling chain***/
+
 private:
     void build_args();
 
@@ -67,6 +72,7 @@ private:
     // unsigned num_args_;
     // We don't need this, all value inside function should be unnamed
     // std::map<std::string, Value*> sym_table_;   // Symbol table of args/instructions
+    std::set<std::pair<Instruction *,Function *>> call_func;
 };
 
 // Argument of Function, does not contain actual value

@@ -55,8 +55,9 @@ struct cmp_interval{
     }
 };
 
-const std::vector<int> general_reg_id = {12,11,10,9,8,7,6,5,4};
+const std::vector<int> general_reg_id = {12,10,9,8,7,6,5,4};
 const std::vector<int> func_reg_id = {3,2,1,0};
+const std::vector<int> all_reg_id = {12,10,9,8,7,6,5,4,3,2,1,0};
 
 class RegAllocDriver{
 public:
@@ -85,6 +86,7 @@ private:
     void add_interval(Interval* interval){interval_list.insert(interval);}
     void add_reg_to_pool(int reg_id);
     bool try_alloc_free_reg();
+    std::set<int> unused_reg_id = {all_reg_id.begin(),all_reg_id.end()};
     std::priority_queue<int> remained_general_reg_id = {general_reg_id.begin(),general_reg_id.end()};
     std::priority_queue<int> remained_func_reg_id = {func_reg_id.begin(),func_reg_id.end()};
     std::set<Interval *> active = {};
