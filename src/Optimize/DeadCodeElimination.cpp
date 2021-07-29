@@ -105,7 +105,7 @@ void DeadCodeElimination::sweep() {
                     false_bb->remove_pre_basic_block(bb);
                     bb->remove_succ_basic_block(true_bb);
                     bb->remove_succ_basic_block(false_bb);;
-                    auto new_br = BranchInst::create_br(targetBB, bb);
+                    BranchInst::create_br(targetBB, bb);
                 }
                 if (!(instr->is_br() && instr->get_num_operand() == 1)) {
                     wait_delete.push_back(instr);
