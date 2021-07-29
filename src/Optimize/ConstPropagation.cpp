@@ -92,6 +92,7 @@ void ConstPropagation::execute() {
 }
 
 void ConstPropagation::reduce_redundant_cond_br() {
+    std::vector<Instruction*> wait_delete_instr;
     for (auto func : module->get_functions()) {
         for (auto bb : func->get_basic_blocks()) {
             builder->set_insert_point(bb);
@@ -118,9 +119,17 @@ void ConstPropagation::reduce_redundant_cond_br() {
                                             if (instr->get_operand(i) == bb) {
                                                 instr->remove_operands(i - 1, i);
                                             }
+                                            if (instr->get_num_operand() == 2) {
+                                                instr->replace_all_use_with(instr->get_operand(0));
+                                                wait_delete_instr.push_back(instr);
+                                            }
                                         }
                                     }
                                 }
+                                for (auto delete_instr : wait_delete_instr) {
+                                    succBB->delete_instr(delete_instr);
+                                }
+                                wait_delete_instr.clear();
                             }
                         }
                         bb->delete_instr(br);

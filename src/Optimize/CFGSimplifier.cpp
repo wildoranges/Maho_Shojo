@@ -71,6 +71,7 @@ bool CFGSimplifier::bb_can_delete(BasicBlock *bb) {
 }
 
 void CFGSimplifier::replace_phi(BasicBlock *victim_bb, std::list<BasicBlock*> pre_bb_list, BasicBlock *succ_bb) {
+    std::vector<Instruction*> wait_delete_instr;
     for (auto instr : succ_bb->get_instructions()) {
         if (instr->is_phi()) {
             for (int i = 1; i < instr->get_num_operand(); i+=2) {
@@ -81,9 +82,16 @@ void CFGSimplifier::replace_phi(BasicBlock *victim_bb, std::list<BasicBlock*> pr
                         dynamic_cast<PhiInst*>(instr)->add_phi_pair_operand(val, pre_bb);
                     }
                     instr->remove_operands(i - 1, i);
+                    if (instr->get_num_operand() == 2) {
+                        instr->replace_all_use_with(instr->get_operand(0));
+                        wait_delete_instr.push_back(instr);
+                    }
                 }
             }
         }
+    }
+    for (auto delete_instr : wait_delete_instr) {
+        succ_bb->delete_instr(delete_instr);
     }
 }
 
@@ -115,6 +123,10 @@ void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
                         wait_delete_instr.push_back(instr);
                     } else {
                         instr->remove_operands(i - 1, i);
+                        if (instr->get_num_operand() == 2) {
+                            instr->replace_all_use_with(instr->get_operand(0));
+                            wait_delete_instr.push_back(instr);
+                        }
                     }
                 }
             }
