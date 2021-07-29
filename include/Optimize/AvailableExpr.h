@@ -32,7 +32,7 @@ struct cmp_expr{
                 auto const_b_opr = dynamic_cast<ConstantInt*>(b_operand);
                 if(const_a_opr&&const_b_opr){
                     if(const_a_opr->get_value()!=const_b_opr->get_value()){
-                        return (a_operand->get_name() < b_operand->get_name());
+                        return (const_a_opr->get_value() < const_b_opr->get_value());
                     }
                 }else{
                     return (a_operand->get_name() < b_operand->get_name());
@@ -43,6 +43,12 @@ struct cmp_expr{
         }
         if(a->get_instr_op_name()!=b->get_instr_op_name()){
             return (a->get_instr_op_name() < b->get_instr_op_name());
+        }else{
+            auto a_br = dynamic_cast<CmpInst*>(a);
+            auto b_br = dynamic_cast<CmpInst*>(b);//TODO:CMP BR SUPPORT?
+            if(a_br&&b_br){
+                return (a_br->get_cmp_op() < b_br->get_cmp_op());
+            }
         }
         return false;
     }
@@ -51,6 +57,7 @@ struct cmp_expr{
 class AvailableExpr: public Pass{
 public:
     explicit AvailableExpr(Module* module):Pass(module){}
+    const std::string get_name() const override {return name;}
     void execute() override;
     void compute_local_gen(Function* f);
     //void compute_local_kill(Function* f);

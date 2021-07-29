@@ -26,22 +26,26 @@ bool AvailableExpr::is_valid_expr(Instruction *inst) {
 void AvailableExpr::compute_local_gen(Function *f) {
     auto all_bbs = f->get_basic_blocks();
     for(auto bb:all_bbs){
+        std::vector<Instruction*> delete_list = {};
         auto instrs = bb->get_instructions();
-        for(auto instr_iter=instrs.begin();instr_iter!=instrs.end();instr_iter++){
-            auto instr = *instr_iter;
+        for(auto instr : instrs){
             if(is_valid_expr(instr)){
                 auto res = bb_gen[bb].insert(instr);
                 if(!res.second){
                     auto old_instr = bb_gen[bb].find(instr);
                     instr->replace_all_use_with(*old_instr);
-                    instr_iter = instrs.erase(instr_iter);
-                    instr_iter --;
-                    instr->remove_use_of_ops();
+                    delete_list.push_back(instr);
+//                    instr_iter = instrs.erase(instr_iter);
+//                    instr_iter --;
+//                    instr->remove_use_of_ops();
                 }else{
                     U.insert(instr);
                 }
                 //remove_relevant_instr(instr,bb_gen[bb]);
             }
+        }
+        for(auto inst : delete_list){
+            bb->delete_instr(inst);
         }
     }
 }
@@ -144,16 +148,22 @@ void AvailableExpr::initial_map(Function *f) {
 void AvailableExpr::compute_global_common_expr(Function *f) {
     auto all_bbs = f->get_basic_blocks();
     for(auto bb:all_bbs){
+        std::vector<Instruction*> delete_list = {};
         auto instrs = bb->get_instructions();
-        for(auto instr_iter=instrs.begin();instr_iter!=instrs.end();instr_iter++){
-            auto instr = *instr_iter;
-            auto common_exp = bb_in[bb].find(instr);
-            if(common_exp!=bb_in[bb].end()){
-                instr->replace_all_use_with(*common_exp);
-                instr_iter = instrs.erase(instr_iter);
-                instr_iter --;
-                instr->remove_use_of_ops();
+        for(auto instr : instrs) {
+            if (is_valid_expr(instr)) {
+                auto common_exp = bb_in[bb].find(instr);
+                if (common_exp != bb_in[bb].end()) {
+                    instr->replace_all_use_with(*common_exp);
+                    delete_list.push_back(instr);
+//                instr_iter = instrs.erase(instr_iter);
+//                instr_iter --;
+//                instr->remove_use_of_ops();
+                }
             }
+        }
+        for(auto inst : delete_list){
+            bb->delete_instr(inst);
         }
     }
 }
