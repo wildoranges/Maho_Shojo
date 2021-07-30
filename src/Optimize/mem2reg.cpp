@@ -7,7 +7,7 @@ void Mem2Reg::execute(){
         func_ = fun;
         insideBlockForwarding();
         genPhi();
-        // module->set_print_name();
+        module->set_print_name();
         valueDefineCounting();
         valueForwarding(func_->get_entry_block());
         removeAlloc();
@@ -292,8 +292,10 @@ void Mem2Reg::phiStatistic(){
                 if(value_map.find(opr) != value_map.end()){
                     auto opr_reduced_value = value_map.find(opr)->second;
                     if(opr_reduced_value != reduced_value){
-//                        std::cout << "conflict! " << opr->get_name() << " -> " << opr_reduced_value->get_name();
-//                        std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
+#ifdef DEBUG
+                        std::cout << "conflict! " << opr->get_name() << " -> " << opr_reduced_value->get_name();
+                        std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
+#endif
                     }
                 }
                 else{

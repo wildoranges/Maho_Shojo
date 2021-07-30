@@ -50,12 +50,12 @@ public:
 
 
 struct cmp_interval{
-    bool operator()(Interval* a,Interval* b){
-        return (*a->range_list.begin())->from > (*b->range_list.begin())->from;
+    bool operator()(const Interval* a, const Interval* b) const {
+        return (*(a->range_list.begin()))->from > (*(b->range_list.begin()))->from;
     }
 };
 
-const std::vector<int> general_reg_id = {12,10,9,8,7,6,5,4};
+const std::vector<int> general_reg_id = {11,10,9,8,7,6,5,4};
 const std::vector<int> func_reg_id = {3,2,1,0};
 const std::vector<int> all_reg_id = {12,10,9,8,7,6,5,4,3,2,1,0};
 

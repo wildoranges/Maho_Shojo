@@ -8,7 +8,7 @@
 #include <string>
 #include <set>
 
-namespace CodeGen {
+namespace IR2asm {
 
     const int max_reg = 15;
 
@@ -16,21 +16,74 @@ namespace CodeGen {
                 "r6", "r7", "r8", "r9", "r10", "r11",
                 "r12", "sp", "lr", "pc"};
 
-    class value {
+    class Value {
+        public:
         virtual bool is_reg() = 0;
+        virtual bool is_const() = 0;
+        virtual std::string get_code() = 0;
+    };
+
+    class Location{
+        public:
+        virtual std::string get_code() = 0;
     };
 
 
-    class reg : public value {
+    class Reg : public Value {
     public:
         int id;
 
-        reg(int i) : id(i) {}
+        Reg(int i) : id(i) {}
 
         int get_id() { return id; }
 
         bool is_reg() final {return true;}
-        const std::string& get_name() { return reg_name[id]; }
+        bool is_const() final {return false;}
+        std::string get_code(){ return reg_name[id]; }
+    };
+
+    class Regbase: public Location{
+        private:
+            Reg reg_;
+            int offset;
+
+        public:
+            Regbase(Reg reg, int offset): reg_(reg), offset(offset){}
+            Reg &get_reg(){return reg_;}
+            int get_offset(){return offset;}
+            std::string get_code(){
+                if(!offset)return "[" + reg_.get_code() + "]";
+                else {
+                    return "[" + reg_.get_code() + ", #" + std::to_string(offset) + "]";
+                }
+            }
+    };
+
+    class label: public Location{
+        private:
+            std::string label_;
+            int offset = 0;
+        
+        public:
+            explicit label(std::string labl):label_(labl){}
+            explicit label(std::string labl, int offst):label_(labl), offset(offst){}
+            std::string get_label(){return label_;}
+            std::string get_code(){
+                if(!offset)return label_;
+                return label_ + std::to_string(offset);
+            }
+    };
+    class constant: public Value{
+        private:
+            int value_;
+
+        public:
+            explicit constant(int val):value_(val){}
+            ~constant(){}
+            bool is_const() final {return true;}
+            bool is_reg() final {return false;}
+            int get_val(){return value_;}
+            std::string get_code(){return "#" + std::to_string(value_);}
     };
 
 }

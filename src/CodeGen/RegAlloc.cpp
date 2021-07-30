@@ -44,13 +44,13 @@ bool Interval::intersects(Interval *interval) {
 
 
 struct cmp_range{
-    bool operator()(Range* a,Range* b){
+    bool operator()(const Range* a,const Range* b) const {
         return a->from > b->from;
     }
 };
 
 void Interval::union_interval(Interval *interval) {
-    std::priority_queue<Range*, std::list<Range*>, cmp_range> all_range;
+    std::priority_queue<Range*, std::vector<Range*>, cmp_range> all_range;
     for(auto range:range_list){
         all_range.push(range);
     }
@@ -108,7 +108,7 @@ struct cmp_block_depth{
 void RegAlloc::compute_block_order() {
 //TODO:USE LOOP INFO
 //TODO:CHECK CLEAR
-    std::priority_queue<BasicBlock*,std::list<BasicBlock*>,cmp_block_depth>work_list;
+    std::priority_queue<BasicBlock*,std::vector<BasicBlock*>,cmp_block_depth>work_list;
     block_order.clear();
     auto entry = func->get_entry_block();
     work_list.push(entry);
