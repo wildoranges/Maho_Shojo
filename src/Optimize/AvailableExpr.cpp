@@ -24,8 +24,10 @@ bool AvailableExpr::is_valid_expr(Instruction *inst) {
 }
 
 void AvailableExpr::compute_local_gen(Function *f) {
+    std::cerr << "local expr\n";
     auto all_bbs = f->get_basic_blocks();
     for(auto bb:all_bbs){
+        std::cerr<<bb->get_name()<<std::endl;
         std::vector<Instruction*> delete_list = {};
         auto instrs = bb->get_instructions();
         for(auto instr : instrs){
@@ -33,14 +35,18 @@ void AvailableExpr::compute_local_gen(Function *f) {
                 auto res = bb_gen[bb].insert(instr);
                 if(!res.second){
                     auto old_instr = bb_gen[bb].find(instr);
-                    std::cerr << "replace " <<instr->print() << " with "<<(*old_instr)->print() << std::endl;
+                    std::cerr << "local replace " <<instr->print() << " with "<<(*old_instr)->print() << std::endl;
                     instr->replace_all_use_with(*old_instr);
                     delete_list.push_back(instr);
 //                    instr_iter = instrs.erase(instr_iter);
 //                    instr_iter --;
 //                    instr->remove_use_of_ops();
                 }else{
-                    U.insert(instr);
+                    std::cerr << "insert " << instr->print() <<" into bb_gen\n";
+                    auto u_res = U.insert(instr);
+                    if(u_res.second){
+                        std::cerr << "insert " << instr->print() <<" into U\n";
+                    }
                 }
                 //remove_relevant_instr(instr,bb_gen[bb]);
             }
@@ -74,13 +80,18 @@ void AvailableExpr::compute_global_in_out(Function *f) {
     }
     bb_out[entry] = std::set<Instruction*,cmp_expr>();
     bool change = true;
+    int iter_cnt = 1;
     while (change){
+        std::cerr << "\n\nloop" << iter_cnt << std::endl<<std::endl;
+        iter_cnt++;
         change = false;
         for(auto bb:all_bbs){
             if(bb!=entry){
+                std::cerr << "cur bb:" <<bb->get_name() <<std::endl;
                 std::set<Instruction*,cmp_expr> last_tmp;
                 bool is_first = true;
                 for(auto pred:bb->get_pre_basic_blocks()){
+                    std::cerr << "pred bb:"<< pred->get_name()<<std::endl;
                     if(!is_first){
                         std::set<Instruction*,cmp_expr> this_tmp= {};
                         std::insert_iterator<std::set<Instruction*,cmp_expr>> it(this_tmp,this_tmp.begin());
@@ -91,6 +102,10 @@ void AvailableExpr::compute_global_in_out(Function *f) {
                         last_tmp = bb_out[pred];
                     }
                 }
+                std::cerr << "intersect:\n";
+                for(auto inst:last_tmp){
+                    std::cerr << inst->print() << std::endl;
+                }
                 bb_in[bb] = last_tmp;
                 auto old_out_size = bb_out[bb].size();
                 std::set<Instruction*,cmp_expr> tmp2 = {};
@@ -98,7 +113,11 @@ void AvailableExpr::compute_global_in_out(Function *f) {
                 //std::set_difference(bb_in[bb].begin(),bb_in[bb].end(),bb_kill[bb].begin(),bb_kill[bb].end(),it);
                 //std::set<Instruction*,cmp_expr> tmp3 = {};
                 //std::insert_iterator<std::set<Instruction*,cmp_expr>> it2(tmp3,tmp3.begin());
-                std::set_union(bb_gen[bb].begin(),bb_gen[bb].end(),bb_in[bb].begin(),bb_in[bb].end(),it);
+                std::set_union(bb_in[bb].begin(),bb_in[bb].end(),bb_gen[bb].begin(),bb_gen[bb].end(),it);
+                std::cerr << "union:\n";
+                for(auto inst:tmp2){
+                    std::cerr << inst->print() << std::endl;
+                }
                 bb_out[bb] = tmp2;
                 auto new_out_size = tmp2.size();
                 if(old_out_size!=new_out_size){
@@ -147,18 +166,23 @@ void AvailableExpr::initial_map(Function *f) {
 //}
 
 void AvailableExpr::compute_global_common_expr(Function *f) {
+    std::cerr << "global\n";
+    std::set<Instruction*> delete_list = {};
+    std::map<Instruction*,Instruction*> replace_map;
     auto all_bbs = f->get_basic_blocks();
     for(auto bb:all_bbs){
-        std::vector<Instruction*> delete_list = {};
+        std::cerr << "cur bb:"<< bb->get_name() <<std::endl;
+
         auto instrs = bb->get_instructions();
         for(auto instr : instrs) {
             if (is_valid_expr(instr)) {
                 auto common_exp = bb_in[bb].find(instr);
                 if (common_exp != bb_in[bb].end()) {
                     if(*common_exp!=instr){
-                        std::cerr << "replace " <<instr->print() << " with "<<(*common_exp)->print() << std::endl;
-                        instr->replace_all_use_with(*common_exp);
-                        delete_list.push_back(instr);
+                        std::cerr << "global replace " <<instr->print() << " with "<<(*common_exp)->print() << std::endl;
+                        //instr->replace_all_use_with(*common_exp);
+                        replace_map[instr] = *common_exp;
+                        delete_list.insert(instr);
                     }
 //                instr_iter = instrs.erase(instr_iter);
 //                instr_iter --;
@@ -166,9 +190,14 @@ void AvailableExpr::compute_global_common_expr(Function *f) {
                 }
             }
         }
-        for(auto inst : delete_list){
-            bb->delete_instr(inst);
+    }
+    for(auto inst : delete_list){
+        auto common_exp = replace_map[inst];
+        while(replace_map.find(common_exp)!=replace_map.end()){
+            common_exp = replace_map[common_exp];
         }
+        inst->replace_all_use_with(common_exp);
+        inst->get_parent()->delete_instr(inst);
     }
 }
 
