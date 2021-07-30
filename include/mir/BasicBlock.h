@@ -74,6 +74,8 @@ public:
     std::set<BasicBlock *> &get_dom_frontier(){return dom_frontier_;}
     std::set<BasicBlock *> &get_rdom_frontier(){return rdom_frontier_;}
     std::set<BasicBlock *> &get_rdoms(){return rdoms_;}
+    std::set<Value*>& get_use_var(){return use_var;}
+    std::set<Value*>& get_def_var(){return def_var;}
     std::set<Value*>& get_live_in(){return live_in;}
     std::set<Value*>& get_live_out(){return live_out;}
     void set_use_var(std::set<Value*> use){use_var = use;}
