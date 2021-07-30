@@ -492,6 +492,10 @@ namespace CodeGen{
 
     std::string bb_gen(BasicBlock* bb){
         std::string code;
+        code += bb_label[bb].get_code()+":"+IR2asm::endl;
+        for(auto inst : bb->get_instructions()){
+            code += instr_gen(inst);
+        }
         //TODO: instruction gen
         return code;
     }
