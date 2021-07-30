@@ -89,9 +89,9 @@ void Mem2Reg::insideBlockForwarding(){
             }
             bb->delete_instr(inst);
         } 
-        // for(auto inst:delete_list){
-        //     bb->delete_instr(inst);
-        // }       
+        for(auto inst:delete_list){
+            bb->delete_instr(inst);
+        }       
     }
 }
 
@@ -250,9 +250,9 @@ void Mem2Reg::valueForwarding(BasicBlock* bb){
         }
     // }
 
-    // for(auto inst: delete_list){
-    //     bb->delete_instr(inst);
-    // }
+    for(auto inst: delete_list){
+        bb->delete_instr(inst);
+    }
 } 
 
 void Mem2Reg::removeAlloc(){
@@ -263,9 +263,9 @@ void Mem2Reg::removeAlloc(){
             auto alloc_inst = dynamic_cast<AllocaInst *>(inst);
             if(alloc_inst->get_alloca_type()->is_integer_type())delete_list.insert(inst);
         }
-        // for(auto inst: delete_list){
-        //     bb->delete_instr(inst);
-        // }
+        for(auto inst: delete_list){
+            bb->delete_instr(inst);
+        }
     }
 }
 

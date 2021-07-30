@@ -58,7 +58,7 @@ std::string call(label* fun){
     asmstr += space;
     asmstr += "bl ";
     asmstr += fun->get_code();
-    asmstr += "\n";
+    asmstr += endl;
     return asmstr;
 }
 
@@ -67,7 +67,17 @@ std::string ret(Value* retval){
     asmstr += space;
     asmstr += "mov r0, ";
     asmstr += retval->get_code();
-    asmstr += "\n";
+    asmstr += endl;
+    asmstr += space;
+    asmstr += "br lr" + endl;
+    return asmstr;
+}
+
+std::string ret(){
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "br lr" + endl;
+    return asmstr;
 }
 
 std::string add(Reg* rd, Reg* rs, Value* opr2){

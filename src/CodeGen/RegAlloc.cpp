@@ -108,7 +108,7 @@ struct cmp_block_depth{
 void RegAlloc::compute_block_order() {
 //TODO:USE LOOP INFO
 //TODO:CHECK CLEAR
-    std::priority_queue<BasicBlock*,std::list<BasicBlock*>,cmp_block_depth>work_list;
+    std::priority_queue<BasicBlock*,std::vector<BasicBlock*>,cmp_block_depth>work_list;
     block_order.clear();
     auto entry = func->get_entry_block();
     work_list.push(entry);
