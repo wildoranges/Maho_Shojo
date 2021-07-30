@@ -12,7 +12,7 @@ namespace IR2asm{
     const std::string space = std::string(4, ' ');
     const std::string endl = "\n";
 
-    Reg frame_ptr = Reg(12);
+    Reg frame_ptr = Reg(11);
     Reg sp = Reg(13);
     Reg lr = Reg(14);
     Reg pc = Reg(15);
@@ -33,6 +33,7 @@ namespace IR2asm{
 
     std::string getelementptr(Location * ptr);
     std::string cond(CmpOp & cop);
+    std::string ret();
     std::string ret(Value* retval);
     std::string br(Value* label);
     std::string br(Value* cond, Value* success, Value* fail);

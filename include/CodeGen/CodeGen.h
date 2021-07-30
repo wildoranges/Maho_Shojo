@@ -12,19 +12,24 @@ namespace CodeGen{
     const int int_size = 4;
     const int int_p2align = 2;
     const int reg_size = 4;
+    const int max_func_reg = 3;
 
     std::map<Value*, IR2asm::Regbase*> stack_map;
+    std::vector<IR2asm::Regbase*> arg_on_stack;
     std::map<GlobalVariable *, IR2asm::label> global_variable_table;
     std::map<Function*, std::set<GlobalVariable *>> global_variable_use;
-    std::set<int> used_reg;
+    std::pair<std::set<int>, std::set<int>> used_reg;
     std::map<Value*, Interval*>& reg_map;
     int func_no = 0;
     int bb_no = 0;
     int label_no = 0;
+    int max_arg_size = 0;
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label> bb_label;
+    bool have_func_call = true;
 
     void make_linear_bb(Function* fun);
+    void func_call_check(Function* fun);
 
     std::string global(std::string name);
     bool iszeroinit(Constant * init);
@@ -35,6 +40,7 @@ namespace CodeGen{
     int stack_space_allocation(Function* fun, RegAllocDriver* driver);
     std::string callee_reg_store(Function* fun);
     std::string callee_stack_operation_in(Function* fun, int stack_size);
+    std::string arg_move(Function *fun);
     std::string callee_reg_restore(Function* fun);
     std::string callee_stack_operation_out(Function* fun, int stack_size);
     std::string caller_reg_store(Function* fun);
