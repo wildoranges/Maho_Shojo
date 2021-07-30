@@ -11,7 +11,7 @@ private:
 public:
     explicit FuncInline(Module* module): Pass(module){}
     void execute() final;
-    void no_recursive_find();
+    void no_recursive_call_find();
     void func_inline();
 };
 

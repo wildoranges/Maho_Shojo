@@ -6,22 +6,25 @@ void FuncInline::execute(){
 
 }
 
-void FuncInline::no_recursive_find(){
+void FuncInline::no_recursive_call_find(){
     std::map<Function* ,int> recursive_check;
     for (auto func : module->get_functions()){
-        for (auto call_func : func->get_calling_func()){
-            if (call_func.second == func){
-                recursive_check[func] == 1;
+        auto use_list = func->get_use_list();
+        for (auto use : use_list){
+            auto inst_val = use.val_;
+            auto inst = dynamic_cast<Instruction *>(inst_val);
+            if (inst->get_parent()->get_parent() == func){
+                recursive_check[func] = 1;
                 break;
             }
         }
-    }
-    for (auto func : module->get_functions()){
-        for (auto call_func : func->get_calling_func()){
-            if (recursive_check[func] == 1){
-                continue;
-            }
-            calling_pair.push_back({func,call_func});
+        if (recursive_check[func] == 1){
+            continue;
+        }
+        for (auto use : use_list){
+            auto inst_val = use.val_;
+            auto inst = dynamic_cast<Instruction *>(inst_val);
+            calling_pair.push_back({inst->get_parent()->get_parent(),{inst,func}});
         }
     }
 }
@@ -75,8 +78,7 @@ void FuncInline::func_inline(){
         for (auto old_BB : call_func_BBs){
             new_BB = BasicBlock::create(module,"",func);
             for (auto old_inst : old_BB->get_instructions()){
-                new_inst = old_inst->copy(new_BB);
-                //TODO
+                //TODO copy inst
             }
         }
         
