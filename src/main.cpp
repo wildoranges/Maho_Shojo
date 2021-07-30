@@ -82,6 +82,7 @@ int main(int argc, char *argv[])
             PassMgr passmgr(m.get());
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
+            passmgr.execute();
         } else {
             PassMgr passmgr(m.get());
 
