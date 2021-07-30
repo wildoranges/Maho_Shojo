@@ -33,6 +33,7 @@ void AvailableExpr::compute_local_gen(Function *f) {
                 auto res = bb_gen[bb].insert(instr);
                 if(!res.second){
                     auto old_instr = bb_gen[bb].find(instr);
+                    std::cerr << "replace " <<instr->print() << " with "<<(*old_instr)->print() << std::endl;
                     instr->replace_all_use_with(*old_instr);
                     delete_list.push_back(instr);
 //                    instr_iter = instrs.erase(instr_iter);
@@ -155,6 +156,7 @@ void AvailableExpr::compute_global_common_expr(Function *f) {
                 auto common_exp = bb_in[bb].find(instr);
                 if (common_exp != bb_in[bb].end()) {
                     if(*common_exp!=instr){
+                        std::cerr << "replace " <<instr->print() << " with "<<(*common_exp)->print() << std::endl;
                         instr->replace_all_use_with(*common_exp);
                         delete_list.push_back(instr);
                     }
