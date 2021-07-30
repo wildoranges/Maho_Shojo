@@ -42,6 +42,8 @@ namespace IR2asm {
         std::string get_code(){ return reg_name[id]; }
     };
 
+    
+
     class Regbase: public Location{
         private:
             Reg reg_;

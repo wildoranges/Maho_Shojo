@@ -2,13 +2,13 @@
 #include<RegAlloc.h>
 #include<stack>
 
-namespace CodeGen{
+// namespace CodeGen{
 
-    std::string global(std::string name){
+    std::string CodeGen::global(std::string name){
         return IR2asm::space + ".globl" + name + IR2asm::endl;
     }
 
-    bool iszeroinit(Constant * init){
+    bool CodeGen::iszeroinit(Constant * init){
         if(dynamic_cast<ConstantInt *>(init)){
             return (dynamic_cast<ConstantInt *>(init)->get_value() == 0);
         }
@@ -24,7 +24,7 @@ namespace CodeGen{
     }
 
     //TODO: global varibale
-    std::string global_def_gen(Module* module){
+    std::string CodeGen::global_def_gen(Module* module){
         std::string code;
         for(auto var: module->get_global_variable()){
             std::string name = var->get_name();
@@ -95,24 +95,24 @@ namespace CodeGen{
         return code;
     }
 
-    int stack_space_allocation(Function* fun){
+    int CodeGen::stack_space_allocation(Function* fun){
         int size = 0;
         int arg_size = 0;
         used_reg.second.clear();
         used_reg.first.clear();
         stack_map.clear();
         arg_on_stack.clear();
-        //TODO: arg on stack in reversed sequence
+        //arg on stack in reversed sequence
         if(fun->get_num_of_args() > 4){
             for(auto arg: fun->get_args()){
                 if(arg->get_arg_no() < 4)continue;
                 int type_size = arg->get_type()->get_size();
+                arg_on_stack.push_back(new IR2asm::Regbase(IR2asm::sp, arg_size));
                 arg_size += type_size;
-                arg_on_stack.push_back(new IR2asm::Regbase(IR2asm::sp, -arg_size));
             }
         }
         if(have_func_call){
-            for(auto iter: reg_map){
+            for(auto iter: *reg_map){
                 Value* vreg = iter.first;
                 Interval* interval = iter.second;
                 if(interval->reg_num > 0){
@@ -132,7 +132,7 @@ namespace CodeGen{
                 size += type_size;
                 stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
             }
-                used_reg.second.insert(IR2asm::frame_ptr.get_id());
+                used_reg.second.insert(IR2asm::frame_ptr);
                 size += reg_size;
             for(auto inst: fun->get_entry_block()->get_instructions()){
                 auto alloc = dynamic_cast<AllocaInst*>(inst);
@@ -144,7 +144,7 @@ namespace CodeGen{
         }
         else{
             // stack alloc without frame pointer
-            for(auto iter: reg_map){
+            for(auto iter: *reg_map){
                 Value* vreg = iter.first;
                 Interval* interval = iter.second;
                 if(interval->reg_num > 0){
@@ -179,12 +179,12 @@ namespace CodeGen{
         int reg_store_size = reg_size * (used_reg.second.size() + (have_func_call)? 1 : 0 );
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
-            item->set_offset(offset + arg_size + reg_store_size + size);
+            item->set_offset(offset + reg_store_size + size);
         }
         return size;
     }
 
-    std::string callee_reg_store(Function* fun){
+    std::string CodeGen::callee_reg_store(Function* fun){
         //TODO
         std::string code;
         code += IR2asm::space;
@@ -205,7 +205,7 @@ namespace CodeGen{
         return code;
     }
 
-    std::string callee_reg_restore(Function* fun){
+    std::string CodeGen::callee_reg_restore(Function* fun){
         //TODO
         std::string code;
         code += IR2asm::space;
@@ -226,13 +226,13 @@ namespace CodeGen{
         return code;
     }
 
-    std::string callee_stack_operation_in(Function* fun, int stack_size){
+    std::string CodeGen::callee_stack_operation_in(Function* fun, int stack_size){
         //TODO
         std::string code;
         code += IR2asm::space;
         if(have_func_call){
             code += "mov ";
-            code += (IR2asm::frame_ptr).get_code();
+            code += IR2asm::Reg(IR2asm::frame_ptr).get_code();
             code += ", sp";
             // code += std::to_string(2 * int_size);
             code += IR2asm::endl;
@@ -244,13 +244,13 @@ namespace CodeGen{
         return code;
     }
 
-    std::string callee_stack_operation_out(Function* fun, int stack_size){
+    std::string CodeGen::callee_stack_operation_out(Function* fun, int stack_size){
         //TODO
         std::string code;
         code += IR2asm::space;
         if(have_func_call){
             code += "mov sp, ";
-            code += (IR2asm::frame_ptr).get_code();
+            code += IR2asm::Reg(IR2asm::frame_ptr).get_code();
             // code += std::to_string(2 * int_size);
             code += IR2asm::endl;
             return code;
@@ -263,7 +263,7 @@ namespace CodeGen{
         return code;
     }
 
-    std::string caller_reg_store(Function* fun){
+    std::string CodeGen::caller_reg_store(Function* fun){
         //TODO
         std::string code;
         int arg_num = fun->get_num_of_args();
@@ -283,7 +283,7 @@ namespace CodeGen{
         return code;
     }
 
-    std::string caller_reg_restore(Function* fun){
+    std::string CodeGen::caller_reg_restore(Function* fun){
         //TODO
         std::string code;
         int arg_num = fun->get_num_of_args();
@@ -303,7 +303,7 @@ namespace CodeGen{
         return code;
     }
 
-    void make_global_table(Module* module){
+    void CodeGen::make_global_table(Module* module){
         //TODO:global var use analysis
         for(auto var: module->get_global_variable()){
             for(auto use: var->get_use_list()){
@@ -319,7 +319,7 @@ namespace CodeGen{
         }
     }
     
-    std::string print_global_table(){
+    std::string CodeGen::print_global_table(){
         //TODO
         std::string code;
         for(auto iter: global_variable_table){
@@ -335,7 +335,7 @@ namespace CodeGen{
         return code;
     }
 
-    std::string module_gen(Module* module){
+    std::string CodeGen::module_gen(Module* module){
         std::string code;
         code += global_def_gen(module);
         RegAllocDriver driver = RegAllocDriver(module);
@@ -344,15 +344,16 @@ namespace CodeGen{
         make_global_table(module);
         func_no = 0;
         for(auto func_: module->get_functions()){
-            reg_map = driver.get_reg_alloc_in_func(func_);
+            reg_map = &driver.get_reg_alloc_in_func(func_);
             code += function_gen(func_);
             func_no++;
         }
         //TODO: static data segmentation
         //TODO: *other machine infomation
+        return code;
     }
 
-    void make_linear_bb(Function* fun){
+    void CodeGen::make_linear_bb(Function* fun){
         //TODO:sort bb and make bb label, put in CodeGen::bb_label
         //TODO: label gen, name mangling as bbx_y for yth bb in function no.x .
         bb_label.clear();
@@ -373,7 +374,7 @@ namespace CodeGen{
         return;
     }
 
-    void global_label_gen(Function* fun){
+    void CodeGen::global_label_gen(Function* fun){
         //TODO: global varibal address store after program(.LCPIx_y), fill in CodeGen::global_variable_table
         auto used_global = global_variable_use.find(fun)->second;
         global_variable_table.clear();
@@ -386,7 +387,7 @@ namespace CodeGen{
         }
     }
 
-    void func_call_check(Function* fun){
+    void CodeGen::func_call_check(Function* fun){
         max_arg_size = 0;
         for(auto bb: fun->get_basic_blocks()){
             for(auto inst: bb->get_instructions()){
@@ -405,7 +406,7 @@ namespace CodeGen{
         return;
     }
 
-    std::string arg_move(CallInst* call){
+    std::string CodeGen::arg_move(CallInst* call){
         //TODO: arg on stack in reversed sequence
         std::string regcode;
         std::string memcode;
@@ -416,7 +417,7 @@ namespace CodeGen{
             if(dynamic_cast<Function *>(arg))continue;
             if(i < 4){
                 regcode += IR2asm::space;
-                auto reg = reg_map.find(arg)->second->reg_num;
+                auto reg = (*reg_map).find(arg)->second->reg_num;
                 IR2asm::Reg* preg;
                 if(reg >= 0){
                     if(reg == i){
@@ -448,7 +449,7 @@ namespace CodeGen{
         while(!push_stack.empty()){
             Value* arg = push_stack.top();
             push_stack.pop();
-            auto reg = reg_map.find(arg)->second->reg_num;
+            auto reg = (*reg_map).find(arg)->second->reg_num;
             if(reg >= 0){
                 memcode += IR2asm::space;
                 memcode += "push {";
@@ -470,7 +471,7 @@ namespace CodeGen{
         return memcode + regcode;
     }
 
-    std::string function_gen(Function* fun){
+    std::string CodeGen::function_gen(Function* fun){
         std::string code;
         global_label_gen(fun);
         make_linear_bb(fun);
@@ -490,15 +491,15 @@ namespace CodeGen{
         return code;
     }
 
-    std::string bb_gen(BasicBlock* bb){
+    std::string CodeGen::bb_gen(BasicBlock* bb){
         std::string code;
         //TODO: instruction gen
         return code;
     }
 
-    std::string instr_gen(Instruction * inst){
+    std::string CodeGen::instr_gen(Instruction * inst){
         std::string code;
         //TODO: call functions in IR2asm , deal with phi inst(mov inst)
         return code;
     }
-} // namespace CodeGen
+// } // namespace CodeGen

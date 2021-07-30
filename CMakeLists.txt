@@ -61,6 +61,7 @@ target_link_libraries(
     checker
     ASTPrinter
     pass
+    CodeGen
 )
 
 install(

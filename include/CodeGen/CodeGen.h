@@ -7,7 +7,7 @@
 #include<Instruction.h>
 #include<RegAlloc.h>
 
-namespace CodeGen{
+class CodeGen{
     const int int_align = 4;
     const int int_size = 4;
     const int int_p2align = 2;
@@ -19,7 +19,7 @@ namespace CodeGen{
     std::map<GlobalVariable *, IR2asm::label> global_variable_table;
     std::map<Function*, std::set<GlobalVariable *>> global_variable_use;
     std::pair<std::set<int>, std::set<int>> used_reg;
-    std::map<Value*, Interval*>& reg_map;
+    std::map<Value*, Interval*>* reg_map;
     int func_no = 0;
     int bb_no = 0;
     int label_no = 0;
@@ -28,6 +28,7 @@ namespace CodeGen{
     std::map<BasicBlock*, IR2asm::label> bb_label;
     bool have_func_call = true;
 
+public:
     void make_linear_bb(Function* fun);
     void func_call_check(Function* fun);
 
@@ -37,10 +38,10 @@ namespace CodeGen{
     std::string global_def_gen(Module* module);
     void make_global_table(Module* module);
     std::string function_gen(Function* function);
-    int stack_space_allocation(Function* fun, RegAllocDriver* driver);
+    int stack_space_allocation(Function* fun);
     std::string callee_reg_store(Function* fun);
     std::string callee_stack_operation_in(Function* fun, int stack_size);
-    std::string arg_move(Function *fun);
+    std::string arg_move(CallInst* call);
     std::string callee_reg_restore(Function* fun);
     std::string callee_stack_operation_out(Function* fun, int stack_size);
     std::string caller_reg_store(Function* fun);
@@ -49,6 +50,6 @@ namespace CodeGen{
     std::string print_global_table();
     std::string bb_gen(BasicBlock* bb);
     std::string instr_gen(Instruction * inst);
-}
+};
 
 #endif

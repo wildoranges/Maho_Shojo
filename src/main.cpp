@@ -12,6 +12,7 @@
 #include "ConstPropagation.h"
 #include "DeadCodeElimination.h"
 #include "CFG_analyse.h"
+#include "CodeGen.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
@@ -31,6 +32,7 @@ int main(int argc, char *argv[])
     bool print_ast = false;
     bool print_IR = false;
     bool check = true;
+    bool codegen=false;
     std::string out_file = "a.ll";
     std::string filename = "test.sy";
     for (int i = 1; i < argc; ++i) {
@@ -50,12 +52,16 @@ int main(int argc, char *argv[])
             check = false;
         else if (argv[i] == std::string("-o"))
             out_file = argv[++i];
+        else if (argv[i] == std::string("-S")){
+            codegen = true;
+        }
         else{
             filename = argv[i];
         }
     }
 
     auto root = driver.parse(filename);
+    std::unique_ptr<Module> m;
     if (print_ast)
         root->accept(printer);
     if(check){
@@ -68,7 +74,7 @@ int main(int argc, char *argv[])
     }
     if (print_IR) {
         root->accept(builder);
-        auto m = builder.getModule();
+        m = builder.getModule();
 #ifdef DEBUG
         std::cout << "module\n";
 #endif
@@ -107,6 +113,14 @@ int main(int argc, char *argv[])
         output_stream.open(out_file, std::ios::out);
         output_stream << IR;
         //std::cout << "outputir\n";
+        output_stream.close();
+    }
+    else if(codegen){
+        CodeGen coder = CodeGen();
+        auto asmcode = coder.module_gen(m.get());
+        std::ofstream output_stream;
+        output_stream.open(out_file, std::ios::out);
+        output_stream << asmcode;
         output_stream.close();
     }
     return 0;
