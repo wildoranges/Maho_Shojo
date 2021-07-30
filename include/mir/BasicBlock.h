@@ -76,6 +76,8 @@ public:
     std::set<BasicBlock *> &get_rdoms(){return rdoms_;}
     std::set<Value*>& get_live_in(){return live_in;}
     std::set<Value*>& get_live_out(){return live_out;}
+    void set_use_var(std::set<Value*> use){use_var = use;}
+    void set_def_var(std::set<Value*> def){def_var = def;}
     void set_live_in(std::set<Value*> in){live_in = in;}
     void set_live_out(std::set<Value*> out){live_out = out;}
     void insert_live_in(Value* in){live_in.insert(in);}
@@ -100,7 +102,9 @@ private:
     std::set<BasicBlock*> dom_frontier_;
     std::set<BasicBlock*> rdom_frontier_;
     std::set<BasicBlock*> rdoms_;
-    std::set<Value*> live_in;//TODO:ADD API
+    std::set<Value*> use_var;
+    std::set<Value*> def_var;
+    std::set<Value*> live_in;
     std::set<Value*> live_out;
 
     int incoming_branch = 0;
