@@ -68,7 +68,9 @@ public:
     BasicBlock* get_idom(){return idom_;}
     void add_dom_frontier(BasicBlock* bb){dom_frontier_.insert(bb);}
     void add_rdom_frontier(BasicBlock* bb){rdom_frontier_.insert(bb);}
+    void clear_rdom_frontier(){rdom_frontier_.clear();}
     auto add_rdom(BasicBlock* bb){return rdoms_.insert(bb);}
+    void clear_rdom(){rdoms_.clear();}
     std::set<BasicBlock *> &get_dom_frontier(){return dom_frontier_;}
     std::set<BasicBlock *> &get_rdom_frontier(){return rdom_frontier_;}
     std::set<BasicBlock *> &get_rdoms(){return rdoms_;}

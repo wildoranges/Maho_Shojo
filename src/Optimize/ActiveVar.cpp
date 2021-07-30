@@ -87,7 +87,9 @@ void ActiveVar::get_live_in_live_out() {
             // 迭代后的in和out必不可能小于迭代前的in和out(归纳法可证)
             std::set_union(live_out[bb].begin(), live_out[bb].end(), tmp_live_out.begin(), tmp_live_out.end(), std::inserter(live_out[bb], live_out[bb].begin()));
             auto tmp_live_in = tmp_live_out;
-            std::set_difference(tmp_live_in.begin(), tmp_live_in.end(), def_var[bb].begin(), def_var[bb].end(), std::inserter(tmp_live_in, tmp_live_in.begin()));
+            std::set<Value *> tmp;
+            std::set_difference(tmp_live_in.begin(), tmp_live_in.end(), def_var[bb].begin(), def_var[bb].end(), std::inserter(tmp, tmp.begin()));
+            tmp_live_in = tmp;
             std::set_union(tmp_live_in.begin(), tmp_live_in.end(), use_var[bb].begin(), use_var[bb].end(), std::inserter(tmp_live_in, tmp_live_in.begin()));
             auto old_live_in_size = live_in[bb].size();
             std::set_union(live_in[bb].begin(), live_in[bb].end(), tmp_live_in.begin(), tmp_live_in.end(), std::inserter(live_in[bb], live_in[bb].begin()));

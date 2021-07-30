@@ -1,11 +1,15 @@
 add_library(
         pass STATIC
         Pass.cpp
-        CFGSymplifiler.cpp
+        CFGSimplifier.cpp
         DominateTree.cpp
         mem2reg.cpp
         LIR.cpp
         ActiveVar.cpp
         ConstPropagation.cpp
         DeadCodeElimination.cpp
-        CFG_analyse.cpp)
+        CFG_analyse.cpp
+        LoopInvariant.cpp
+        AvailableExpr.cpp
+)
+

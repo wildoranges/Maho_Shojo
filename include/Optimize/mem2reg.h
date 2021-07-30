@@ -13,6 +13,7 @@ private:
 	Function *func_;
 	IRBuilder *builder;
 	std::map<BasicBlock *, std::vector<Value *>> define_var;
+    std::string name = "mem2reg";
 
 public:
 	explicit Mem2Reg(Module *m) : Pass(m) {}
@@ -24,6 +25,7 @@ public:
 	void valueForwarding(BasicBlock *bb);
 	void removeAlloc();
 	void phiStatistic();
+    const std::string get_name() const override {return name;}
 
 	bool isLocalVarOp(Instruction *inst){
 		if (inst->get_instr_type() == Instruction::OpID::store){

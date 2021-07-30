@@ -10,15 +10,15 @@ void LIR::execute() {
         if (func->get_num_basic_blocks()>0){
             for (auto bb : func->get_basic_blocks()){
                 // split instr
-                split_gep(bb);
-                div_const2mul(bb);
                 split_srem(bb);
+                split_gep(bb);
+                //div_const2mul(bb);
                 // convert instr
                 // remove meaningless instr
                 // merge instr (when all optimization finished)
                 //merge_mul_add(bb);
-                merge_mul_sub(bb);
-                merge_cmp_br(bb);
+                //merge_mul_sub(bb);
+                //merge_cmp_br(bb);
             }
         }
     }

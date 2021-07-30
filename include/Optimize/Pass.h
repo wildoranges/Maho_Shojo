@@ -15,7 +15,8 @@ class Pass{
 public:
     explicit Pass(Module* m){module = m;}
     virtual void execute() = 0;
-    std::string name;
+    virtual const std::string get_name() const = 0;
+    //std::string name;
 protected:
     Module* module;
 };

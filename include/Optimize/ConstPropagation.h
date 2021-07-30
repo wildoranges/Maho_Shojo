@@ -26,6 +26,7 @@ private:
     ConstFolder * folder;
     std::map<Value*, ConstantInt*> const_global_var;
     std::map<Value*, std::map<unsigned int, ConstantInt*>> const_array;
+    std::string name = "ConstPropagation";
 
 public:
     ConstPropagation(Module *module) : Pass(module) {
@@ -34,12 +35,13 @@ public:
     }
     ~ConstPropagation() { delete folder; }
 
-    void execute();
+    void execute() final;
     void const_propagation();
     void reduce_redundant_cond_br();
 
     Constant *get_global_const_val(Value *value);
     Constant *set_global_const_val(Value *value, ConstantInt *const_val);
+    const std::string get_name() const override {return name;}
 };
 
 #endif  // MHSJ_CONSTPROPAGATION_H

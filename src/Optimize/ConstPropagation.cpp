@@ -92,6 +92,7 @@ void ConstPropagation::execute() {
 }
 
 void ConstPropagation::reduce_redundant_cond_br() {
+    std::vector<Instruction*> wait_delete_instr;
     for (auto func : module->get_functions()) {
         for (auto bb : func->get_basic_blocks()) {
             builder->set_insert_point(bb);
@@ -110,17 +111,25 @@ void ConstPropagation::reduce_redundant_cond_br() {
                             surviveBB = dynamic_cast<BasicBlock *>(falseBB);
                         }
                         for (auto succBB : bb->get_succ_basic_blocks()) {
+                            succBB->remove_pre_basic_block(bb);
                             if (succBB != surviveBB) {
-                                succBB->remove_pre_basic_block(bb);
                                 for (auto instr : succBB->get_instructions()) {
                                     if (instr->is_phi()) {
                                         for (int i = 1; i < instr->get_num_operand(); i+=2) {
                                             if (instr->get_operand(i) == bb) {
                                                 instr->remove_operands(i - 1, i);
                                             }
+                                            if (instr->get_num_operand() == 2) {
+                                                instr->replace_all_use_with(instr->get_operand(0));
+                                                wait_delete_instr.push_back(instr);
+                                            }
                                         }
                                     }
                                 }
+                                for (auto delete_instr : wait_delete_instr) {
+                                    succBB->delete_instr(delete_instr);
+                                }
+                                wait_delete_instr.clear();
                             }
                         }
                         bb->delete_instr(br);
