@@ -229,7 +229,7 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
       auto initializer = ConstantArray::get(array_type, init_val);
 
       if (scope.in_global()){
-        var = GlobalVariable::create(node.name, module.get(), array_type, false, initializer);
+        var = GlobalVariable::create(node.name, module.get(), array_type, true, initializer);
         scope.push(node.name, var);
         scope.push_size(node.name, array_sizes);
         scope.push_const(node.name, initializer);
