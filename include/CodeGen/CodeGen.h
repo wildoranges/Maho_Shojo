@@ -27,6 +27,8 @@ class CodeGen{
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
+    std::map<int, std::vector<Value*>> reg2val;
+    std::vector<int> to_save_reg;
 
 public:
     void make_linear_bb(Function* fun);
@@ -44,12 +46,13 @@ public:
     std::string arg_move(CallInst* call);
     std::string callee_reg_restore(Function* fun);
     std::string callee_stack_operation_out(Function* fun, int stack_size);
-    std::string caller_reg_store(Function* fun);
-    std::string caller_reg_restore(Function* fun);
+    std::string caller_reg_store(Function* fun,CallInst* call);
+    std::string caller_reg_restore(Function* fun, CallInst* call);
     void global_label_gen(Function* fun);
     std::string print_global_table();
     std::string bb_gen(BasicBlock* bb);
     std::string instr_gen(Instruction * inst);
+    std::string ret_mov(CallInst* call);
 };
 
 #endif

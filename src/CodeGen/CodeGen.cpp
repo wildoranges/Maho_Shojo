@@ -265,43 +265,79 @@
         return code;
     }
 
-    std::string CodeGen::caller_reg_store(Function* fun){
+    std::string CodeGen::caller_reg_store(Function* fun,CallInst* call){
         //TODO
-        std::string code;
+        std::string code = "";
+        to_save_reg.clear();
         int arg_num = fun->get_num_of_args();
-        if(arg_num == 0)return "";
         if(arg_num > 4)arg_num = 4;
-        code += IR2asm::space;
-        code += "push {";
-        int i = 0;
-        for(; i < arg_num - 1; i++){
-            if(used_reg.first.find(i) == used_reg.first.end())continue;
-            code += IR2asm::Reg(arg_num).get_code();
-            code += ", ";
+        if(!used_reg.first.empty()){
+            for(int i = 0;i < arg_num;i++){
+                if(used_reg.first.find(i) != used_reg.first.end()){
+                    bool not_to_save = true;
+                    for(auto val:reg2val[i]){
+                        not_to_save = not_to_save && !(*reg_map)[val]->covers(call);
+                    }
+                    if(!not_to_save){
+                        to_save_reg.push_back(i);
+                    }
+                }
+            }
+            if(!to_save_reg.empty()){
+                code += IR2asm::space;
+                code += "push {";
+                int save_size = to_save_reg.size();
+                int i = 0;
+                for(; i < save_size - 1; i++){
+                    code += IR2asm::Reg(to_save_reg[i]).get_code();
+                    code += ", ";
+                }
+                code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
+                code += "}";
+                code += IR2asm::endl;
+            }
         }
-        code += IR2asm::Reg(arg_num).get_code();
-        code += "}";
-        code += IR2asm::endl;
         return code;
     }
 
-    std::string CodeGen::caller_reg_restore(Function* fun){
+    std::string CodeGen::caller_reg_restore(Function* fun, CallInst* call){
         //TODO
-        std::string code;
+        std::string code = "";
         int arg_num = fun->get_num_of_args();
-        if(arg_num == 0)return "";
+
+        if(!call->is_void()){
+            int ret_id = (*reg_map)[call]->reg_num;
+            if(ret_id!=0){
+                if(ret_id > 0){
+                    code += IR2asm::space;
+                    code += "mov " + IR2asm::Reg(ret_id).get_code();
+                    code += ", ";
+                    code += IR2asm::Reg(0).get_code();
+                    code += IR2asm::endl;
+                }else{
+                    code += IR2asm::space;
+                    code += "str ";
+                    code += IR2asm::Reg(0).get_code();
+                    code += ", ";
+                    code += stack_map[call]->get_code();
+                    code += IR2asm::endl;
+                }
+            }
+        }        
+
         if(arg_num > 4)arg_num = 4;
-        code += IR2asm::space;
-        code += "pop {";
-        int i = 0;
-        for(; i < arg_num - 1; i++){
-            if(used_reg.first.find(i) == used_reg.first.end())continue;
-            code += IR2asm::Reg(arg_num).get_code();
-            code += ", ";
+        if(!to_save_reg.empty()){
+            code += IR2asm::space;
+            code += "pop {";
+            auto save_size = to_save_reg.size();
+            for(int i = 0; i < save_size - 1; i++){
+                code += IR2asm::Reg(to_save_reg[i]).get_code();//TODO:I OR REG_NUM?
+                code += ", ";
+            }
+            code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
+            code += "}";
+            code += IR2asm::endl;
         }
-        code += IR2asm::Reg(arg_num).get_code();
-        code += "}";
-        code += IR2asm::endl;
         return code;
     }
 
@@ -498,7 +534,17 @@
         std::string code;
         code += bb_label[bb]->get_code()+":"+IR2asm::endl;
         for(auto inst : bb->get_instructions()){
-            code += instr_gen(inst);
+            if(dynamic_cast<CallInst*>(inst)){
+                auto call_inst = dynamic_cast<CallInst*>(inst);        
+                code += caller_reg_store(bb->get_parent(),call_inst);
+                code += arg_move(call_inst);
+                code += instr_gen(call_inst);
+                code += caller_reg_restore(bb->get_parent(),call_inst);
+            }else if(dynamic_cast<ReturnInst*>(inst)){
+                
+            }else{
+                code += instr_gen(inst);
+            }
         }
         //TODO: instruction gen
         return code;

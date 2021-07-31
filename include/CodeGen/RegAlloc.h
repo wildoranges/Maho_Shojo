@@ -41,7 +41,8 @@ public:
     void add_range(int from,int to);
     void add_use_pos(int pos){position_list.push_front(pos);}
     //Interval* split(int id);
-    //bool covers(int id);
+    bool covers(int id);
+    bool covers(Instruction* inst);
     //bool covers(int from,int to);
     bool intersects(Interval* interval);
     void union_interval(Interval* interval);
