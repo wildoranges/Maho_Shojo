@@ -16,10 +16,11 @@ class CodeGen{
 
     std::map<Value*, IR2asm::Regbase*> stack_map;
     std::vector<IR2asm::Regbase*> arg_on_stack;
-    std::map<GlobalVariable *, IR2asm::label> global_variable_table;
+    std::map<GlobalVariable *, IR2asm::label *> global_variable_table;
     std::map<Function*, std::set<GlobalVariable *>> global_variable_use;
     std::pair<std::set<int>, std::set<int>> used_reg;
-    std::map<Value*, Interval*>* reg_map;
+    std::map<int, std::vector<Value*>> reg2value;
+    std::map<Value*, Interval*> reg_map;
     int func_no = 0;
     int bb_no = 0;
     int label_no = 0;
@@ -27,6 +28,8 @@ class CodeGen{
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
+    std::map<int, std::vector<Value*>> reg2val;
+    std::vector<int> to_save_reg;
 
 public:
     void make_linear_bb(Function* fun);
@@ -42,10 +45,11 @@ public:
     std::string callee_reg_store(Function* fun);
     std::string callee_stack_operation_in(Function* fun, int stack_size);
     std::string arg_move(CallInst* call);
+    std::string callee_arg_move(Function* fun);
     std::string callee_reg_restore(Function* fun);
     std::string callee_stack_operation_out(Function* fun, int stack_size);
-    std::string caller_reg_store(Function* fun);
-    std::string caller_reg_restore(Function* fun);
+    std::string caller_reg_store(Function* fun,CallInst* call);
+    std::string caller_reg_restore(Function* fun, CallInst* call);
     void global_label_gen(Function* fun);
     std::string print_global_table();
     std::string bb_gen(BasicBlock* bb);
@@ -56,6 +60,7 @@ public:
                                                         auto const_val = dynamic_cast<ConstantInt*>(val);
                                                         if (const_val) return new IR2asm::constant(const_val->get_value());
                                                     }}
+    std::string ret_mov(CallInst* call);
 };
 
 #endif

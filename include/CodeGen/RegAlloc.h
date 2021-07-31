@@ -41,7 +41,8 @@ public:
     void add_range(int from,int to);
     void add_use_pos(int pos){position_list.push_front(pos);}
     //Interval* split(int id);
-    //bool covers(int id);
+    bool covers(int id);
+    bool covers(Instruction* inst);
     //bool covers(int from,int to);
     bool intersects(Interval* interval);
     void union_interval(Interval* interval);
@@ -51,7 +52,13 @@ public:
 
 struct cmp_interval{
     bool operator()(const Interval* a, const Interval* b) const {
-        return (*(a->range_list.begin()))->from > (*(b->range_list.begin()))->from;
+        auto a_from = (*(a->range_list.begin()))->from;
+        auto b_from = (*(b->range_list.begin()))->from;
+        if(a_from!=b_from){
+            return a_from < b_from;
+        }else{
+            return a->val->get_name() < b->val->get_name();
+        }
     }
 };
 
@@ -94,7 +101,7 @@ private:
     std::map<Value*, Interval*> val2Inter;
     Function* func;
     std::list<BasicBlock*> block_order;
-    std::multiset<Interval*,cmp_interval> interval_list;
+    std::set<Interval*,cmp_interval> interval_list;
 };
 
 #endif //MHSJ_REG_ALLOC_H
