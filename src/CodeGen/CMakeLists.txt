@@ -3,4 +3,6 @@ ADD_LIBRARY(
         CodeGen.cpp
         IR2asm.cpp
         RegAlloc.cpp
+        CodeGen.cpp
+        IR2asm.cpp
 )
