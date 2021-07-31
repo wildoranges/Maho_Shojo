@@ -42,6 +42,8 @@ namespace IR2asm {
         std::string get_code(){ return reg_name[id]; }
     };
 
+    
+
     class Regbase: public Location{
         private:
             Reg reg_;
@@ -51,6 +53,7 @@ namespace IR2asm {
             Regbase(Reg reg, int offset): reg_(reg), offset(offset){}
             Reg &get_reg(){return reg_;}
             int get_offset(){return offset;}
+            void set_offset(int x){offset = x;}
             std::string get_code(){
                 if(!offset)return "[" + reg_.get_code() + "]";
                 else {

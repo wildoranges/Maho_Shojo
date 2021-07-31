@@ -28,9 +28,9 @@ public:
     ArrayType *get_array_type(Type *contained, unsigned num_elements);
 
     void add_function(Function *f);
-    std::list<Function* > get_functions();
+    std::list<Function* > &get_functions();
     void add_global_variable(GlobalVariable* g);
-    std::list<GlobalVariable *> get_global_variable();
+    std::list<GlobalVariable *> &get_global_variable();
     std::string get_instr_op_name( Instruction::OpID instr ) { return instr_id2string_[instr]; }
     void set_print_name();
     virtual std::string print();

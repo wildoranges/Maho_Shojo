@@ -41,7 +41,8 @@ public:
     void add_range(int from,int to);
     void add_use_pos(int pos){position_list.push_front(pos);}
     //Interval* split(int id);
-    //bool covers(int id);
+    bool covers(int id);
+    bool covers(Instruction* inst);
     //bool covers(int from,int to);
     bool intersects(Interval* interval);
     void union_interval(Interval* interval);
@@ -55,7 +56,7 @@ struct cmp_interval{
     }
 };
 
-const std::vector<int> general_reg_id = {11,10,9,8,7,6,5,4};
+const std::vector<int> general_reg_id = {12,10,9,8,7,6,5,4};
 const std::vector<int> func_reg_id = {3,2,1,0};
 const std::vector<int> all_reg_id = {12,10,9,8,7,6,5,4,3,2,1,0};
 

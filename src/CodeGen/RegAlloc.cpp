@@ -22,6 +22,18 @@ void Interval::add_range(int from, int to) {
     }
 }
 
+bool Interval::covers(int id){
+    for(auto range:range_list){
+        if(range->from<=id&&range->to>id){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Interval::covers(Instruction* inst){
+    return covers(inst->get_id());
+}
 
 bool Interval::intersects(Interval *interval) {
     auto taget_it = range_list.begin();
