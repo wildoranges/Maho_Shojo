@@ -70,6 +70,10 @@ bool CFGSimplifier::bb_can_delete(BasicBlock *bb) {
     return true;
 }
 
+bool CFGSimplifier::is_self_loop(BasicBlock *bb) {
+    return (bb->get_pre_basic_blocks().size() == 1 && bb == bb->get_pre_basic_blocks().front());
+}
+
 void CFGSimplifier::replace_phi(BasicBlock *victim_bb, std::list<BasicBlock*> pre_bb_list, BasicBlock *succ_bb) {
     std::vector<Instruction*> wait_delete_instr;
     for (auto instr : succ_bb->get_instructions()) {
@@ -140,6 +144,7 @@ void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
         } else {
             bb->add_instruction(instr);
         }
+        instr->set_parent(bb);
     }
     for (auto delete_instr : wait_delete_instr) {
         bb->delete_instr(delete_instr);
@@ -152,6 +157,10 @@ bool CFGSimplifier::one_pass() {
     bool changed = false;
     for (auto bb : postorder_bb_list) {
         if (bb == func_->get_entry_block()) {
+            continue;
+        }
+        if (is_self_loop(bb)) {
+            wait_delete_bb.push_back(bb);
             continue;
         }
         auto terminator = bb->get_terminator();

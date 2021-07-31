@@ -30,7 +30,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/StaticChecker)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/MHSJBuilder)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/mir)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/Optimize)
-#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/CodeGen)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/CodeGen)
 
 
 # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -43,7 +43,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/ASTPrinter)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/StaticChecker)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/MHSJBuilder)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/Optimize)
-#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/CodeGen)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/CodeGen)
 
 
 add_executable(
@@ -61,6 +61,7 @@ target_link_libraries(
     checker
     ASTPrinter
     pass
+    CodeGen
 )
 
 install(

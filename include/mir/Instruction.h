@@ -273,6 +273,8 @@ public:
     }
 
 private:
+    Constant *v3_;
+
     void assertValid();
 };
 
@@ -337,6 +339,8 @@ public:
 
 private:
     CmpOp cmp_op_;
+    BasicBlock* true_BB_;
+    BasicBlock* false_BB_;
 
     void assertValid();
 };
@@ -436,6 +440,7 @@ public:
 
 private:
     Type *element_ty_;
+    std::vector<Value *> idxs_;
 };
 
 class StoreInst : public Instruction

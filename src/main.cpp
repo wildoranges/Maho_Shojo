@@ -13,6 +13,7 @@
 #include "DeadCodeElimination.h"
 #include "CFGSimplifier.h"
 #include "CFG_analyse.h"
+#include "CodeGen.h"
 
 #include "LoopInvariant.h"
 #include "AvailableExpr.h"
@@ -21,7 +22,7 @@
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
-            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] [ -O0 ]"
+            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] [ -O0 ] [ -S ]"
             << "<input-file>"
             << std::endl;
 }
@@ -37,6 +38,7 @@ int main(int argc, char *argv[])
     bool print_ast = false;
     bool print_IR = false;
     bool check = true;
+    bool codegen=false;
     bool no_optimize = false;
     std::string out_file = "a.ll";
     std::string filename = "test.sy";
@@ -59,6 +61,10 @@ int main(int argc, char *argv[])
             out_file = argv[++i];
         else if (argv[i] == std::string("-O0")) {
             no_optimize = true;
+        }
+        else if (argv[i] == std::string("-S")){
+            codegen = true;
+            print_IR = true;
         }
         else {
             filename = argv[i];
@@ -83,6 +89,7 @@ int main(int argc, char *argv[])
             PassMgr passmgr(m.get());
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
+            passmgr.execute();
         } else {
             PassMgr passmgr(m.get());
 
@@ -100,7 +107,6 @@ int main(int argc, char *argv[])
             passmgr.addPass<ConstPropagation>();
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
-
             passmgr.addPass<AvailableExpr>();
 
             passmgr.addPass<DeadCodeElimination>();
@@ -150,11 +156,22 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
         std::cout << "prtm\n";
 #endif
-        std::ofstream output_stream;
-        output_stream.open(out_file, std::ios::out);
-        output_stream << IR;
-        //std::cout << "outputir\n";
-        output_stream.close();
+        if(codegen){
+            CodeGen coder = CodeGen();
+            auto asmcode = coder.module_gen(m.get());
+            std::ofstream output_stream;
+            output_stream.open(out_file, std::ios::out);
+            output_stream << asmcode;
+            output_stream.close();
+        }
+        else{
+            std::ofstream output_stream;
+            output_stream.open(out_file, std::ios::out);
+            output_stream << IR;
+            //std::cout << "outputir\n";
+            output_stream.close();
+        }
     }
+    
     return 0;
 }

@@ -105,14 +105,14 @@ void Module::add_function(Function *f)
 {
     function_list_.push_back(f);
 }
-std::list<Function* > Module::get_functions(){
+std::list<Function* > &Module::get_functions(){
     return function_list_;
 }
 void Module::add_global_variable(GlobalVariable* g)
 {
     global_list_.push_back(g);
 }
-std::list<GlobalVariable *> Module::get_global_variable(){
+std::list<GlobalVariable *> &Module::get_global_variable(){
     return global_list_;
 }
 
