@@ -5,7 +5,7 @@
 // namespace CodeGen{
 
     std::string CodeGen::global(std::string name){
-        return IR2asm::space + ".globl" + name + IR2asm::endl;
+        return IR2asm::space + ".globl " + name + IR2asm::endl;
     }
 
     bool CodeGen::iszeroinit(Constant * init){
@@ -30,11 +30,11 @@
             std::string name = var->get_name();
             bool isconst = var->is_const();
             auto initializer = var->get_init();
-            bool isinitialized = (dynamic_cast<ConstantZero *>(initializer) != nullptr);
+            bool isinitialized = (dynamic_cast<ConstantZero *>(initializer) == nullptr);
             bool isarray = (dynamic_cast<ConstantArray *>(initializer) != nullptr);
             int size = var->get_type()->get_size();
             code += IR2asm::space;
-            code += ".type" + name + ", %object" + IR2asm::endl;
+            code += ".type " + name + ", %object" + IR2asm::endl;
             code += IR2asm::space;
             if(isinitialized){  //initialized global var
                 bool iszeroinit_ = iszeroinit(initializer);
@@ -80,6 +80,7 @@
                     }
                 }
                 code += ".size ";
+                code += name + ", ";
                 code += std::to_string(size);
                 code += IR2asm::endl;
             }
@@ -91,6 +92,7 @@
                 code += ", " + std::to_string(int_align);  //int align 4
                 code += IR2asm::endl;
             }
+            code += IR2asm::endl;
         }
         return code;
     }
@@ -338,6 +340,7 @@
     std::string CodeGen::module_gen(Module* module){
         std::string code;
         code += global_def_gen(module);
+        std::cout << code;
         RegAllocDriver driver = RegAllocDriver(module);
         driver.compute_reg_alloc();
         //TODO: function definition
@@ -362,11 +365,11 @@
         for(auto bb: fun->get_basic_blocks()){
             if(bb != fun->get_entry_block()){
                 std::string label_str = "bb" + std::to_string(func_no) + "_" + std::to_string(bb_no);
-                IR2asm::label newlabel = IR2asm::label(label_str);
+                IR2asm::label *newlabel = new IR2asm::label(label_str);
                 bb_label.insert({bb, newlabel});
             }
             else{
-                bb_label.insert({bb, IR2asm::label(fun->get_name())});
+                bb_label.insert({bb, new IR2asm::label(fun->get_name())});
             }
             linear_bb.push_back(bb);
             bb_no++;
@@ -493,7 +496,7 @@
 
     std::string CodeGen::bb_gen(BasicBlock* bb){
         std::string code;
-        code += bb_label[bb].get_code()+":"+IR2asm::endl;
+        code += bb_label[bb]->get_code()+":"+IR2asm::endl;
         for(auto inst : bb->get_instructions()){
             code += instr_gen(inst);
         }

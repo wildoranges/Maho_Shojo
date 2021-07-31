@@ -25,7 +25,7 @@ class CodeGen{
     int label_no = 0;
     int max_arg_size = 0;
     std::vector<BasicBlock*> linear_bb;
-    std::map<BasicBlock*, IR2asm::label> bb_label;
+    std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
 
 public:

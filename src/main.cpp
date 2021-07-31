@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
         }
         else if (argv[i] == std::string("-S")){
             codegen = true;
+            print_IR = true;
         }
         else {
             filename = argv[i];
@@ -70,7 +71,6 @@ int main(int argc, char *argv[])
     }
 
     auto root = driver.parse(filename);
-    std::unique_ptr<Module> m;
     if (print_ast)
         root->accept(printer);
     if(check){
@@ -155,19 +155,22 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
         std::cout << "prtm\n";
 #endif
-        std::ofstream output_stream;
-        output_stream.open(out_file, std::ios::out);
-        output_stream << IR;
-        //std::cout << "outputir\n";
-        output_stream.close();
+        if(codegen){
+            CodeGen coder = CodeGen();
+            auto asmcode = coder.module_gen(m.get());
+            std::ofstream output_stream;
+            output_stream.open(out_file, std::ios::out);
+            output_stream << asmcode;
+            output_stream.close();
+        }
+        else{
+            std::ofstream output_stream;
+            output_stream.open(out_file, std::ios::out);
+            output_stream << IR;
+            //std::cout << "outputir\n";
+            output_stream.close();
+        }
     }
-    else if(codegen){
-        CodeGen coder = CodeGen();
-        auto asmcode = coder.module_gen(m.get());
-        std::ofstream output_stream;
-        output_stream.open(out_file, std::ios::out);
-        output_stream << asmcode;
-        output_stream.close();
-    }
+    
     return 0;
 }
