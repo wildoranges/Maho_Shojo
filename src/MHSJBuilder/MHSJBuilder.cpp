@@ -221,6 +221,10 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
       var_type = INT32_T;
       auto *array_type = ArrayType::get(var_type, total_size);
 
+      initval.clear();
+      init_val.clear();
+      cur_depth = 0;
+      cur_pos = 0;
       node.initializers->accept(*this);
       auto initializer = ConstantArray::get(array_type, init_val);
 
@@ -314,6 +318,7 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         if (node.is_inited ){
           cur_pos = 0;
           cur_depth = 0;
+          initval.clear();
           init_val.clear();
           node.initializers->accept(*this);
           auto initializer = ConstantArray::get(array_type, init_val);
@@ -345,6 +350,7 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
           cur_pos = 0;
           cur_depth = 0;
           initval.clear();
+          init_val.clear();
           node.initializers->accept(*this);
           for (int i = 0; i < array_sizes[0]; i++) {
             if (initval[i]) {
