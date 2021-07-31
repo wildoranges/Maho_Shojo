@@ -89,6 +89,31 @@ namespace IR2asm {
             std::string get_code(){return "#" + std::to_string(value_);}
     };
 
+enum ShiftOp{
+    asr,
+    lsl,
+    lsr
+};
+    class Operand2: public Value{
+        private:
+            Reg reg_;
+            ShiftOp shift_op_;
+            int value_;
+
+        public:
+            explicit Operand2(Reg reg, ShiftOp shift_op, int val):reg_(reg), shift_op_(shift_op), value_(val){}
+            explicit Operand2(Reg reg):reg_(reg){}
+            ~Operand2(){}
+            bool is_const() final {return false;}
+            bool is_reg() final {return false;}
+            std::string get_operand2(ShiftOp shift_op) {if (shift_op == ShiftOp::asr) return "ASR";
+                                                        else if (shift_op == ShiftOp::lsl) return "LSL";
+                                                        else if (shift_op == ShiftOp::lsr) return "LSR";
+                                                        else return "ERROR";}
+            std::string get_code(){if (!shift_op_) return reg_.get_code();
+                                    else return reg_.get_code() + " " + get_operand2(shift_op_) + " " + "#" + std::to_string(value_);}
+    };
+
 }
 
 #endif //MHSJ_VALUEGEN_H

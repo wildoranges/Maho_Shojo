@@ -80,7 +80,7 @@ std::string ret(){
     return asmstr;
 }
 
-std::string add(Reg* rd, Reg* rs, Value* opr2){
+std::string add(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "add ";
@@ -93,7 +93,7 @@ std::string add(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string sub(Reg* rd, Reg* rs, Value* opr2){
+std::string sub(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "sub ";
@@ -106,7 +106,7 @@ std::string sub(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string mul(Reg* rd, Reg* rs, Value* opr2){
+std::string mul(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "mul ";
@@ -119,7 +119,7 @@ std::string mul(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string sdiv(Reg* rd, Reg* rs, Value* opr2){
+std::string sdiv(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "sdiv ";
@@ -132,7 +132,7 @@ std::string sdiv(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string srem(Reg* rd, Reg* rs, Value* opr2){
+std::string srem(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "srem ";
@@ -145,7 +145,7 @@ std::string srem(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string land(Reg* rd, Reg* rs, Value* opr2){
+std::string land(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "and ";
@@ -158,7 +158,7 @@ std::string land(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string lor(Reg* rd, Reg* rs, Value* opr2){
+std::string lor(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "or ";
@@ -171,7 +171,7 @@ std::string lor(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string lxor(Reg* rd, Reg* rs, Value* opr2){
+std::string lxor(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "xor ";
@@ -184,7 +184,7 @@ std::string lxor(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string asr(Reg* rd, Reg* rs, Value* opr2){
+std::string asr(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "asr ";
@@ -197,7 +197,7 @@ std::string asr(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string lsl(Reg* rd, Reg* rs, Value* opr2){
+std::string lsl(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "lsl ";
@@ -210,7 +210,7 @@ std::string lsl(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string lsr(Reg* rd, Reg* rs, Value* opr2){
+std::string lsr(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "lsr ";
