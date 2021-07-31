@@ -174,6 +174,7 @@ public:
     void set_id(int id){id_ = id;}
     int get_id() const{return id_;}
 
+    virtual Instruction *copy_inst(BasicBlock *BB)  = 0;
 
 private:
     BasicBlock *parent_;
@@ -205,6 +206,10 @@ public:
 
     virtual std::string print() override;
 
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new BinaryInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),BB);
+    }
+
 private:
     void assertValid();
 };
@@ -219,6 +224,10 @@ public:
     static MulAddInst *create_muladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new MulAddInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),get_operand(2),BB);
+    }
 
 private:
     void assertValid();
@@ -235,6 +244,10 @@ public:
 
     virtual std::string print() override;
 
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new MulSubInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),get_operand(2),BB);
+    }
+
 private:
     void assertValid();
 };
@@ -242,18 +255,22 @@ private:
 class ShiftBinaryInst : public Instruction
 {
 private:
-    ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Constant *v3,
+    ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3,
                BasicBlock *bb);
 
 public:
-    static ShiftBinaryInst *create_asradd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m);
-    static ShiftBinaryInst *create_lsladd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m);
-    static ShiftBinaryInst *create_lsradd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m);
-    static ShiftBinaryInst *create_asrsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m);
-    static ShiftBinaryInst *create_lslsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m);
-    static ShiftBinaryInst *create_lsrsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m);
+    static ShiftBinaryInst *create_asradd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
+    static ShiftBinaryInst *create_lsladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
+    static ShiftBinaryInst *create_lsradd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
+    static ShiftBinaryInst *create_asrsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
+    static ShiftBinaryInst *create_lslsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
+    static ShiftBinaryInst *create_lsrsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m);
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new ShiftBinaryInst(get_type(),get_instr_type(),get_operand(0),get_operand(1),get_operand(2),BB);
+    }
 
 private:
     void assertValid();
@@ -284,6 +301,10 @@ public:
 
     virtual std::string print() override;
 
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new CmpInst(get_type(),cmp_op_,get_operand(0),get_operand(1),BB);
+    }
+
 private:
     CmpOp cmp_op_;
 
@@ -298,6 +319,7 @@ public:
 private:
     CmpBrInst(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false,
             BasicBlock *bb);
+    CmpBrInst(CmpOp op, Value *lhs, Value *rhs, BasicBlock *bb);
 
 public:
     static CmpBrInst *create_cmpbr(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false,
@@ -309,6 +331,10 @@ public:
 
     virtual std::string print() override;
 
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new CmpBrInst(cmp_op_,get_operand(0),get_operand(1),BB);
+    }
+
 private:
     CmpOp cmp_op_;
 
@@ -319,12 +345,21 @@ class CallInst : public Instruction
 {
 protected:
     CallInst(Function *func, std::vector<Value *> args, BasicBlock *bb);
+    CallInst(Type *ret_ty, std::vector<Value *> args, BasicBlock *bb);
 
 public:
     static CallInst *create(Function *func, std::vector<Value *> args, BasicBlock *bb);
     FunctionType *get_function_type() const;
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        std::vector<Value *> args;
+        for (auto i = 1; i < get_num_operand(); i++){
+            args.push_back(get_operand(i));
+        }
+        return new CallInst(get_function_type()->get_return_type(),args,BB);
+    }
 };
 
 class BranchInst : public Instruction
@@ -332,7 +367,9 @@ class BranchInst : public Instruction
 private:
     BranchInst(Value *cond, BasicBlock *if_true, BasicBlock *if_false,
                BasicBlock *bb);
+    BranchInst(Value *cond, BasicBlock *bb);
     BranchInst(BasicBlock *if_true, BasicBlock *bb);
+    BranchInst(BasicBlock *bb);
 
 public:
     static BranchInst *create_cond_br(Value *cond, BasicBlock *if_true, BasicBlock *if_false,
@@ -342,6 +379,15 @@ public:
     bool is_cond_br() const;
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        if (get_num_operand() == 1){
+            return new BranchInst(BB);
+        }
+        else{
+            return new BranchInst(get_operand(0),BB);
+        }
+    }
 };
 
 class ReturnInst : public Instruction
@@ -356,6 +402,16 @@ public:
     bool is_void_ret() const;
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        if (is_void_ret()){
+            return new ReturnInst(BB);
+        }
+        else{
+            return new ReturnInst(get_operand(0),BB);
+        }
+    }
+
 };
 
 class GetElementPtrInst : public Instruction
@@ -369,6 +425,14 @@ public:
     Type *get_element_type() const;
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        std::vector<Value *> idxs;
+        for (auto i = 1; i < get_num_operand(); i++){
+            idxs.push_back(get_operand(i));
+        }
+        return new GetElementPtrInst(get_operand(0),idxs,BB);
+    }
 
 private:
     Type *element_ty_;
@@ -386,6 +450,11 @@ public:
     Value *get_lval() { return this->get_operand(1); }
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new StoreInst(get_operand(0),get_operand(1),BB);
+    }
+
 };
 
 class LoadInst : public Instruction
@@ -400,6 +469,11 @@ public:
     Type *get_load_type() const;
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new LoadInst(get_type(),get_operand(0),BB);
+    }
+
 };
 
 class AllocaInst : public Instruction
@@ -413,6 +487,10 @@ public:
     Type *get_alloca_type() const;
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new AllocaInst(alloca_ty_,BB);
+    }
 
 private:
     Type *alloca_ty_;
@@ -429,6 +507,10 @@ public:
     Type *get_dest_type() const;
 
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new ZextInst(get_instr_type(),get_operand(0),dest_ty_,BB);
+    }
 
 private:
     Type *dest_ty_;
@@ -452,6 +534,11 @@ public:
         this->add_operand(pre_bb);
     }
     virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return nullptr;
+    }
+
 };
 
 #endif // SYSY_INSTRUCTION_H

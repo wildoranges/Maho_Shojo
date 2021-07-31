@@ -8,9 +8,11 @@ class FuncInline : public Pass
 private:
     /* data */
     std::vector<std::pair<Function*, std::pair<Instruction *,Function *>>> calling_pair;
+    std::string name = "FuncInline";
 public:
     explicit FuncInline(Module* module): Pass(module){}
     void execute() final;
+    const std::string get_name() const override {return name;}
     void no_recursive_call_find();
     void func_inline();
 };
