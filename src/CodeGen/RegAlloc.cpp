@@ -183,7 +183,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
             if(val2Inter.find(opr)==val2Inter.end()){
                 auto new_interval = new Interval(opr);
                 val2Inter[opr] = new_interval;
-                add_interval(new_interval);
+                //add_interval(new_interval);
             }
             val2Inter[opr]->add_range(block_from,block_to);
         }
@@ -203,7 +203,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
                     auto new_interval = new Interval(instr);
                     new_interval->add_range(block_from,block_to);
                     val2Inter[instr] = new_interval;
-                    add_interval(new_interval);
+                    //add_interval(new_interval);
                 }
                 auto cur_inter = val2Inter[instr];
                 auto top_range = *(cur_inter->range_list.begin());
@@ -224,7 +224,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
                     val2Inter[opr] = new_interval;
                     new_interval->add_range(block_from,instr->get_id()+2);
                     new_interval->add_use_pos(instr->get_id());
-                    add_interval(new_interval);
+                    //add_interval(new_interval);
                 }
                 else{
                     auto cur_inter = val2Inter[opr];
@@ -249,10 +249,10 @@ void RegAlloc::walk_intervals() {
     active = {};
     //inactive = {};
     //handled = {};
-    while(!interval_list.empty()){
-        auto current_it = interval_list.begin();
+    for(auto current_it=interval_list.begin();current_it!=interval_list.end();current_it++){
+        //auto current_it = interval_list.begin();
         current = *current_it;//TODO:CHECK WARNING
-        interval_list.erase(current_it);
+        //interval_list.erase(current_it);
         //interval_list.pop();
         auto position = (*current->range_list.begin())->from;
 
