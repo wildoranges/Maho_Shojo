@@ -1,6 +1,6 @@
 #include "FuncInline.h"
 
-#define HUGE_SIZE 10000
+#define HUGE_SIZE 100
 
 void FuncInline::execute(){
     no_recursive_call_find();
@@ -49,7 +49,6 @@ void FuncInline::func_inline(){
         auto call_BB = inst_call->get_parent();
         auto split_BB = BasicBlock::create(module,"",func);
         bool need_move = false;
-        //split BasicBlock of inst_call
         for (auto iter_inst = call_BB->get_instructions().begin(); iter_inst!=call_BB->get_instructions().end(); iter_inst++){
             if (need_move){
                 auto inst = *iter_inst;
