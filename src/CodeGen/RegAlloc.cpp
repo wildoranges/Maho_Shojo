@@ -3,6 +3,7 @@
 //
 
 #include "RegAlloc.h"
+#include <iostream>
 #include <set>
 
 void Interval::add_range(int from, int to) {
@@ -98,6 +99,7 @@ void RegAllocDriver::compute_reg_alloc() {
         if(func->get_basic_blocks().empty()){
             continue;
         }else{
+            std::cerr << "function " << func->get_name() << std::endl;
             auto allocator = new RegAlloc(func);
             allocator->execute();
             reg_alloc[func] = allocator->get_reg_alloc();
@@ -215,7 +217,11 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
                 //interval_list.insert(cur_inter);
             }
 
-            for(auto opr:instr->get_operands()){
+            if(instr->is_phi()){//analyze
+                continue;
+            }
+
+            for(auto opr:instr->get_operands()){//TODO:CONST ALLOC
                 if(!dynamic_cast<Instruction*>(opr) && !dynamic_cast<Argument*>(opr)){
                     continue;
                 }
