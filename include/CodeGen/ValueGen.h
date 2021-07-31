@@ -33,6 +33,7 @@ namespace IR2asm {
     public:
         int id;
 
+        Reg();
         Reg(int i) : id(i) {}
 
         int get_id() { return id; }
@@ -96,22 +97,26 @@ enum ShiftOp{
 };
     class Operand2: public Value{
         private:
-            Reg reg_;
+            Reg reg_1_;
+            Reg reg_2_;
             ShiftOp shift_op_;
             int value_;
 
         public:
-            explicit Operand2(Reg reg, ShiftOp shift_op, int val):reg_(reg), shift_op_(shift_op), value_(val){}
-            explicit Operand2(Reg reg):reg_(reg){}
+            explicit Operand2(Reg reg_1, ShiftOp shift_op, Reg reg_2):reg_1_(reg_1), shift_op_(shift_op), reg_2_(reg_2){}
+            explicit Operand2(Reg reg, ShiftOp shift_op, int val):reg_1_(reg), shift_op_(shift_op), value_(val){}
+            explicit Operand2(Reg reg):reg_1_(reg){}
+            explicit Operand2(int val):value_(val){}
             ~Operand2(){}
             bool is_const() final {return false;}
             bool is_reg() final {return false;}
-            std::string get_operand2(ShiftOp shift_op) {if (shift_op == ShiftOp::asr) return "ASR";
-                                                        else if (shift_op == ShiftOp::lsl) return "LSL";
-                                                        else if (shift_op == ShiftOp::lsr) return "LSR";
+            std::string get_operand2(ShiftOp shift_op) {if (shift_op == ShiftOp::asr) return "asr";
+                                                        else if (shift_op == ShiftOp::lsl) return "lsl";
+                                                        else if (shift_op == ShiftOp::lsr) return "lsr";
                                                         else return "ERROR";}
-            std::string get_code(){if (!shift_op_) return reg_.get_code();
-                                    else return reg_.get_code() + " " + get_operand2(shift_op_) + " " + "#" + std::to_string(value_);}
+            std::string get_code(){if (!shift_op_) {if (!value_) return reg_1_.get_code(); else return "#" + std::to_string(value_);}
+                                    else {if (!value_) return reg_1_.get_code() + " " + get_operand2(shift_op_) + " " + reg_2_.get_code();
+                                            else return reg_1_.get_code() + " " + get_operand2(shift_op_) + " " + "#" + std::to_string(value_);}}
     };
 
 }

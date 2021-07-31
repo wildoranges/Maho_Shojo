@@ -31,32 +31,43 @@ namespace IR2asm{
     NOP
     };
 
-    std::string getelementptr(Location * ptr);
+    std::string mov(Reg* rd, Operand2 *opr2);
+    std::string movgt(Reg* rd, Operand2 *opr2);
+    std::string movge(Reg* rd, Operand2 *opr2);
+    std::string movlt(Reg* rd, Operand2 *opr2);
+    std::string movle(Reg* rd, Operand2 *opr2);
+    std::string getelementptr(Reg* rd, Location * ptr);
     std::string cond(CmpOp & cop);
     std::string ret();
-    std::string ret(Value* retval);
-    std::string br(Value* label);
-    std::string br(Value* cond, Value* success, Value* fail);
-    std::string add(Value* rd, Value* rs, Value* opr2);
-    std::string sub(Value* rd, Value* rs, Value* opr2);
-    std::string mul(Value* rd, Value* rs, Value* opr2);
-    std::string sdiv(Value* rd, Value* rs, Value* opr2);
-    std::string srem(Value* rd, Value* rs, Value* opr2);
-    std::string load(Value* rd, Value* addr);
-    std::string store(Value* rs, Value* addr);
+    std::string ret(Reg* retval);
+    std::string b(Location* label);
+    std::string br(Location* label){return b(label);}
+    std::string cbz(Reg* rs, Location* label);
+    std::string cbnz(Reg* rs, Location* label);
+    // TODO: can be simplified
+    std::string br(Reg* cond, Location* success, Location* fail){return cbnz(cond, success) + cbz(cond, fail);}
+    std::string cmp(Reg* rs, Operand2* opr2);
+    std::string add(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string sub(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string r_sub(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string mul(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string sdiv(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string srem(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string load(Reg* rd, Location* addr);
+    std::string store(Reg* rs, Location* addr);
     std::string call(label* fun);
     
-    std::string land(Value* rd, Value* rs, Value* opr2);
-    std::string lor(Value* rd, Value* rs, Value* opr2);
-    std::string lxor(Value* rd, Value* rs, Value* opr2);
+    std::string land(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string lor(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string lxor(Reg* rd, Reg* rs, Operand2* opr2);
 
-    std::string asr(Value* rd, Value* rs, Value* opr2);
-    std::string lsl(Value* rd, Value* rs, Value* opr2);
-    std::string lsr(Value* rd, Value* rs, Value* opr2);
+    std::string asr(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string lsl(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string lsr(Reg* rd, Reg* rs, Operand2* opr2);
 
-    std::string muladd(Value* rd, Value* rs, Value* rt, Value* rn);
-    std::string mulsub(Value* rd, Value* rs, Value* rt, Value* rn);
-    std::string smul(Value* rd1, Value* rd2, Value* rs, Value* rt);
+    std::string muladd(Reg* rd, Reg* rs, Reg* rt, Reg* rn);
+    std::string mulsub(Reg* rd, Reg* rs, Reg* rt, Reg* rn);
+    std::string smul(Reg* rd1, Reg* rd2, Reg* rs, Reg* rt);
 };
 
 #endif
