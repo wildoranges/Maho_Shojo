@@ -289,7 +289,7 @@
                 if(used_reg.first.find(i) != used_reg.first.end()){
                     bool not_to_save = true;
                     for(auto val:reg2val[i]){
-                        not_to_save = not_to_save && !(*reg_map)[val]->covers(call);
+                        not_to_save = not_to_save && !reg_map[val]->covers(call);
                     }
                     if(!not_to_save){
                         to_save_reg.push_back(i);
@@ -319,7 +319,7 @@
         int arg_num = fun->get_num_of_args();
 
         if(!call->is_void()){
-            int ret_id = (*reg_map)[call]->reg_num;
+            int ret_id = reg_map[call]->reg_num;
             if(ret_id!=0){
                 if(ret_id > 0){
                     code += IR2asm::space;
