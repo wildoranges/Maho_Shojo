@@ -6,6 +6,10 @@
 #include <set>
 
 void Interval::add_range(int from, int to) {
+    if(range_list.empty()){
+        range_list.push_front(new Range(from, to));
+        return;
+    }
     auto top_range = *range_list.begin();
     if(from>=top_range->from && from<=top_range->to){
         top_range->to = to > top_range->to?to:top_range->to;
@@ -197,16 +201,20 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
             }
 
             for(auto opr:instr->get_operands()){
-                if(!dynamic_cast<Instruction*>(opr)){
+                if(!dynamic_cast<Instruction*>(opr) && !dynamic_cast<Argument*>(opr)){
                     continue;
                 }
                 if(val2Inter.find(opr)==val2Inter.end()){
                     auto new_interval = new Interval(opr);
                     val2Inter[opr] = new_interval;
+                    new_interval->add_range(block_from,instr->get_id());
+                    new_interval->add_use_pos(instr->get_id());
                     add_interval(new_interval);
                 }
-                val2Inter[opr]->add_range(block_from,instr->get_id());
-                val2Inter[opr]->add_use_pos(instr->get_id());
+                else{
+                    val2Inter[opr]->add_range(block_from,instr->get_id());
+                    val2Inter[opr]->add_use_pos(instr->get_id());
+                }
             }
         }
     }
