@@ -353,7 +353,7 @@
     std::string CodeGen::module_gen(Module* module){
         std::string code;
         code += global_def_gen(module);
-        // std::cout << code;
+        std::cout << code;
         RegAllocDriver driver = RegAllocDriver(module);
         driver.compute_reg_alloc();
         //TODO: function definition
