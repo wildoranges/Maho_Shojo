@@ -86,8 +86,10 @@ public:
     void incoming_add(){incoming_branch++;}
     void incoming_decrement(){incoming_branch--;}
     bool is_incoming_zero(){return incoming_branch==0;}
+    void incoming_reset(){incoming_branch = 0;}
     int get_loop_depth(){return loop_depth;}
     void loop_depth_add(){loop_depth++;}
+    void loop_depth_reset(){loop_depth = 0;}
     /*******CFG_analyse*******/
 private:
     explicit BasicBlock(Module *m, const std::string &name ,
