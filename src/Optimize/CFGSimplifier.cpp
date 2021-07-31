@@ -144,6 +144,7 @@ void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
         } else {
             bb->add_instruction(instr);
         }
+        instr->set_parent(bb);
     }
     for (auto delete_instr : wait_delete_instr) {
         bb->delete_instr(delete_instr);
