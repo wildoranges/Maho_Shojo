@@ -40,13 +40,13 @@ bool Interval::covers(Instruction* inst){
 }
 
 bool Interval::intersects(Interval *interval) {
-    auto taget_it = range_list.begin();
+    auto target_it = range_list.begin();
     auto with_it = interval->range_list.begin();
-    while(with_it!=interval->range_list.end()&&taget_it!=range_list.end()){
-        auto target_range = *taget_it;
+    while(with_it!=interval->range_list.end()&&target_it!=range_list.end()){
+        auto target_range = *target_it;
         auto with_range = *with_it;
         if(target_range->to<=with_range->from){
-            taget_it++;
+            target_it++;
             continue;
         }else if(with_range->to<=target_range->from){
             with_it++;
@@ -177,7 +177,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         auto lst_instr = instrs.rbegin();
         int block_to = (*(lst_instr))->get_id() + 2;
         for(auto opr:bb->get_live_out()){//TODO:NEW
-            if(!dynamic_cast<Instruction*>(opr)){
+            if(!dynamic_cast<Instruction*>(opr) && !dynamic_cast<Argument*>(opr)){
                 continue;
             }
             if(val2Inter.find(opr)==val2Inter.end()){
@@ -205,11 +205,14 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
                     val2Inter[instr] = new_interval;
                     add_interval(new_interval);
                 }
-                auto top_range = *val2Inter[instr]->range_list.begin();
+                auto cur_inter = val2Inter[instr];
+                auto top_range = *(cur_inter->range_list.begin());
+                //interval_list.erase(cur_inter);
                 //val2Inter[instr]->range_list.pop();
                 top_range->from = instr->get_id();
                 //val2Inter[instr]->range_list.push(top_range);
-                val2Inter[instr]->add_use_pos(instr->get_id());
+                cur_inter->add_use_pos(instr->get_id());
+                //interval_list.insert(cur_inter);
             }
 
             for(auto opr:instr->get_operands()){
@@ -219,15 +222,25 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
                 if(val2Inter.find(opr)==val2Inter.end()){
                     auto new_interval = new Interval(opr);
                     val2Inter[opr] = new_interval;
-                    new_interval->add_range(block_from,instr->get_id());
+                    new_interval->add_range(block_from,instr->get_id()+2);
                     new_interval->add_use_pos(instr->get_id());
                     add_interval(new_interval);
                 }
                 else{
-                    val2Inter[opr]->add_range(block_from,instr->get_id());
-                    val2Inter[opr]->add_use_pos(instr->get_id());
+                    auto cur_inter = val2Inter[opr];
+                    //interval_list.erase(cur_inter);
+                    cur_inter->add_range(block_from,instr->get_id()+2);
+                    cur_inter->add_use_pos(instr->get_id());
+                    //interval_list.insert(cur_inter);
                 }
             }
+        }
+    }
+    for(auto pair:val2Inter){
+        std::cerr << "op:" <<pair.first->get_name() << std::endl;
+        add_interval(pair.second);
+        for(auto range:pair.second->range_list){
+            std::cerr << "from: " << range->from << " to: " << range->to << std::endl;
         }
     }
 }
@@ -245,7 +258,7 @@ void RegAlloc::walk_intervals() {
 
         std::vector<Interval *> delete_list = {};
         for(auto it : active){
-            if((*(it->range_list.rbegin()))->to < position){//TODO:CHECK equal?
+            if((*(it->range_list.rbegin()))->to <= position){//TODO:CHECK equal?
                 add_reg_to_pool(it->reg_num);
                 //handled.insert(*it);
                 delete_list.push_back(it);

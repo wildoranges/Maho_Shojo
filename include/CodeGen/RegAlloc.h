@@ -52,7 +52,7 @@ public:
 
 struct cmp_interval{
     bool operator()(const Interval* a, const Interval* b) const {
-        return (*(a->range_list.begin()))->from > (*(b->range_list.begin()))->from;
+        return (*(a->range_list.begin()))->from < (*(b->range_list.begin()))->from;
     }
 };
 

@@ -108,35 +108,35 @@ int main(int argc, char *argv[])
             passmgr.addPass<CFGSimplifier>();
             passmgr.addPass<AvailableExpr>();
 
-//            passmgr.addPass<DeadCodeElimination>();
-//            passmgr.addPass<CFGSimplifier>();
-//
-//            passmgr.addPass<CFGSimplifier>();
-//            passmgr.addPass<ConstPropagation>();
-//            passmgr.addPass<DeadCodeElimination>();
-//            passmgr.addPass<CFGSimplifier>();
-//
-//            passmgr.addPass<DeadCodeElimination>();
-//            passmgr.addPass<CFGSimplifier>();
-//
-//            passmgr.addPass<LoopInvariant>();
-//            passmgr.addPass<CFGSimplifier>();
-//
-//            passmgr.addPass<AvailableExpr>();
-//            passmgr.addPass<DeadCodeElimination>();
-//            passmgr.addPass<CFGSimplifier>();
-//
-//            passmgr.addPass<DeadCodeElimination>();
-//            passmgr.addPass<CFGSimplifier>();
-//
-//            passmgr.addPass<DeadCodeElimination>();
-//
-//            //passmgr.addPass<LIR>();
-//            passmgr.addPass<DeadCodeElimination>();
-//            passmgr.addPass<AvailableExpr>();
-//            passmgr.addPass<DeadCodeElimination>();
-//
-//            passmgr.addPass<ActiveVar>();
+            passmgr.addPass<DeadCodeElimination>();
+            passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<CFGSimplifier>();
+            passmgr.addPass<ConstPropagation>();
+            passmgr.addPass<DeadCodeElimination>();
+            passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<DeadCodeElimination>();
+            passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<LoopInvariant>();
+            passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<AvailableExpr>();
+            passmgr.addPass<DeadCodeElimination>();
+            passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<DeadCodeElimination>();
+            passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<DeadCodeElimination>();
+
+            //passmgr.addPass<LIR>();
+            passmgr.addPass<DeadCodeElimination>();
+            passmgr.addPass<AvailableExpr>();
+            passmgr.addPass<DeadCodeElimination>();
+
+            passmgr.addPass<ActiveVar>();
             //passmgr.addPass<CFG_analyse>();
             /****passmgr.addPass<CFG_analyse>();****
              ***this is executed in LoopInvariant***/
