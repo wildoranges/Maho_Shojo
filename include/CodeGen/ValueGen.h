@@ -33,7 +33,6 @@ namespace IR2asm {
     public:
         int id;
 
-        Reg();
         Reg(int i) : id(i) {}
 
         int get_id() { return id; }
@@ -91,9 +90,9 @@ namespace IR2asm {
     };
 
 enum ShiftOp{
-    asr,
-    lsl,
-    lsr
+    ASR,
+    LSL,
+    LSR
 };
     class Operand2: public Value{
         private:
@@ -104,15 +103,15 @@ enum ShiftOp{
 
         public:
             explicit Operand2(Reg reg_1, ShiftOp shift_op, Reg reg_2):reg_1_(reg_1), shift_op_(shift_op), reg_2_(reg_2){}
-            explicit Operand2(Reg reg, ShiftOp shift_op, int val):reg_1_(reg), shift_op_(shift_op), value_(val){}
-            explicit Operand2(Reg reg):reg_1_(reg){}
-            explicit Operand2(int val):value_(val){}
+            explicit Operand2(Reg reg, ShiftOp shift_op, int val):reg_1_(reg), shift_op_(shift_op), value_(val), reg_2_(IR2asm::Reg(-1)){}
+            explicit Operand2(Reg reg):reg_1_(reg), reg_2_(IR2asm::Reg(-1)){}
+            explicit Operand2(int val):value_(val), reg_1_(IR2asm::Reg(-1)), reg_2_(IR2asm::Reg(-1)){}
             ~Operand2(){}
             bool is_const() final {return false;}
             bool is_reg() final {return false;}
-            std::string get_operand2(ShiftOp shift_op) {if (shift_op == ShiftOp::asr) return "asr";
-                                                        else if (shift_op == ShiftOp::lsl) return "lsl";
-                                                        else if (shift_op == ShiftOp::lsr) return "lsr";
+            std::string get_operand2(ShiftOp shift_op) {if (shift_op == ShiftOp::ASR) return "asr";
+                                                        else if (shift_op == ShiftOp::LSL) return "lsl";
+                                                        else if (shift_op == ShiftOp::LSR) return "lsr";
                                                         else return "ERROR";}
             std::string get_code(){if (!shift_op_) {if (!value_) return reg_1_.get_code(); else return "#" + std::to_string(value_);}
                                     else {if (!value_) return reg_1_.get_code() + " " + get_operand2(shift_op_) + " " + reg_2_.get_code();

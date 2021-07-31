@@ -54,7 +54,7 @@ public:
     std::string print_global_table();
     std::string bb_gen(BasicBlock* bb);
     std::string instr_gen(Instruction * inst);
-    IR2asm::Reg *get_asm_reg(Value *val){return new IR2asm::Reg((*reg_map).find(val)->second->reg_num);}
+    IR2asm::Reg *get_asm_reg(Value *val){return new IR2asm::Reg((reg_map).find(val)->second->reg_num);}
     IR2asm::constant *get_asm_const(Constant *val){if (dynamic_cast<ConstantZero*>(val)) return new IR2asm::constant(0);
                                                     else {
                                                         auto const_val = dynamic_cast<ConstantInt*>(val);

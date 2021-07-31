@@ -39,13 +39,12 @@ namespace IR2asm{
     std::string getelementptr(Reg* rd, Location * ptr);
     std::string cond(CmpOp & cop);
     std::string ret();
-    std::string ret(Reg* retval);
+    std::string ret(Value* retval);
     std::string b(Location* label);
-    std::string br(Location* label){return b(label);}
+    std::string br(Location* label);
     std::string cbz(Reg* rs, Location* label);
     std::string cbnz(Reg* rs, Location* label);
-    // TODO: can be simplified
-    std::string br(Reg* cond, Location* success, Location* fail){return cbnz(cond, success) + cbz(cond, fail);}
+    std::string br(Reg* cond, Location* success, Location* fail);
     std::string cmp(Reg* rs, Operand2* opr2);
     std::string add(Reg* rd, Reg* rs, Operand2* opr2);
     std::string sub(Reg* rd, Reg* rs, Operand2* opr2);
@@ -68,6 +67,6 @@ namespace IR2asm{
     std::string muladd(Reg* rd, Reg* rs, Reg* rt, Reg* rn);
     std::string mulsub(Reg* rd, Reg* rs, Reg* rt, Reg* rn);
     std::string smul(Reg* rd1, Reg* rd2, Reg* rs, Reg* rt);
-};
+}
 
 #endif

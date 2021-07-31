@@ -135,6 +135,15 @@ std::string ret(){
     return asmstr;
 }
 
+std::string br(Location* label) {
+    return b(label);
+}
+
+// TODO: can be simplified
+std::string br(Reg* cond, Location* success, Location* fail) {
+    return cbnz(cond, success) + cbz(cond, fail);
+}
+
 std::string b(Location *addr) {
     std::string asmstr;
     asmstr += space;
