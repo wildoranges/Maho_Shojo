@@ -21,7 +21,7 @@
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
-            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] [ -O0 ]"
+            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] [ -O0 ] [ -S ]"
             << "<input-file>"
             << std::endl;
 }
