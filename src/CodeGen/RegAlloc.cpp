@@ -331,8 +331,9 @@ bool RegAlloc::try_alloc_free_reg() {
             current->reg_num = spill_val->reg_num;
             spill_val->reg_num = -1;
             unused_reg_id.erase(spill_val->reg_num);
-            active.insert(current);
             active.erase(spill_val);//TODO:CHECK ERASE?
+            active.insert(current);
+            std::cerr << "spill "<< spill_val->val->get_name() <<" to stack" << std::endl;
             return true;
         }
     }
