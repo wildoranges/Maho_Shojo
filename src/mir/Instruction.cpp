@@ -727,6 +727,13 @@ StoreConstOffsetInst::StoreConstOffsetInst(Value *val, Value *ptr, ConstantInt *
     set_operand(2, offset);
 }
 
+StoreConstOffsetInst::StoreConstOffsetInst(Value *val, Value *ptr, BasicBlock *bb)
+    : Instruction(Type::get_void_type(bb->get_module()), Instruction::store_const_offset, 3, bb)
+{
+    set_operand(0, val);
+    set_operand(1, ptr);
+}
+
 StoreConstOffsetInst *StoreConstOffsetInst::create_store_const_offset(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb)
 {
     return new StoreConstOffsetInst(val, ptr, offset, bb);
@@ -790,6 +797,14 @@ LoadConstOffsetInst::LoadConstOffsetInst(Type *ty, Value *ptr, ConstantInt *offs
     set_operand(1, offset);
 }
 
+LoadConstOffsetInst::LoadConstOffsetInst(Type *ty, Value *ptr, BasicBlock *bb)
+    : Instruction(ty, Instruction::load_const_offset, 2, bb)
+{
+    assert(ptr->get_type()->is_pointer_type());
+    assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
+    set_operand(0, ptr);
+}
+
 LoadConstOffsetInst *LoadConstOffsetInst::create_load_const_offset(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb)
 {
     return new LoadConstOffsetInst(ty, ptr, offset, bb);
@@ -824,9 +839,15 @@ MovConstInst::MovConstInst(Type *ty, ConstantInt *const_val, BasicBlock *bb)
     set_operand(0, const_val);
 }
 
-MovConstInst *MovConstInst::create_mov_const(Type *ty, ConstantInt *const_val, BasicBlock *bb)
+MovConstInst::MovConstInst(Type *ty, BasicBlock *bb)
+    : Instruction(ty, Instruction::mov_const, 1, bb)
 {
-    return new MovConstInst(ty, const_val, bb);
+    //nothing to do
+}
+
+MovConstInst *MovConstInst::create_mov_const(ConstantInt *const_val, BasicBlock *bb)
+{
+    return new MovConstInst(Type::get_int32_type(bb->get_module()), const_val, bb);
 }
 
 std::string MovConstInst::print()

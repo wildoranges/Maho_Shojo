@@ -283,8 +283,6 @@ public:
     }
 
 private:
-    Constant *v3_;
-
     void assertValid();
 };
 
@@ -349,8 +347,6 @@ public:
 
 private:
     CmpOp cmp_op_;
-    BasicBlock* true_BB_;
-    BasicBlock* false_BB_;
 
     void assertValid();
 };
@@ -450,7 +446,6 @@ public:
 
 private:
     Type *element_ty_;
-    std::vector<Value *> idxs_;
 };
 
 class StoreInst : public Instruction
@@ -476,6 +471,7 @@ class StoreConstOffsetInst : public Instruction
 {
 private:
     StoreConstOffsetInst(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+    StoreConstOffsetInst(Value *val, Value *ptr, BasicBlock *bb);
 
 public:
     static StoreConstOffsetInst *create_store_const_offset(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb);
@@ -486,7 +482,9 @@ public:
 
     virtual std::string print() override;
 
-    // TODO: copy function
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new StoreConstOffsetInst(get_operand(0), get_operand(1), BB);
+    }
 
 };
 
@@ -513,6 +511,7 @@ class LoadConstOffsetInst : public Instruction
 {
 private:
     LoadConstOffsetInst(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+    LoadConstOffsetInst(Type *ty, Value *ptr, BasicBlock *bb);
 
 public:
     static LoadConstOffsetInst *create_load_const_offset(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb);
@@ -523,7 +522,9 @@ public:
 
     virtual std::string print() override;
 
-    // TODO: copy function
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new LoadConstOffsetInst(get_type(), get_operand(0), BB);
+    }
 
 };
 
@@ -531,14 +532,17 @@ class MovConstInst : public Instruction
 {
 private:
     MovConstInst(Type *ty, ConstantInt *const_val, BasicBlock *bb);
+    MovConstInst(Type *ty, BasicBlock *bb);
 
 public:
-    static MovConstInst *create_mov_const(Type *ty, ConstantInt *const_val, BasicBlock *bb);
+    static MovConstInst *create_mov_const(ConstantInt *const_val, BasicBlock *bb);
     ConstantInt *get_const() { return dynamic_cast<ConstantInt*>(this->get_operand(0)); }
 
     virtual std::string print() override;
 
-    // TODO: copy function
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        return new MovConstInst(get_type(), BB);
+    }
 
 };
 
