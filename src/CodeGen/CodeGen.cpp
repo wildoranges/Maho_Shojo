@@ -1,6 +1,7 @@
 #include<CodeGen.h>
 #include<RegAlloc.h>
 #include<queue>
+#include<algorithm>
 
 // namespace CodeGen{
 
@@ -280,7 +281,7 @@
 
     std::string CodeGen::caller_reg_store(Function* fun,CallInst* call){
         //TODO
-        std::string code = "";
+        std::string code;
         to_save_reg.clear();
         int arg_num = fun->get_num_of_args();
         if(arg_num > 4)arg_num = 4;
@@ -612,9 +613,89 @@
                 code += instr_gen(call_inst);
                 code += caller_reg_restore(bb->get_parent(),call_inst);
             }else if(dynamic_cast<ReturnInst*>(inst)){
-                
-            }else{
                 code += instr_gen(inst);
+            }else{
+                std::vector<int> store_list = {};
+                std::set<Value*> to_store_set = {};
+                std::set<Value*> to_ld_set = {};
+                std::set<Interval*> interval_set = {};
+                bool use_target = false;
+                if(!inst->is_void()){
+                    auto reg_inter = reg_map[inst];
+                    if(reg_inter->reg_num<0){
+                        reg_inter->reg_num = store_list.size();
+                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
+                        if(it==store_list.end()){
+                            store_list.push_back(reg_inter->reg_num);
+                        }
+                        interval_set.insert(reg_inter);
+                        to_store_set.insert(inst);
+                        use_target = true;
+                    }
+                }
+                for(auto opr:inst->get_operands()){
+                    if(dynamic_cast<Constant*>(opr)){
+                        continue;
+                    }
+                    auto reg_inter = reg_map[opr];
+                    if(reg_inter->reg_num<0){
+                        if(use_target){
+                            reg_inter->reg_num = store_list.size() - 1;
+                        }else{
+                            reg_inter->reg_num = store_list.size();
+                        }
+                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
+                        if(it==store_list.end()){
+                            store_list.push_back(reg_inter->reg_num);
+                        }
+                        interval_set.insert(reg_inter);
+                        to_ld_set.insert(opr);
+                    }
+                }
+                if(!store_list.empty()){
+                    code += IR2asm::space;
+                    code += "push {";
+                    int lst_size = store_list.size() - 1;
+                    for(int i = 0;i < lst_size;i++){
+                        code += IR2asm::Reg(store_list[i]).get_code();
+                        code += ", ";
+                    }
+                    code += IR2asm::Reg(store_list[lst_size]).get_code();
+                    code += "}";
+                    code += IR2asm::endl;
+                }
+                for(auto opr:to_ld_set){
+                    code += IR2asm::space;
+                    code += "ldr ";
+                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+ stack_map[opr]->get_code();
+                    code += IR2asm::endl;
+                }
+
+                code += instr_gen(inst);
+
+                for(auto opr:to_store_set){
+                    code += IR2asm::space;
+                    code += "str ";
+                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+ stack_map[opr]->get_code();
+                    code += IR2asm::endl;
+                }
+
+                if(!store_list.empty()){
+                    code += IR2asm::space;
+                    code += "pop {";
+                    int lst_size = store_list.size() - 1;
+                    for(int i = 0;i < lst_size;i++){
+                        code += IR2asm::Reg(store_list[i]).get_code();
+                        code += ", ";
+                    }
+                    code += IR2asm::Reg(store_list[lst_size]).get_code();
+                    code += "}";
+                    code += IR2asm::endl;
+                }
+
+                for(auto inter:interval_set){
+                    inter->reg_num = -1;
+                }
             }
         }
         //TODO: instruction gen

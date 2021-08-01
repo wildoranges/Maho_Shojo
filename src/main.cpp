@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
 
             passmgr.addPass<ActiveVar>();
+            passmgr.addPass<CFG_analyse>();
 
             m->set_print_name();
             passmgr.execute();
