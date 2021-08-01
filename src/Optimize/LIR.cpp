@@ -62,7 +62,7 @@ void LIR::mov_const(BasicBlock *bb) {
     auto &instructions = bb->get_instructions();
     for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
         auto instr = *iter;
-        if (instr->is_div() || instr->is_rem() || instr->is_asr() || instr->is_lsl() || instr->is_lsr()) {
+        if (instr->is_div() || instr->is_rem() || instr->is_asr() || instr->is_lsl() || instr->is_lsr() || instr->is_store()) {
             auto op1 = instr->get_operand(0);
             auto const_op1 = dynamic_cast<ConstantInt*>(op1);
             if (const_op1) {
