@@ -124,24 +124,24 @@ struct cmp_block_depth{
 void RegAlloc::compute_block_order() {
 //TODO:USE LOOP INFO
 //TODO:CHECK CLEAR
-    // std::priority_queue<BasicBlock*,std::vector<BasicBlock*>,cmp_block_depth>work_list;
-    // block_order.clear();
+    std::priority_queue<BasicBlock*,std::vector<BasicBlock*>,cmp_block_depth>work_list;
+    block_order.clear();
     auto entry = func->get_entry_block();
-    // work_list.push(entry);
-    // while(!work_list.empty()){
-    //     auto bb = work_list.top();
-    //     work_list.pop();
-    //     block_order.push_back(bb);
+    work_list.push(entry);
+    while(!work_list.empty()){
+        auto bb = work_list.top();
+        work_list.pop();
+        block_order.push_back(bb);
 
-    //     for(auto sux : bb->get_succ_basic_blocks()){
-    //         sux->incoming_decrement();
-    //         if(sux->is_incoming_zero()){
-    //             work_list.push(sux);
-    //         }
-    //     }
-    // }
-   std::set<BasicBlock*> visited = {};
-   get_dfs_order(entry,visited);
+        for(auto sux : bb->get_succ_basic_blocks()){
+            sux->incoming_decrement();
+            if(sux->is_incoming_zero()){
+                work_list.push(sux);
+            }
+        }
+    }
+//    std::set<BasicBlock*> visited = {};
+//    get_dfs_order(entry,visited);
 }
 
 void RegAlloc::get_dfs_order(BasicBlock *bb, std::set<BasicBlock *> &visited) {

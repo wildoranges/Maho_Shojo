@@ -123,8 +123,8 @@ std::string ret(Value* retval){
     asmstr += "mov r0, ";
     asmstr += retval->get_code();
     asmstr += endl;
-    asmstr += space;
-    asmstr += "br lr" + endl;
+    // asmstr += space;
+    // asmstr += "br lr" + endl;
     return asmstr;
 }
 

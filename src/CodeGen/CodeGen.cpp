@@ -590,10 +590,11 @@
 
         //TODO: basicblock gen
         for(auto bb: linear_bb){
-            code += bb_gen(bb);
+            // code += bb_gen(bb);
         }
         if(stack_size)code += callee_stack_operation_out(fun, stack_size);
         code += callee_reg_restore(fun);
+        code += IR2asm::space + "br lr" + IR2asm::endl;
         code += print_global_table();
         std::cout << code;
         return code;
