@@ -69,7 +69,9 @@ void LIR::mov_const(BasicBlock *bb) {
                 auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
                 instructions.pop_back();
                 bb->add_instruction(iter, mov_const_instr);
+                op1->remove_use(op1);
                 op1->replace_all_use_with(mov_const_instr);
+                mov_const_instr->set_operand(0, op1);
             }
         }
     }
