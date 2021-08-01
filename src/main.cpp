@@ -141,6 +141,8 @@ int main(int argc, char *argv[])
 
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
+            /****passmgr.addPass<CFG_analyse>();****
+             ***this is executed in LoopInvariant***/
 
             m->set_print_name();
             passmgr.execute();
