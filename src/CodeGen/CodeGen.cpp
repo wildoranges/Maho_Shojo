@@ -633,10 +633,18 @@
             } else {
                 auto ret_val = inst->get_operand(0);
                 auto const_ret_val = dynamic_cast<ConstantInt*>(ret_val);
-                if (const_ret_val) {
-                    code += IR2asm::ret(get_asm_const(const_ret_val));
+                if (get_asm_reg(ret_val)->get_id() == 0) {
+                    code += IR2asm::ret();
                 } else {
-                    code += IR2asm::ret(get_asm_reg(ret_val));
+                    if (const_ret_val) {
+                        code += IR2asm::ret(get_asm_const(const_ret_val));
+                    } else {
+                        if (get_asm_reg(ret_val)->get_id() < 0) {
+                            code += IR2asm::ret(stack_map[ret_val]);
+                        } else {
+                            code += IR2asm::ret(get_asm_reg(ret_val));
+                        }
+                    }
                 }
             }
             break;
@@ -806,13 +814,23 @@
             break;
         case Instruction::getelementptr: {
                 IR2asm::Location *addr;
-                auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
-                if (global_addr) {
-                    addr = global_variable_table[global_addr];
+                auto arg_addr = dynamic_cast<Argument*>(inst->get_operand(0));
+                if (arg_addr) {
+                    auto arg_num = arg_addr->get_arg_no();
+                    if (arg_num < 4) {
+                        code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(*get_asm_reg(inst->get_operand(0))));
+                    } else {
+                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num]);
+                    }
                 } else {
-                    addr = stack_map[inst->get_operand(0)];
+                    auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
+                    if (global_addr) {
+                        addr = global_variable_table[global_addr];
+                    } else {
+                        addr = stack_map[inst->get_operand(0)];
+                    }
+                    code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                 }
-                code += IR2asm::getelementptr(get_asm_reg(inst), addr);
             }
             break;
         case Instruction::land: {

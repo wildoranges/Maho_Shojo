@@ -10,6 +10,8 @@ void LIR::execute() {
         if (func->get_num_basic_blocks()>0){
             for (auto bb : func->get_basic_blocks()){
                 // split instr
+                load_const_offset(bb);
+                store_const_offset(bb);
                 split_srem(bb);
                 split_gep(bb);
                 //div_const2mul(bb);
@@ -22,6 +24,14 @@ void LIR::execute() {
             }
         }
     }
+}
+
+void LIR::load_const_offset(BasicBlock *bb) {
+    // TODO
+}
+
+void LIR::store_const_offset(BasicBlock *bb) {
+    // TODO
 }
 
 void LIR::merge_cmp_br(BasicBlock* bb) {

@@ -83,7 +83,7 @@ std::string movle(Reg* rd, Operand2 *opr2) {
 std::string getelementptr(Reg* rd, Location * ptr){
     std::string asmstr;
     asmstr += space;
-    asmstr += "mov ";
+    asmstr += "ldr ";
     asmstr += rd->get_code();
     asmstr += ", ";
     auto regbase = dynamic_cast<Regbase *>(ptr);
@@ -114,6 +114,17 @@ std::string call(label* fun){
     asmstr += "bl ";
     asmstr += fun->get_code();
     asmstr += endl;
+    return asmstr;
+}
+
+std::string ret(Location *addr){
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "ldr r0, ";
+    asmstr += addr->get_code();
+    asmstr += endl;
+    asmstr += space;
+    asmstr += "br lr" + endl;
     return asmstr;
 }
 
