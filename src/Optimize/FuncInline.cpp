@@ -98,32 +98,9 @@ void FuncInline::func_inline(){
             old2new_BB[old_BB] = new_BB;
             new_BBs.push_back(new_BB);
             for (auto old_inst : old_BB->get_instructions()){
+                new_inst = old_inst->copy_inst(new_BB);
                 if (old_inst->is_phi()){
-                    new_inst = PhiInst::create_phi(old_inst->get_type(),new_BB);
                     new_BB->add_instruction(new_inst);
-                    for (auto op : old_inst->get_operands()){
-                        new_inst->add_operand(op);
-                    }
-                }
-                else{
-                    new_inst = old_inst->copy_inst(new_BB);
-                    //not Value* operand
-                    if (new_inst->is_cmpbr()){
-                        new_inst->set_operand(2,old_inst->get_operand(2));
-                        new_inst->set_operand(3,old_inst->get_operand(3));
-                    }
-                    if (new_inst->is_br()){
-                        if (new_inst->get_num_operand() == 1){
-                            new_inst->set_operand(0,old_inst->get_operand(0));
-                        }
-                        else{
-                            new_inst->set_operand(1,old_inst->get_operand(1));
-                            new_inst->set_operand(2,old_inst->get_operand(2));
-                        }
-                    }
-                    if (new_inst->is_call()){
-                        new_inst->set_operand(0,old_inst->get_operand(0));
-                    }
                 }
                 old2new_inst[old_inst] = new_inst;
             }

@@ -11,6 +11,7 @@ public:
     const std::string get_name() const override {return name;}
     void compute_postorder();
     bool one_pass();
+    bool delete_redundant_phi();
     void combine_bb(BasicBlock*, BasicBlock*);
     bool bb_can_delete(BasicBlock*);
     void replace_phi(BasicBlock*, std::list<BasicBlock*>, BasicBlock*);

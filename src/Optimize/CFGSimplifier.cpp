@@ -13,10 +13,69 @@ void CFGSimplifier::execute() {
         while (changed) {
             postorder_bb_list.clear();
             compute_postorder();
-            changed = one_pass();
+            changed = one_pass() && delete_redundant_phi();
         }
     }
     return ;
+}
+
+bool CFGSimplifier::delete_redundant_phi() {
+    bool changed = false;
+    for (auto bb : func_->get_basic_blocks()) {
+        std::vector<Instruction*> wait_delete_instr;
+        for (auto instr : bb->get_instructions()) {
+            if (instr->is_phi()) {
+                if (instr->get_num_operand() == 2) {
+                    instr->replace_all_use_with(instr->get_operand(0));
+                    wait_delete_instr.push_back(instr);
+                    changed = true;
+                } else {
+                    auto val = instr->get_operand(0);
+                    auto const_val = dynamic_cast<ConstantInt*>(val);
+                    bool can_replace = true;
+                    if (const_val) {
+                        auto const_value = const_val->get_value();
+                        for (int i = 2; i < instr->get_num_operand(); i+=2) {
+                            auto cur_val = instr->get_operand(i);
+                            auto cur_const_val = dynamic_cast<ConstantInt*>(cur_val);
+                            if (cur_const_val) {
+                                if (cur_const_val->get_value() != const_value) {
+                                    can_replace = false;
+                                    break;
+                                }
+                            } else {
+                                can_replace = false;
+                                break;
+                            }
+                        }
+                    } else {
+                        for (int i = 2; i < instr->get_num_operand(); i+=2) {
+                            auto cur_val = instr->get_operand(i);
+                            if (dynamic_cast<ConstantInt*>(cur_val)) {
+                                can_replace = false;
+                                break;
+                            } else {
+                                if (cur_val != val) {
+                                    can_replace = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (can_replace == true) {
+                        instr->replace_all_use_with(instr->get_operand(0));
+                        wait_delete_instr.push_back(instr);
+                        changed = true;
+                    }
+                }
+            }
+        }
+        for (auto delete_instr : wait_delete_instr) {
+            bb->delete_instr(delete_instr);
+        }
+        wait_delete_instr.clear();
+    }
+    return changed;
 }
 
 void CFGSimplifier::compute_postorder() {
