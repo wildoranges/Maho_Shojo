@@ -92,14 +92,15 @@ namespace IR2asm {
 enum ShiftOp{
     ASR,
     LSL,
-    LSR
+    LSR,
+    NOSHIFT
 };
     class Operand2: public Value{
         private:
             Reg reg_1_;
             Reg reg_2_;
-            ShiftOp shift_op_;
-            int value_;
+            ShiftOp shift_op_ = NOSHIFT;
+            int value_ = 0;
 
         public:
             explicit Operand2(Reg reg_1, ShiftOp shift_op, Reg reg_2):reg_1_(reg_1), shift_op_(shift_op), reg_2_(reg_2){}
@@ -112,8 +113,8 @@ enum ShiftOp{
             std::string get_operand2(ShiftOp shift_op) {if (shift_op == ShiftOp::ASR) return "asr";
                                                         else if (shift_op == ShiftOp::LSL) return "lsl";
                                                         else if (shift_op == ShiftOp::LSR) return "lsr";
-                                                        else return "ERROR";}
-            std::string get_code(){if (!shift_op_) {if (!value_) return reg_1_.get_code(); else return "#" + std::to_string(value_);}
+                                                        else return "";}
+            std::string get_code(){if (shift_op_ == NOSHIFT) {if (!value_) return reg_1_.get_code(); else return "#" + std::to_string(value_);}
                                     else {if (!value_) return reg_1_.get_code() + " " + get_operand2(shift_op_) + " " + reg_2_.get_code();
                                             else return reg_1_.get_code() + " " + get_operand2(shift_op_) + " " + "#" + std::to_string(value_);}}
     };

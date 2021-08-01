@@ -28,7 +28,7 @@ namespace IR2asm{
 std::string mov(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "mov";
+    asmstr += "mov ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -39,7 +39,7 @@ std::string mov(Reg* rd, Operand2 *opr2) {
 std::string movgt(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movgt";
+    asmstr += "movgt ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -50,7 +50,7 @@ std::string movgt(Reg* rd, Operand2 *opr2) {
 std::string movge(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movge";
+    asmstr += "movge ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -61,7 +61,7 @@ std::string movge(Reg* rd, Operand2 *opr2) {
 std::string movlt(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movlt";
+    asmstr += "movlt ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -72,7 +72,7 @@ std::string movlt(Reg* rd, Operand2 *opr2) {
 std::string movle(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movle";
+    asmstr += "movle ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -361,6 +361,7 @@ std::string load(Reg* rd, Location* addr){
     asmstr += ", ";
     asmstr += addr->get_code();
     asmstr += endl;
+    return asmstr;
 }
 
 std::string store(Reg* rd, Location* addr){
@@ -371,6 +372,7 @@ std::string store(Reg* rd, Location* addr){
     asmstr += ", ";
     asmstr += addr->get_code();
     asmstr += endl;
+    return asmstr;
 }
 
 std::string muladd(Reg* rd, Reg* rs, Reg* rt, Reg* rn){

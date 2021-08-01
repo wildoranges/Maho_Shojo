@@ -644,7 +644,9 @@
                     }
                 }
                 for(auto opr:inst->get_operands()){
-                    if(dynamic_cast<Constant*>(opr)){
+                    if(dynamic_cast<Constant*>(opr) || 
+                       dynamic_cast<BasicBlock *>(opr) || 
+                       dynamic_cast<GlobalVariable *>(opr)){
                         continue;
                     }
                     auto reg_inter = reg_map[opr];
@@ -820,7 +822,13 @@
                 auto op1 = inst->get_operand(0);
                 auto op2 = inst->get_operand(1);
                 auto operand1 = op1;
-                auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                IR2asm::Operand2* operand2;
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                if (const_op2) {
+                    operand2 = new IR2asm::Operand2(get_asm_const(const_op2)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                }
                 code += IR2asm::sdiv(get_asm_reg(inst), get_asm_reg(operand1), operand2);
             }
                 break;
@@ -834,7 +842,7 @@
                 if (global_addr) {
                     addr = global_variable_table[global_addr];
                 } else {
-                    addr = stack_map[inst->get_operand(0)];
+                    addr = new IR2asm::Regbase(*get_asm_reg(inst->get_operand(0)), 0);
                 }
                 code += IR2asm::load(get_asm_reg(inst), addr);
             }
@@ -845,7 +853,7 @@
                 if (global_addr) {
                     addr = global_variable_table[global_addr];
                 } else {
-                    addr = stack_map[inst->get_operand(0)];
+                    addr = new IR2asm::Regbase(*get_asm_reg(inst->get_operand(1)), 0);
                 }
                 code += IR2asm::store(get_asm_reg(inst->get_operand(0)), addr);
             }
