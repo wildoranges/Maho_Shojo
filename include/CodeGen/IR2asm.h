@@ -40,6 +40,7 @@ namespace IR2asm{
     std::string cond(CmpOp & cop);
     std::string ret();
     std::string ret(Value* retval);
+    std::string ret(Location *addr);
     std::string b(Location* label);
     std::string br(Location* label);
     std::string cbz(Reg* rs, Location* label);

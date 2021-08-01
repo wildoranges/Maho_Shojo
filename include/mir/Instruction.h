@@ -54,6 +54,9 @@ public:
         lsrsub,
         smul_lo,
         smul_hi,
+        load_const_offset,
+        store_const_offset,
+        mov_const,
 
     };
     // create instruction, auto insert to bb
@@ -104,6 +107,9 @@ public:
             case lsrsub: return "lsrsub"; break;
             case smul_lo: return "smul_lo"; break;
             case smul_hi: return "smul_hi"; break;
+            case load_const_offset: return "load_const_offset"; break;
+            case store_const_offset: return "store_const_offset"; break;
+            case mov_const: return "mov_const"; break;
         
         default: return ""; break;
         }
@@ -111,7 +117,7 @@ public:
 
 
 
-    bool is_void() { return ((op_id_ == cmpbr) || (op_id_ == ret) || (op_id_ == br) || (op_id_ == store) || (op_id_ == call && this->get_type()->is_void_type())); }
+    bool is_void() { return ((op_id_ == cmpbr) || (op_id_ == ret) || (op_id_ == br) || (op_id_ == store_const_offset) || (op_id_ == store) || (op_id_ == call && this->get_type()->is_void_type())); }
 
     bool is_phi() { return op_id_ == phi; }
     bool is_store() { return op_id_ == store; }
@@ -119,6 +125,10 @@ public:
     bool is_ret() { return op_id_ == ret; }
     bool is_load() { return op_id_ == load; }
     bool is_br() { return op_id_ == br; }
+
+    bool is_load_const_offset() { return op_id_ == load_const_offset; }
+    bool is_store_const_offset() { return op_id_ == store_const_offset; }
+    bool is_mov_const() { return op_id_ == mov_const; }
 
     bool is_add() { return op_id_ == add; }
     bool is_sub() { return op_id_ == sub; }
@@ -174,6 +184,7 @@ public:
     void set_id(int id){id_ = id;}
     int get_id() const{return id_;}
 
+    //get a new instruction with old operands(need changing)
     virtual Instruction *copy_inst(BasicBlock *BB)  = 0;
 
 private:
@@ -273,8 +284,6 @@ public:
     }
 
 private:
-    Constant *v3_;
-
     void assertValid();
 };
 
@@ -334,13 +343,14 @@ public:
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        return new CmpBrInst(cmp_op_,get_operand(0),get_operand(1),BB);
+        auto new_inst = new CmpBrInst(cmp_op_,get_operand(0),get_operand(1),BB);
+        new_inst->set_operand(2, get_operand(2));
+        new_inst->set_operand(3, get_operand(3));
+        return new_inst;
     }
 
 private:
     CmpOp cmp_op_;
-    BasicBlock* true_BB_;
-    BasicBlock* false_BB_;
 
     void assertValid();
 };
@@ -362,7 +372,9 @@ public:
         for (auto i = 1; i < get_num_operand(); i++){
             args.push_back(get_operand(i));
         }
-        return new CallInst(get_function_type()->get_return_type(),args,BB);
+        auto new_inst = new CallInst(get_function_type()->get_return_type(),args,BB);
+        new_inst->set_operand(0, get_operand(0));
+        return new_inst;
     }
 };
 
@@ -386,10 +398,15 @@ public:
 
     Instruction *copy_inst(BasicBlock *BB) override final{
         if (get_num_operand() == 1){
-            return new BranchInst(BB);
+            auto new_inst = new BranchInst(BB);
+            new_inst->set_operand(0, get_operand(0));
+            return new_inst;
         }
         else{
-            return new BranchInst(get_operand(0),BB);
+            auto new_inst = new BranchInst(get_operand(0),BB);
+            new_inst->set_operand(1, get_operand(1));
+            new_inst->set_operand(2, get_operand(2));
+            return new_inst;
         }
     }
 };
@@ -440,7 +457,6 @@ public:
 
 private:
     Type *element_ty_;
-    std::vector<Value *> idxs_;
 };
 
 class StoreInst : public Instruction
@@ -462,6 +478,29 @@ public:
 
 };
 
+class StoreConstOffsetInst : public Instruction
+{
+private:
+    StoreConstOffsetInst(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+    StoreConstOffsetInst(Value *val, Value *ptr, BasicBlock *bb);
+
+public:
+    static StoreConstOffsetInst *create_store_const_offset(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+
+    Value *get_rval() { return this->get_operand(0); }
+    Value *get_lval() { return this->get_operand(1); }
+    ConstantInt *get_offset() { return dynamic_cast<ConstantInt*>(this->get_operand(2)); }
+
+    virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        auto new_inst = new StoreConstOffsetInst(get_operand(0), get_operand(1), BB);
+        new_inst->set_operand(2, get_operand(2));
+        return new_inst;
+    }
+
+};
+
 class LoadInst : public Instruction
 {
 private:
@@ -477,6 +516,49 @@ public:
 
     Instruction *copy_inst(BasicBlock *BB) override final{
         return new LoadInst(get_type(),get_operand(0),BB);
+    }
+
+};
+
+class LoadConstOffsetInst : public Instruction
+{
+private:
+    LoadConstOffsetInst(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+    LoadConstOffsetInst(Type *ty, Value *ptr, BasicBlock *bb);
+
+public:
+    static LoadConstOffsetInst *create_load_const_offset(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+    Value *get_lval() { return this->get_operand(0); }
+    ConstantInt *get_offset() { return dynamic_cast<ConstantInt*>(this->get_operand(1)); }
+
+    Type *get_load_type() const;
+
+    virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        auto new_inst = new LoadConstOffsetInst(get_type(), get_operand(0), BB);
+        new_inst->set_operand(1, get_operand(1));
+        return new_inst;
+    }
+
+};
+
+class MovConstInst : public Instruction
+{
+private:
+    MovConstInst(Type *ty, ConstantInt *const_val, BasicBlock *bb);
+    MovConstInst(Type *ty, BasicBlock *bb);
+
+public:
+    static MovConstInst *create_mov_const(ConstantInt *const_val, BasicBlock *bb);
+    ConstantInt *get_const() { return dynamic_cast<ConstantInt*>(this->get_operand(0)); }
+
+    virtual std::string print() override;
+
+    Instruction *copy_inst(BasicBlock *BB) override final{
+        auto new_inst = new MovConstInst(get_type(), BB);
+        new_inst->set_operand(0, get_operand(0));
+        return new_inst;
     }
 
 };
@@ -525,9 +607,6 @@ class PhiInst : public Instruction
 {
 private:
     PhiInst(OpID op, std::vector<Value *> vals, std::vector<BasicBlock *> val_bbs, Type *ty, BasicBlock *bb);
-    PhiInst(Type *ty, OpID op, unsigned num_ops, BasicBlock *bb)
-        : Instruction(ty, op, num_ops, bb) {}
-    Value *l_val_;
 
 public:
     static PhiInst *create_phi(Type *ty, BasicBlock *bb);
@@ -541,8 +620,15 @@ public:
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        return nullptr;
+        auto new_inst = create_phi(get_type(), BB);
+        for (auto op : get_operands()){
+            new_inst->add_operand(op);
+        }
+        return new_inst;
     }
+
+private:
+    Value *l_val_;
 
 };
 
