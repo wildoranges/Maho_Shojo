@@ -633,10 +633,18 @@
             } else {
                 auto ret_val = inst->get_operand(0);
                 auto const_ret_val = dynamic_cast<ConstantInt*>(ret_val);
-                if (const_ret_val) {
-                    code += IR2asm::ret(get_asm_const(const_ret_val));
+                if (get_asm_reg(ret_val)->get_id() == 0) {
+                    code += IR2asm::ret();
                 } else {
-                    code += IR2asm::ret(get_asm_reg(ret_val));
+                    if (const_ret_val) {
+                        code += IR2asm::ret(get_asm_const(const_ret_val));
+                    } else {
+                        if (get_asm_reg(ret_val)->get_id() < 0) {
+                            code += IR2asm::ret(stack_map[ret_val]);
+                        } else {
+                            code += IR2asm::ret(get_asm_reg(ret_val));
+                        }
+                    }
                 }
             }
             break;
