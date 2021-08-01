@@ -105,6 +105,7 @@ void RegAllocDriver::compute_reg_alloc() {
             reg_alloc[func] = allocator->get_reg_alloc();
         }
     }
+    std::cerr << "finish reg alloc\n";
 }
 
 void RegAlloc::execute() {
@@ -134,6 +135,7 @@ void RegAlloc::compute_block_order() {
         auto bb = work_list.top();
         work_list.pop();
         block_order.push_back(bb);
+        std::cerr << "add "<<bb->get_name()<<" to block order" << std::endl;
 
         for(auto sux : bb->get_succ_basic_blocks()){
             sux->incoming_decrement();
@@ -352,12 +354,18 @@ void RegAlloc::union_phi_val() {
     for(const auto& set:vreg_sets){
         Value* final_vreg = nullptr;
         for(auto vreg:set){
+            if(val2Inter.find(vreg)==val2Inter.end())continue;
             if(final_vreg == nullptr){
                 final_vreg = vreg;
             }else{
                 auto vreg_ptr = val2Inter[vreg];
                 auto final_ptr = val2Inter[final_vreg];
+                std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
                 final_ptr->union_interval(vreg_ptr);
+                std::cerr << "after union:\n";
+                for(auto range:final_ptr->range_list){
+                    std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
+                } 
                 val2Inter[vreg] = final_ptr;
                 interval_list.erase(vreg_ptr);
             }
