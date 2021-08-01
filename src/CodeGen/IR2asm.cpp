@@ -25,6 +25,17 @@ namespace IR2asm{
 
 //TODO:zext
 
+std::string ldr_const(Reg* rd, constant *val) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "ldr ";
+    asmstr += rd->get_code();
+    asmstr += ", =";
+    asmstr += val->get_num();
+    asmstr += endl;
+    return asmstr;
+}
+
 std::string mov(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
@@ -82,29 +93,20 @@ std::string movle(Reg* rd, Operand2 *opr2) {
 
 std::string getelementptr(Reg* rd, Location * ptr){
     std::string asmstr;
-    asmstr += space;
-    asmstr += "ldr ";
-    asmstr += rd->get_code();
-    asmstr += ", ";
     auto regbase = dynamic_cast<Regbase *>(ptr);
     if(regbase){
-        asmstr += regbase->get_reg().get_code();
-        asmstr += endl;
-        asmstr += space;
-        int offset = regbase->get_offset();
-        asmstr += (offset > 0)?"add ":"sub ";
-        asmstr += rd->get_code();
-        asmstr += ", ";
-        asmstr += rd->get_code();
-        asmstr += ", #";
-        asmstr += std::to_string(abs(regbase->get_offset()));
+        asmstr += add(rd, &regbase->get_reg(), new Operand2(regbase->get_offset()));
     }
     else{
+        asmstr += space;
+        asmstr += "ldr ";
+        asmstr += rd->get_code();
+        asmstr += ", ";
         auto labelexpr = dynamic_cast<label *>(ptr);
         asmstr += "=";
         asmstr += labelexpr->get_code();
+        asmstr += endl;
     }
-    asmstr += endl;
     return asmstr;
 }
 

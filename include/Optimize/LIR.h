@@ -7,6 +7,7 @@
 
 #include "Module.h"
 #include "Pass.h"
+#include "ConstPropagation.h"
 
 class LIR:public Pass
 {
