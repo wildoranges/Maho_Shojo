@@ -24,7 +24,6 @@
         return true;
     }
 
-    //TODO: global varibale
     std::string CodeGen::global_def_gen(Module* module){
         std::string code;
         for(auto var: module->get_global_variable()){
@@ -201,7 +200,6 @@
     }
 
     std::string CodeGen::callee_reg_store(Function* fun){
-        //TODO
         std::string code;
         code += IR2asm::space;
         code += "push {";
@@ -222,7 +220,6 @@
     }
 
     std::string CodeGen::callee_reg_restore(Function* fun){
-        //TODO
         std::string code;
         code += IR2asm::space;
         code += "pop {";
@@ -243,7 +240,7 @@
     }
 
     std::string CodeGen::callee_stack_operation_in(Function* fun, int stack_size){
-        //TODO
+        //TODO: immediate overflow
         std::string code;
         code += IR2asm::space;
         if(have_func_call){
@@ -261,7 +258,6 @@
     }
 
     std::string CodeGen::callee_stack_operation_out(Function* fun, int stack_size){
-        //TODO
         std::string code;
         code += IR2asm::space;
         if(have_func_call){
@@ -315,7 +311,6 @@
     }
 
     std::string CodeGen::caller_reg_restore(Function* fun, CallInst* call){
-        //TODO
         std::string code = "";
         int arg_num = fun->get_num_of_args();
 
@@ -345,7 +340,7 @@
             code += "pop {";
             auto save_size = to_save_reg.size();
             for(int i = 0; i < save_size - 1; i++){
-                code += IR2asm::Reg(to_save_reg[i]).get_code();//TODO:I OR REG_NUM?
+                code += IR2asm::Reg(to_save_reg[i]).get_code();
                 code += ", ";
             }
             code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
@@ -356,7 +351,6 @@
     }
 
     void CodeGen::make_global_table(Module* module){
-        //TODO:global var use analysis
         for(auto var: module->get_global_variable()){
             for(auto use: var->get_use_list()){
                 Function* func_;
@@ -373,7 +367,6 @@
     }
     
     std::string CodeGen::print_global_table(){
-        //TODO
         std::string code;
         for(auto iter: global_variable_table){
             GlobalVariable* var = iter.first;
@@ -394,24 +387,22 @@
         std::cout << code;
         RegAllocDriver driver = RegAllocDriver(module);
         driver.compute_reg_alloc();
-        //TODO: function definition
         make_global_table(module);
         func_no = 0;
         code += ".text " + IR2asm::endl;
         for(auto func_: module->get_functions()){
             if(func_->get_basic_blocks().empty())continue;
             reg_map = driver.get_reg_alloc_in_func(func_);
-            code += function_gen(func_);
+            code += function_gen(func_) + IR2asm::endl;
             func_no++;
         }
-        //TODO: static data segmentation
         //TODO: *other machine infomation
         return code;
     }
 
     void CodeGen::make_linear_bb(Function* fun){
-        //TODO:sort bb and make bb label, put in CodeGen::bb_label
-        //TODO: label gen, name mangling as bbx_y for yth bb in function no.x .
+        //sort bb and make bb label, put in CodeGen::bb_label
+        //label gen, name mangling as bbx_y for yth bb in function no.x .
         bb_label.clear();
         linear_bb.clear();
         bb_no = -1;
@@ -432,7 +423,7 @@
     }
 
     void CodeGen::global_label_gen(Function* fun){
-        //TODO: global varibal address store after program(.LCPIx_y), fill in CodeGen::global_variable_table
+        //global varibal address store after program(.LCPIx_y), fill in CodeGen::global_variable_table
         if(global_variable_use.find(fun) == global_variable_use.end()){
             global_variable_table.clear();
             return;        
@@ -468,7 +459,7 @@
     }
 
     std::string CodeGen::arg_move(CallInst* call){
-        //TODO: arg on stack in reversed sequence
+        //arg on stack in reversed sequence
         std::string regcode;
         std::string memcode;
         std::queue<Value *> push_queue;//for sequence changing
@@ -478,6 +469,15 @@
             if(dynamic_cast<Function *>(arg))continue;
             if(i < 4){
                 regcode += IR2asm::space;
+                if(dynamic_cast<ConstantInt *>(arg)){
+                    regcode += "ldr ";
+                    regcode += IR2asm::Reg(i).get_code();
+                    regcode += ", =";
+                    regcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
+                    regcode += IR2asm::endl;
+                    i++;
+                    continue;
+                }
                 auto reg = (reg_map).find(arg)->second->reg_num;
                 IR2asm::Reg* preg;
                 if(reg >= 0){
@@ -511,6 +511,16 @@
         while(!push_queue.empty()){
             Value* arg = push_queue.front();
             push_queue.pop();
+            if(dynamic_cast<ConstantInt *>(arg)){
+                memcode += IR2asm::space;
+                memcode += "ldr r0, =";
+                memcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
+                memcode += IR2asm::endl;
+                memcode += IR2asm::space;
+                memcode += "push {r0}";
+                memcode += IR2asm::endl;
+                continue;
+            }
             auto reg = (reg_map).find(arg)->second->reg_num;
             if(reg >= 0){
                 //TODO: check push?
@@ -595,6 +605,7 @@
         }
         if(stack_size)code += callee_stack_operation_out(fun, stack_size);
         code += callee_reg_restore(fun);
+        code += IR2asm::space + "br lr" + IR2asm::endl;
         code += print_global_table();
         std::cout << code;
         return code;

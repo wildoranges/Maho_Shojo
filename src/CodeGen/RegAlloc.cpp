@@ -354,7 +354,7 @@ void RegAlloc::union_phi_val() {
     for(const auto& set:vreg_sets){
         Value* final_vreg = nullptr;
         for(auto vreg:set){
-            if(val2Inter.find(vreg)==val2Inter.end())continue;
+            if(val2Inter.find(vreg) == val2Inter.end())continue;
             if(final_vreg == nullptr){
                 final_vreg = vreg;
             }else{
