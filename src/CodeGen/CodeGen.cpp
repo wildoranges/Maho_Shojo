@@ -382,8 +382,9 @@
 
     std::string CodeGen::module_gen(Module* module){
         std::string code;
-        code += global_def_gen(module);
-        std::cout << code;
+        std::string globaldef;
+        globaldef += global_def_gen(module);
+        // std::cout << code;
         RegAllocDriver driver = RegAllocDriver(module);
         driver.compute_reg_alloc();
         make_global_table(module);
@@ -396,7 +397,7 @@
             func_no++;
         }
         //TODO: *other machine infomation
-        return code;
+        return code + globaldef;
     }
 
     void CodeGen::make_linear_bb(Function* fun){
@@ -714,6 +715,8 @@
         return code;
     }
 
+    //TODO: return bb
+
     std::string CodeGen::instr_gen(Instruction * inst){
         std::string code;
         //TODO: call functions in IR2asm , deal with phi inst(mov inst)
@@ -882,7 +885,7 @@
                     code += IR2asm::lxor(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 } else if (cmp_op == CmpInst::GT || cmp_op == CmpInst::GE || cmp_op == CmpInst::LT || cmp_op == CmpInst::LE) {
                     code += IR2asm::cmp(get_asm_reg(operand1), operand2);
-                    code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(0));
+                    code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(0));
                     switch (cmp_op)
                     {
                     case CmpInst::GT:
@@ -920,14 +923,18 @@
                     if (arg_num < 4) {
                         code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(*get_asm_reg(inst->get_operand(0))));
                     } else {
-                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num]);
+                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num - 4]);
                     }
                 } else {
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
                     if (global_addr) {
                         addr = global_variable_table[global_addr];
                     } else {
-                        addr = stack_map[inst->get_operand(0)];
+                        if (dynamic_cast<AllocaInst*>(inst->get_operand(0))) {
+                            addr = stack_map[inst->get_operand(0)];
+                        } else {
+                            addr = new IR2asm::Regbase(*get_asm_reg(inst), 0);
+                        }
                     }
                     code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                 }
@@ -1101,7 +1108,7 @@
         case Instruction::mov_const: {
                 auto mov_inst = dynamic_cast<MovConstInst*>(inst);
                 auto const_val = mov_inst->get_const()->get_value();
-                code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(const_val));
+                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(const_val));
             }
             break;
         default:

@@ -16,6 +16,8 @@ void LIR::execute() {
                 split_gep(bb);
                 //div_const2mul(bb);
                 // convert instr
+                ConstPropagation const_propagation(module);
+                const_propagation.execute();
                 mov_const(bb);
                 // remove meaningless instr
                 // merge instr (when all optimization finished)
