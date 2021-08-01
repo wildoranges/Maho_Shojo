@@ -16,7 +16,7 @@ void LIR::execute() {
                 split_gep(bb);
                 //div_const2mul(bb);
                 // convert instr
-                //mov_const(bb);
+                mov_const(bb);
                 // remove meaningless instr
                 // merge instr (when all optimization finished)
                 //merge_mul_add(bb);
