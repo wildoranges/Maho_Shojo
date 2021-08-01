@@ -134,11 +134,12 @@ int main(int argc, char *argv[])
 
             passmgr.addPass<DeadCodeElimination>();
 
-            //passmgr.addPass<LIR>();
-            passmgr.addPass<DeadCodeElimination>();
+ 
             passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();
-
+            passmgr.addPass<LIR>();
+            passmgr.addPass<ConstPropagation>();
+            passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
             /****passmgr.addPass<CFG_analyse>();****

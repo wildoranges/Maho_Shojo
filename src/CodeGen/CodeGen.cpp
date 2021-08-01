@@ -276,8 +276,7 @@
     }
 
     std::string CodeGen::caller_reg_store(Function* fun,CallInst* call){
-        //TODO
-        std::string code;
+        std::string code = "";
         to_save_reg.clear();
         int arg_num = fun->get_num_of_args();
         if(arg_num > 4)arg_num = 4;
@@ -848,7 +847,7 @@
                 } else {
                     addr = stack_map[inst->get_operand(0)];
                 }
-                code += IR2asm::load(get_asm_reg(inst->get_operand(0)), addr);
+                code += IR2asm::store(get_asm_reg(inst->get_operand(0)), addr);
             }
             break;
         case Instruction::cmp: {
