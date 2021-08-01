@@ -847,7 +847,7 @@
                 } else {
                     addr = stack_map[inst->get_operand(0)];
                 }
-                code += IR2asm::load(get_asm_reg(inst->get_operand(0)), addr);
+                code += IR2asm::store(get_asm_reg(inst->get_operand(0)), addr);
             }
             break;
         case Instruction::cmp: {
