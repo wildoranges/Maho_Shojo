@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     bool check = true;
     bool codegen=false;
     bool no_optimize = false;
-    std::string out_file = "a.ll";
+    std::string out_file = "a";
     std::string filename = "test.sy";
     for (int i = 1; i < argc; ++i) {
         if (argv[i] == std::string("-h") || argv[i] == std::string("--help")) {
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 
             passmgr.addPass<DeadCodeElimination>();
 
- 
+
             passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<LIR>();
@@ -163,13 +163,13 @@ int main(int argc, char *argv[])
             CodeGen coder = CodeGen();
             auto asmcode = coder.module_gen(m.get());
             std::ofstream output_stream;
-            output_stream.open(out_file, std::ios::out);
+            output_stream.open(out_file + ".s", std::ios::out);
             output_stream << asmcode;
             output_stream.close();
         }
-        else{
+        if (print_IR) {
             std::ofstream output_stream;
-            output_stream.open(out_file, std::ios::out);
+            output_stream.open(out_file + ".ll", std::ios::out);
             output_stream << IR;
             //std::cout << "outputir\n";
             output_stream.close();
