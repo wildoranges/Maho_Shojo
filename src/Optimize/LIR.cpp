@@ -37,6 +37,20 @@ void LIR::store_const_offset(BasicBlock *bb) {
 
 void LIR::mov_const(BasicBlock *bb) {
     // TODO
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
+        auto instr = *iter;
+        if (instr->is_div() || instr->is_rem() || instr->is_asr() || instr->is_lsl() || instr->is_lsr()) {
+            auto op1 = instr->get_operand(0);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            if (const_op1) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                op1->replace_all_use_with(mov_const_instr);
+            }
+        }
+    }
 }
 
 void LIR::merge_cmp_br(BasicBlock* bb) {
