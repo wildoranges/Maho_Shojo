@@ -252,7 +252,7 @@ std::string MulSubInst::print()
     return instr_ir;
 }
 
-ShiftBinaryInst::ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Constant *v3, 
+ShiftBinaryInst::ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3, 
                     BasicBlock *bb)
     : Instruction(ty, id, 3, bb)
 {
@@ -271,32 +271,32 @@ void ShiftBinaryInst::assertValid()
         static_cast<Constant *>(get_operand(2)));
 }
 
-ShiftBinaryInst *ShiftBinaryInst::create_asradd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+ShiftBinaryInst *ShiftBinaryInst::create_asradd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
     return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::asradd, v1, v2, v3, bb);
 }
 
-ShiftBinaryInst *ShiftBinaryInst::create_lsladd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+ShiftBinaryInst *ShiftBinaryInst::create_lsladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
     return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsladd, v1, v2, v3, bb);
 }
 
-ShiftBinaryInst *ShiftBinaryInst::create_lsradd(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+ShiftBinaryInst *ShiftBinaryInst::create_lsradd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
     return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsradd, v1, v2, v3, bb);
 }
 
-ShiftBinaryInst *ShiftBinaryInst::create_asrsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+ShiftBinaryInst *ShiftBinaryInst::create_asrsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
     return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::asrsub, v1, v2, v3, bb);
 }
 
-ShiftBinaryInst *ShiftBinaryInst::create_lslsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+ShiftBinaryInst *ShiftBinaryInst::create_lslsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
     return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lslsub, v1, v2, v3, bb);
 }
 
-ShiftBinaryInst *ShiftBinaryInst::create_lsrsub(Value *v1, Value *v2, Constant *v3, BasicBlock *bb, Module *m)
+ShiftBinaryInst *ShiftBinaryInst::create_lsrsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
     return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsrsub, v1, v2, v3, bb);
 }
@@ -368,7 +368,7 @@ std::string CmpInst::print()
     instr_ir += " ";
     instr_ir += this->get_operand(0)->get_type()->print();
     instr_ir += " ";
-    instr_ir += print_as_op(this->get_operand(0), false);
+    instr_ir += print_as_op(this->get_operand(0), false);   
     instr_ir += ", ";
     if (Type::is_eq_type(this->get_operand(0)->get_type(), this->get_operand(1)->get_type()))
     {
@@ -389,6 +389,15 @@ CmpBrInst::CmpBrInst(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, Basi
     set_operand(1, rhs);
     set_operand(2, if_true);
     set_operand(3, if_false);
+    // assertValid();
+}
+
+CmpBrInst::CmpBrInst(CmpOp op, Value *lhs, Value *rhs, 
+            BasicBlock *bb)
+    : Instruction(Type::get_void_type(bb->get_module()), Instruction::cmpbr, 4, bb), cmp_op_(op)
+{
+    set_operand(0, lhs);
+    set_operand(1, rhs);
     // assertValid();
 }
 
@@ -459,6 +468,15 @@ CallInst::CallInst(Function *func, std::vector<Value *> args, BasicBlock *bb)
     }
 }
 
+CallInst::CallInst(Type *ret_ty, std::vector<Value *> args, BasicBlock *bb)
+    : Instruction(ret_ty, Instruction::call, args.size() + 1, bb)
+{
+    int num_ops = args.size() + 1; 
+    for (int i = 1; i < num_ops; i++) {
+        set_operand(i, args[i-1]);
+    }
+}
+
 CallInst *CallInst::create(Function *func, std::vector<Value *> args, BasicBlock *bb)
 {
     return new CallInst(func, args, bb);
@@ -507,10 +525,22 @@ BranchInst::BranchInst(Value *cond, BasicBlock *if_true, BasicBlock *if_false,
     set_operand(2, if_false);
 }
 
+BranchInst::BranchInst(Value *cond, BasicBlock *bb)
+    : Instruction(Type::get_void_type(bb->get_module()), Instruction::br, 3, bb)
+{
+    set_operand(0, cond);
+}
+
 BranchInst::BranchInst(BasicBlock *if_true, BasicBlock *bb)
     : Instruction(Type::get_void_type(if_true->get_module()), Instruction::br, 1, bb)
 {
     set_operand(0, if_true);
+}
+
+BranchInst::BranchInst(BasicBlock *bb)
+    : Instruction(Type::get_void_type(bb->get_module()), Instruction::br, 1, bb)
+{
+    //nothing to do
 }
 
 BranchInst *BranchInst::create_cond_br(Value *cond, BasicBlock *if_true, BasicBlock *if_false,
@@ -697,6 +727,13 @@ StoreConstOffsetInst::StoreConstOffsetInst(Value *val, Value *ptr, ConstantInt *
     set_operand(2, offset);
 }
 
+StoreConstOffsetInst::StoreConstOffsetInst(Value *val, Value *ptr, BasicBlock *bb)
+    : Instruction(Type::get_void_type(bb->get_module()), Instruction::store_const_offset, 3, bb)
+{
+    set_operand(0, val);
+    set_operand(1, ptr);
+}
+
 StoreConstOffsetInst *StoreConstOffsetInst::create_store_const_offset(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb)
 {
     return new StoreConstOffsetInst(val, ptr, offset, bb);
@@ -760,6 +797,14 @@ LoadConstOffsetInst::LoadConstOffsetInst(Type *ty, Value *ptr, ConstantInt *offs
     set_operand(1, offset);
 }
 
+LoadConstOffsetInst::LoadConstOffsetInst(Type *ty, Value *ptr, BasicBlock *bb)
+    : Instruction(ty, Instruction::load_const_offset, 2, bb)
+{
+    assert(ptr->get_type()->is_pointer_type());
+    assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
+    set_operand(0, ptr);
+}
+
 LoadConstOffsetInst *LoadConstOffsetInst::create_load_const_offset(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb)
 {
     return new LoadConstOffsetInst(ty, ptr, offset, bb);
@@ -794,9 +839,15 @@ MovConstInst::MovConstInst(Type *ty, ConstantInt *const_val, BasicBlock *bb)
     set_operand(0, const_val);
 }
 
-MovConstInst *MovConstInst::create_mov_const(Type *ty, ConstantInt *const_val, BasicBlock *bb)
+MovConstInst::MovConstInst(Type *ty, BasicBlock *bb)
+    : Instruction(ty, Instruction::mov_const, 1, bb)
 {
-    return new MovConstInst(ty, const_val, bb);
+    //nothing to do
+}
+
+MovConstInst *MovConstInst::create_mov_const(ConstantInt *const_val, BasicBlock *bb)
+{
+    return new MovConstInst(Type::get_int32_type(bb->get_module()), const_val, bb);
 }
 
 std::string MovConstInst::print()
