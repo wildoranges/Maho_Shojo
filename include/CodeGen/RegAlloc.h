@@ -68,7 +68,7 @@ const std::vector<int> all_reg_id = {12,10,9,8,7,6,5,4,3,2,1,0};
 
 class RegAllocDriver{
 public:
-    RegAllocDriver(Module* m):module(m){}
+    explicit RegAllocDriver(Module* m):module(m){}
     void compute_reg_alloc();
     std::map<Value*, Interval*>& get_reg_alloc_in_func(Function* f){return reg_alloc[f];}
 private:
@@ -78,7 +78,7 @@ private:
 
 class RegAlloc{
 public:
-    RegAlloc(Function* f):func(f){}
+    explicit RegAlloc(Function* f):func(f){}
     //int get_reg(Value* value);
     void execute();
     void compute_block_order();
@@ -100,7 +100,7 @@ private:
     Interval* current = nullptr;
     std::map<Value*, Interval*> val2Inter;
     Function* func;
-    std::list<BasicBlock*> block_order;
+    std::list<BasicBlock*> block_order={};
     std::set<Interval*,cmp_interval> interval_list;
 };
 

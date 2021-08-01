@@ -25,10 +25,21 @@ namespace IR2asm{
 
 //TODO:zext
 
+std::string ldr_const(Reg* rd, constant *val) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "ldr ";
+    asmstr += rd->get_code();
+    asmstr += ", =";
+    asmstr += val->get_num();
+    asmstr += endl;
+    return asmstr;
+}
+
 std::string mov(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "mov";
+    asmstr += "mov ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -39,7 +50,7 @@ std::string mov(Reg* rd, Operand2 *opr2) {
 std::string movgt(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movgt";
+    asmstr += "movgt ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -50,7 +61,7 @@ std::string movgt(Reg* rd, Operand2 *opr2) {
 std::string movge(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movge";
+    asmstr += "movge ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -61,7 +72,7 @@ std::string movge(Reg* rd, Operand2 *opr2) {
 std::string movlt(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movlt";
+    asmstr += "movlt ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -72,7 +83,7 @@ std::string movlt(Reg* rd, Operand2 *opr2) {
 std::string movle(Reg* rd, Operand2 *opr2) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movle";
+    asmstr += "movle ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += opr2->get_code();
@@ -82,29 +93,20 @@ std::string movle(Reg* rd, Operand2 *opr2) {
 
 std::string getelementptr(Reg* rd, Location * ptr){
     std::string asmstr;
-    asmstr += space;
-    asmstr += "ldr ";
-    asmstr += rd->get_code();
-    asmstr += ", ";
     auto regbase = dynamic_cast<Regbase *>(ptr);
     if(regbase){
-        asmstr += regbase->get_reg().get_code();
-        asmstr += endl;
-        asmstr += space;
-        int offset = regbase->get_offset();
-        asmstr += (offset > 0)?"add ":"sub ";
-        asmstr += rd->get_code();
-        asmstr += ", ";
-        asmstr += rd->get_code();
-        asmstr += ", #";
-        asmstr += std::to_string(abs(regbase->get_offset()));
+        asmstr += add(rd, &regbase->get_reg(), new Operand2(regbase->get_offset()));
     }
     else{
+        asmstr += space;
+        asmstr += "ldr ";
+        asmstr += rd->get_code();
+        asmstr += ", ";
         auto labelexpr = dynamic_cast<label *>(ptr);
         asmstr += "=";
         asmstr += labelexpr->get_code();
+        asmstr += endl;
     }
-    asmstr += endl;
     return asmstr;
 }
 
@@ -134,8 +136,8 @@ std::string ret(Value* retval){
     asmstr += "mov r0, ";
     asmstr += retval->get_code();
     asmstr += endl;
-    asmstr += space;
-    asmstr += "br lr" + endl;
+    // asmstr += space;
+    // asmstr += "br lr" + endl;
     return asmstr;
 }
 
@@ -361,6 +363,7 @@ std::string load(Reg* rd, Location* addr){
     asmstr += ", ";
     asmstr += addr->get_code();
     asmstr += endl;
+    return asmstr;
 }
 
 std::string store(Reg* rd, Location* addr){
@@ -371,6 +374,7 @@ std::string store(Reg* rd, Location* addr){
     asmstr += ", ";
     asmstr += addr->get_code();
     asmstr += endl;
+    return asmstr;
 }
 
 std::string muladd(Reg* rd, Reg* rs, Reg* rt, Reg* rn){

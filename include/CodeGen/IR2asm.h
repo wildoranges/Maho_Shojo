@@ -31,6 +31,7 @@ namespace IR2asm{
     NOP
     };
 
+    std::string ldr_const(Reg* rd, constant *val);
     std::string mov(Reg* rd, Operand2 *opr2);
     std::string movgt(Reg* rd, Operand2 *opr2);
     std::string movge(Reg* rd, Operand2 *opr2);

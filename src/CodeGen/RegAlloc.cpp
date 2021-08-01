@@ -3,6 +3,7 @@
 //
 
 #include "RegAlloc.h"
+#include <iostream>
 #include <set>
 
 void Interval::add_range(int from, int to) {
@@ -98,11 +99,13 @@ void RegAllocDriver::compute_reg_alloc() {
         if(func->get_basic_blocks().empty()){
             continue;
         }else{
+            std::cerr << "function " << func->get_name() << std::endl;
             auto allocator = new RegAlloc(func);
             allocator->execute();
             reg_alloc[func] = allocator->get_reg_alloc();
         }
     }
+    std::cerr << "finish reg alloc\n";
 }
 
 void RegAlloc::execute() {
@@ -132,6 +135,7 @@ void RegAlloc::compute_block_order() {
         auto bb = work_list.top();
         work_list.pop();
         block_order.push_back(bb);
+        std::cerr << "add "<<bb->get_name()<<" to block order" << std::endl;
 
         for(auto sux : bb->get_succ_basic_blocks()){
             sux->incoming_decrement();
@@ -215,7 +219,11 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
                 //interval_list.insert(cur_inter);
             }
 
-            for(auto opr:instr->get_operands()){
+            if(instr->is_phi()){//analyze
+                continue;
+            }
+
+            for(auto opr:instr->get_operands()){//TODO:CONST ALLOC
                 if(!dynamic_cast<Instruction*>(opr) && !dynamic_cast<Argument*>(opr)){
                     continue;
                 }
@@ -325,8 +333,9 @@ bool RegAlloc::try_alloc_free_reg() {
             current->reg_num = spill_val->reg_num;
             spill_val->reg_num = -1;
             unused_reg_id.erase(spill_val->reg_num);
-            active.insert(current);
             active.erase(spill_val);//TODO:CHECK ERASE?
+            active.insert(current);
+            std::cerr << "spill "<< spill_val->val->get_name() <<" to stack" << std::endl;
             return true;
         }
     }
@@ -345,12 +354,18 @@ void RegAlloc::union_phi_val() {
     for(const auto& set:vreg_sets){
         Value* final_vreg = nullptr;
         for(auto vreg:set){
+            if(val2Inter.find(vreg) == val2Inter.end())continue;
             if(final_vreg == nullptr){
                 final_vreg = vreg;
             }else{
                 auto vreg_ptr = val2Inter[vreg];
                 auto final_ptr = val2Inter[final_vreg];
+                std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
                 final_ptr->union_interval(vreg_ptr);
+                std::cerr << "after union:\n";
+                for(auto range:final_ptr->range_list){
+                    std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
+                } 
                 val2Inter[vreg] = final_ptr;
                 interval_list.erase(vreg_ptr);
             }

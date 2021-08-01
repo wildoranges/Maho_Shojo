@@ -7,6 +7,7 @@
 
 #include "Module.h"
 #include "Pass.h"
+#include "ConstPropagation.h"
 
 class LIR:public Pass
 {
@@ -18,6 +19,7 @@ public:
     void merge_mul_sub(BasicBlock* bb);
     void load_const_offset(BasicBlock *bb);
     void store_const_offset(BasicBlock *bb);
+    void mov_const(BasicBlock *bb);
     void split_gep(BasicBlock* bb);
     void split_srem(BasicBlock* bb);
     void mul_const2shift(BasicBlock* bb);

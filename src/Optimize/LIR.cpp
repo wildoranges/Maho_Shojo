@@ -10,12 +10,15 @@ void LIR::execute() {
         if (func->get_num_basic_blocks()>0){
             for (auto bb : func->get_basic_blocks()){
                 // split instr
-                load_const_offset(bb);
-                store_const_offset(bb);
+                //load_const_offset(bb);
+                //store_const_offset(bb);
                 split_srem(bb);
                 split_gep(bb);
                 //div_const2mul(bb);
                 // convert instr
+                ConstPropagation const_propagation(module);
+                const_propagation.execute();
+                mov_const(bb);
                 // remove meaningless instr
                 // merge instr (when all optimization finished)
                 //merge_mul_add(bb);
@@ -28,10 +31,89 @@ void LIR::execute() {
 
 void LIR::load_const_offset(BasicBlock *bb) {
     // TODO
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
+        auto instr = *iter;
+        if (instr->is_load()) {
+            auto load_instr = dynamic_cast<LoadInst*>(instr);
+            auto ptr = load_instr->get_lval();
+            auto gep_ptr = dynamic_cast<GetElementPtrInst*>(ptr);
+            if (gep_ptr) {
+                auto offset = gep_ptr->get_operand(2);
+                auto const_offset = dynamic_cast<ConstantInt*>(offset);
+                if (const_offset) {
+                    auto load_const_offset_instr = LoadConstOffsetInst::create_load_const_offset(ptr->get_type()->get_pointer_element_type(), gep_ptr->get_operand(0), const_offset, bb);
+                    instructions.pop_back();
+                    bb->add_instruction(iter, load_const_offset_instr);
+                    //bb->delete_instr(op_ins1);
+                    iter--;
+                    instr->replace_all_use_with(load_const_offset_instr);
+                    bb->delete_instr(instr);
+                    continue;
+                }
+            }
+        }
+    }
 }
 
 void LIR::store_const_offset(BasicBlock *bb) {
     // TODO
+}
+
+void LIR::mov_const(BasicBlock *bb) {
+    // TODO: need support other LIR instructions
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
+        auto instr = *iter;
+        if (instr->is_asr() || instr->is_lsl() || instr->is_lsr() || instr->is_store()) {
+            auto op1 = instr->get_operand(0);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            if (const_op1) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                mov_const_instr->remove_use(op1);
+                op1->replace_all_use_with(mov_const_instr);
+                mov_const_instr->set_operand(0, op1);
+            }
+        }
+        if (instr->is_add() || instr->is_sub()) {
+            auto op2 = instr->get_operand(1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op2) {
+                auto const_op2_val = const_op2->get_value();
+                if (const_op2_val >= (1<<12) || const_op2_val < -(1<<12)) {
+                    auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+                    instructions.pop_back();
+                    bb->add_instruction(iter, mov_const_instr);
+                    mov_const_instr->remove_use(op2);
+                    op2->replace_all_use_with(mov_const_instr);
+                    mov_const_instr->set_operand(0, op2);
+                }
+            }
+        }
+        if (instr->is_mul() || instr->is_div() || instr->is_rem()) {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                mov_const_instr->remove_use(op1);
+                op1->replace_all_use_with(mov_const_instr);
+                mov_const_instr->set_operand(0, op1);
+            } else if (const_op2) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                mov_const_instr->remove_use(op2);
+                op2->replace_all_use_with(mov_const_instr);
+                mov_const_instr->set_operand(0, op2);
+            }
+        }
+    }
 }
 
 void LIR::merge_cmp_br(BasicBlock* bb) {

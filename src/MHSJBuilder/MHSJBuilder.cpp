@@ -237,11 +237,12 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
       else {
         auto tmp_terminator = cur_fun_entry_block->get_terminator();
         if (tmp_terminator != nullptr) {
-          cur_fun_entry_block->delete_instr(tmp_terminator);
+          cur_fun_entry_block->get_instructions().pop_back();
         }
         var = builder->create_alloca(array_type);
-        cur_fun_cur_block->delete_instr(dynamic_cast<Instruction*>(var));
+        cur_fun_cur_block->get_instructions().pop_back();
         cur_fun_entry_block->add_instruction(dynamic_cast<Instruction*>(var));
+        dynamic_cast<Instruction*>(var)->set_parent(cur_fun_entry_block);
         if (tmp_terminator != nullptr) {
           cur_fun_entry_block->add_instruction(tmp_terminator);
         }

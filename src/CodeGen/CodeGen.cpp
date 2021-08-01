@@ -1,6 +1,7 @@
 #include<CodeGen.h>
 #include<RegAlloc.h>
 #include<queue>
+#include<algorithm>
 
 // namespace CodeGen{
 
@@ -23,7 +24,6 @@
         return true;
     }
 
-    //TODO: global varibale
     std::string CodeGen::global_def_gen(Module* module){
         std::string code;
         for(auto var: module->get_global_variable()){
@@ -200,7 +200,6 @@
     }
 
     std::string CodeGen::callee_reg_store(Function* fun){
-        //TODO
         std::string code;
         code += IR2asm::space;
         code += "push {";
@@ -221,7 +220,6 @@
     }
 
     std::string CodeGen::callee_reg_restore(Function* fun){
-        //TODO
         std::string code;
         code += IR2asm::space;
         code += "pop {";
@@ -242,7 +240,7 @@
     }
 
     std::string CodeGen::callee_stack_operation_in(Function* fun, int stack_size){
-        //TODO
+        //TODO: immediate overflow
         std::string code;
         code += IR2asm::space;
         if(have_func_call){
@@ -260,7 +258,6 @@
     }
 
     std::string CodeGen::callee_stack_operation_out(Function* fun, int stack_size){
-        //TODO
         std::string code;
         code += IR2asm::space;
         if(have_func_call){
@@ -279,7 +276,6 @@
     }
 
     std::string CodeGen::caller_reg_store(Function* fun,CallInst* call){
-        //TODO
         std::string code = "";
         to_save_reg.clear();
         int arg_num = fun->get_num_of_args();
@@ -314,7 +310,6 @@
     }
 
     std::string CodeGen::caller_reg_restore(Function* fun, CallInst* call){
-        //TODO
         std::string code = "";
         int arg_num = fun->get_num_of_args();
 
@@ -344,7 +339,7 @@
             code += "pop {";
             auto save_size = to_save_reg.size();
             for(int i = 0; i < save_size - 1; i++){
-                code += IR2asm::Reg(to_save_reg[i]).get_code();//TODO:I OR REG_NUM?
+                code += IR2asm::Reg(to_save_reg[i]).get_code();
                 code += ", ";
             }
             code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
@@ -355,7 +350,6 @@
     }
 
     void CodeGen::make_global_table(Module* module){
-        //TODO:global var use analysis
         for(auto var: module->get_global_variable()){
             for(auto use: var->get_use_list()){
                 Function* func_;
@@ -372,7 +366,6 @@
     }
     
     std::string CodeGen::print_global_table(){
-        //TODO
         std::string code;
         for(auto iter: global_variable_table){
             GlobalVariable* var = iter.first;
@@ -389,28 +382,27 @@
 
     std::string CodeGen::module_gen(Module* module){
         std::string code;
-        code += global_def_gen(module);
-        std::cout << code;
+        std::string globaldef;
+        globaldef += global_def_gen(module);
+        // std::cout << code;
         RegAllocDriver driver = RegAllocDriver(module);
         driver.compute_reg_alloc();
-        //TODO: function definition
         make_global_table(module);
         func_no = 0;
         code += ".text " + IR2asm::endl;
         for(auto func_: module->get_functions()){
             if(func_->get_basic_blocks().empty())continue;
             reg_map = driver.get_reg_alloc_in_func(func_);
-            code += function_gen(func_);
+            code += function_gen(func_) + IR2asm::endl;
             func_no++;
         }
-        //TODO: static data segmentation
         //TODO: *other machine infomation
-        return code;
+        return code + globaldef;
     }
 
     void CodeGen::make_linear_bb(Function* fun){
-        //TODO:sort bb and make bb label, put in CodeGen::bb_label
-        //TODO: label gen, name mangling as bbx_y for yth bb in function no.x .
+        //sort bb and make bb label, put in CodeGen::bb_label
+        //label gen, name mangling as bbx_y for yth bb in function no.x .
         bb_label.clear();
         linear_bb.clear();
         bb_no = -1;
@@ -431,7 +423,7 @@
     }
 
     void CodeGen::global_label_gen(Function* fun){
-        //TODO: global varibal address store after program(.LCPIx_y), fill in CodeGen::global_variable_table
+        //global varibal address store after program(.LCPIx_y), fill in CodeGen::global_variable_table
         if(global_variable_use.find(fun) == global_variable_use.end()){
             global_variable_table.clear();
             return;        
@@ -467,7 +459,7 @@
     }
 
     std::string CodeGen::arg_move(CallInst* call){
-        //TODO: arg on stack in reversed sequence
+        //arg on stack in reversed sequence
         std::string regcode;
         std::string memcode;
         std::queue<Value *> push_queue;//for sequence changing
@@ -477,6 +469,15 @@
             if(dynamic_cast<Function *>(arg))continue;
             if(i < 4){
                 regcode += IR2asm::space;
+                if(dynamic_cast<ConstantInt *>(arg)){
+                    regcode += "ldr ";
+                    regcode += IR2asm::Reg(i).get_code();
+                    regcode += ", =";
+                    regcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
+                    regcode += IR2asm::endl;
+                    i++;
+                    continue;
+                }
                 auto reg = (reg_map).find(arg)->second->reg_num;
                 IR2asm::Reg* preg;
                 if(reg >= 0){
@@ -510,6 +511,16 @@
         while(!push_queue.empty()){
             Value* arg = push_queue.front();
             push_queue.pop();
+            if(dynamic_cast<ConstantInt *>(arg)){
+                memcode += IR2asm::space;
+                memcode += "ldr r0, =";
+                memcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
+                memcode += IR2asm::endl;
+                memcode += IR2asm::space;
+                memcode += "push {r0}";
+                memcode += IR2asm::endl;
+                continue;
+            }
             auto reg = (reg_map).find(arg)->second->reg_num;
             if(reg >= 0){
                 //TODO: check push?
@@ -594,6 +605,7 @@
         }
         if(stack_size)code += callee_stack_operation_out(fun, stack_size);
         code += callee_reg_restore(fun);
+        code += IR2asm::space + "br lr" + IR2asm::endl;
         code += print_global_table();
         std::cout << code;
         return code;
@@ -612,18 +624,103 @@
                 code += instr_gen(call_inst);
                 code += caller_reg_restore(bb->get_parent(),call_inst);
             }else if(dynamic_cast<ReturnInst*>(inst)){
-                
-            }else{
                 code += instr_gen(inst);
+            }else{
+                std::vector<int> store_list = {};
+                std::set<Value*> to_store_set = {};
+                std::set<Value*> to_ld_set = {};
+                std::set<Interval*> interval_set = {};
+                bool use_target = false;
+                if(!inst->is_void()){
+                    auto reg_inter = reg_map[inst];
+                    if(reg_inter->reg_num<0){
+                        reg_inter->reg_num = store_list.size();
+                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
+                        if(it==store_list.end()){
+                            store_list.push_back(reg_inter->reg_num);
+                        }
+                        interval_set.insert(reg_inter);
+                        to_store_set.insert(inst);
+                        use_target = true;
+                    }
+                }
+                for(auto opr:inst->get_operands()){
+                    if(dynamic_cast<Constant*>(opr) || 
+                       dynamic_cast<BasicBlock *>(opr) || 
+                       dynamic_cast<GlobalVariable *>(opr)){
+                        continue;
+                    }
+                    auto reg_inter = reg_map[opr];
+                    if(reg_inter->reg_num<0){
+                        if(use_target){
+                            reg_inter->reg_num = store_list.size() - 1;
+                        }else{
+                            reg_inter->reg_num = store_list.size();
+                        }
+                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
+                        if(it==store_list.end()){
+                            store_list.push_back(reg_inter->reg_num);
+                        }
+                        interval_set.insert(reg_inter);
+                        to_ld_set.insert(opr);
+                    }
+                }
+                if(!store_list.empty()){
+                    code += IR2asm::space;
+                    code += "push {";
+                    int lst_size = store_list.size() - 1;
+                    for(int i = 0;i < lst_size;i++){
+                        code += IR2asm::Reg(store_list[i]).get_code();
+                        code += ", ";
+                    }
+                    code += IR2asm::Reg(store_list[lst_size]).get_code();
+                    code += "}";
+                    code += IR2asm::endl;
+                }
+                for(auto opr:to_ld_set){
+                    code += IR2asm::space;
+                    code += "ldr ";
+                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+ stack_map[opr]->get_code();
+                    code += IR2asm::endl;
+                }
+
+                code += instr_gen(inst);
+
+                for(auto opr:to_store_set){
+                    code += IR2asm::space;
+                    code += "str ";
+                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+ stack_map[opr]->get_code();
+                    code += IR2asm::endl;
+                }
+
+                if(!store_list.empty()){
+                    code += IR2asm::space;
+                    code += "pop {";
+                    int lst_size = store_list.size() - 1;
+                    for(int i = 0;i < lst_size;i++){
+                        code += IR2asm::Reg(store_list[i]).get_code();
+                        code += ", ";
+                    }
+                    code += IR2asm::Reg(store_list[lst_size]).get_code();
+                    code += "}";
+                    code += IR2asm::endl;
+                }
+
+                for(auto inter:interval_set){
+                    inter->reg_num = -1;
+                }
             }
         }
         //TODO: instruction gen
         return code;
     }
 
+    //TODO: return bb
+
     std::string CodeGen::instr_gen(Instruction * inst){
         std::string code;
         //TODO: call functions in IR2asm , deal with phi inst(mov inst)
+        // may have many bugs
         auto instr_type = inst->get_instr_type();
         switch (instr_type)
         {
@@ -728,7 +825,13 @@
                 auto op1 = inst->get_operand(0);
                 auto op2 = inst->get_operand(1);
                 auto operand1 = op1;
-                auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                IR2asm::Operand2* operand2;
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                if (const_op2) {
+                    operand2 = new IR2asm::Operand2(get_asm_const(const_op2)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                }
                 code += IR2asm::sdiv(get_asm_reg(inst), get_asm_reg(operand1), operand2);
             }
                 break;
@@ -742,7 +845,7 @@
                 if (global_addr) {
                     addr = global_variable_table[global_addr];
                 } else {
-                    addr = stack_map[inst->get_operand(0)];
+                    addr = new IR2asm::Regbase(*get_asm_reg(inst->get_operand(0)), 0);
                 }
                 code += IR2asm::load(get_asm_reg(inst), addr);
             }
@@ -753,9 +856,9 @@
                 if (global_addr) {
                     addr = global_variable_table[global_addr];
                 } else {
-                    addr = stack_map[inst->get_operand(0)];
+                    addr = new IR2asm::Regbase(*get_asm_reg(inst->get_operand(1)), 0);
                 }
-                code += IR2asm::load(get_asm_reg(inst->get_operand(0)), addr);
+                code += IR2asm::store(get_asm_reg(inst->get_operand(0)), addr);
             }
             break;
         case Instruction::cmp: {
@@ -782,7 +885,7 @@
                     code += IR2asm::lxor(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 } else if (cmp_op == CmpInst::GT || cmp_op == CmpInst::GE || cmp_op == CmpInst::LT || cmp_op == CmpInst::LE) {
                     code += IR2asm::cmp(get_asm_reg(operand1), operand2);
-                    code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(0));
+                    code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(0));
                     switch (cmp_op)
                     {
                     case CmpInst::GT:
@@ -820,14 +923,18 @@
                     if (arg_num < 4) {
                         code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(*get_asm_reg(inst->get_operand(0))));
                     } else {
-                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num]);
+                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num - 4]);
                     }
                 } else {
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
                     if (global_addr) {
                         addr = global_variable_table[global_addr];
                     } else {
-                        addr = stack_map[inst->get_operand(0)];
+                        if (dynamic_cast<AllocaInst*>(inst->get_operand(0))) {
+                            addr = stack_map[inst->get_operand(0)];
+                        } else {
+                            addr = new IR2asm::Regbase(*get_asm_reg(inst), 0);
+                        }
                     }
                     code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                 }
@@ -943,6 +1050,66 @@
         case Instruction::smul_lo:
             break;
         case Instruction::smul_hi:
+            break;
+        case Instruction::load_const_offset: {
+                auto load_const_offset_inst = dynamic_cast<LoadConstOffsetInst*>(inst);
+                auto ptr = load_const_offset_inst->get_lval();
+                auto offset = load_const_offset_inst->get_offset()->get_value();
+                auto arg_ptr = dynamic_cast<Argument*>(ptr);
+                if (arg_ptr) {
+                    auto arg_num = arg_ptr->get_arg_no();
+                    if (arg_num > 4) {
+                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num]);
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), offset));
+                    } else {
+                        if (get_asm_reg(ptr)->get_id() < 0) {
+                            code += IR2asm::getelementptr(get_asm_reg(inst), stack_map[ptr]);
+                            code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), offset));
+                        } else {
+                            code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(ptr), offset));
+                        }
+                    }
+                } else {
+                    if (get_asm_reg(ptr)->get_id() < 0) {
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), stack_map[ptr]->get_offset() + offset));
+                    } else {
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(ptr), offset));
+                    }
+                }
+            }
+            break;
+        case Instruction::store_const_offset: {
+                auto store_const_offset = dynamic_cast<LoadConstOffsetInst*>(inst);
+                auto ptr = store_const_offset->get_lval();
+                auto offset = store_const_offset->get_offset()->get_value();
+                auto arg_ptr = dynamic_cast<Argument*>(ptr);
+                if (arg_ptr) {
+                    auto arg_num = arg_ptr->get_arg_no();
+                    if (arg_num > 4) {
+                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num]);
+                        code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), offset));
+                    } else {
+                        if (get_asm_reg(ptr)->get_id() < 0) {
+                            code += IR2asm::getelementptr(get_asm_reg(inst), stack_map[ptr]);
+                            code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), offset));
+                        } else {
+                            code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(ptr), offset));
+                        }
+                    }
+                } else {
+                    if (get_asm_reg(ptr)->get_id() < 0) {
+                        code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), stack_map[ptr]->get_offset() + offset));
+                    } else {
+                        code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(ptr), offset));
+                    }
+                }
+            }
+            break;
+        case Instruction::mov_const: {
+                auto mov_inst = dynamic_cast<MovConstInst*>(inst);
+                auto const_val = mov_inst->get_const()->get_value();
+                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(const_val));
+            }
             break;
         default:
             break;
