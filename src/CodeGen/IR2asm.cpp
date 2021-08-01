@@ -25,6 +25,61 @@ namespace IR2asm{
 
 //TODO:zext
 
+std::string mov(Reg* rd, Operand2 *opr2) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "mov";
+    asmstr += rd->get_code();
+    asmstr += ", ";
+    asmstr += opr2->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string movgt(Reg* rd, Operand2 *opr2) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "movgt";
+    asmstr += rd->get_code();
+    asmstr += ", ";
+    asmstr += opr2->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string movge(Reg* rd, Operand2 *opr2) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "movge";
+    asmstr += rd->get_code();
+    asmstr += ", ";
+    asmstr += opr2->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string movlt(Reg* rd, Operand2 *opr2) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "movlt";
+    asmstr += rd->get_code();
+    asmstr += ", ";
+    asmstr += opr2->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string movle(Reg* rd, Operand2 *opr2) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "movle";
+    asmstr += rd->get_code();
+    asmstr += ", ";
+    asmstr += opr2->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
 std::string getelementptr(Reg* rd, Location * ptr){
     std::string asmstr;
     asmstr += space;
@@ -80,7 +135,58 @@ std::string ret(){
     return asmstr;
 }
 
-std::string add(Reg* rd, Reg* rs, Value* opr2){
+std::string br(Location* label) {
+    return b(label);
+}
+
+// TODO: can be simplified
+std::string br(Reg* cond, Location* success, Location* fail) {
+    return cbnz(cond, success) + cbz(cond, fail);
+}
+
+std::string b(Location *addr) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "b ";
+    asmstr += addr->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string cbz(Reg* rs, Location *addr) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "cbz ";
+    asmstr += rs->get_code();
+    asmstr += ", ";
+    asmstr += addr->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string cbnz(Reg* rs, Location *addr) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "cbnz ";
+    asmstr += rs->get_code();
+    asmstr += ", ";
+    asmstr += addr->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string cmp(Reg* rs, Operand2* opr2) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "cmp ";
+    asmstr += rs->get_code();
+    asmstr += ", ";
+    asmstr += opr2->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string add(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "add ";
@@ -93,7 +199,7 @@ std::string add(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string sub(Reg* rd, Reg* rs, Value* opr2){
+std::string sub(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "sub ";
@@ -106,7 +212,20 @@ std::string sub(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string mul(Reg* rd, Reg* rs, Value* opr2){
+std::string r_sub(Reg* rd, Reg* rs, Operand2* opr2){
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "rsb ";
+    asmstr += rd->get_code();
+    asmstr += ", ";
+    asmstr += rs->get_code();
+    asmstr += ", ";
+    asmstr += opr2->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string mul(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "mul ";
@@ -119,7 +238,7 @@ std::string mul(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string sdiv(Reg* rd, Reg* rs, Value* opr2){
+std::string sdiv(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "sdiv ";
@@ -132,7 +251,7 @@ std::string sdiv(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string srem(Reg* rd, Reg* rs, Value* opr2){
+std::string srem(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "srem ";
@@ -145,7 +264,7 @@ std::string srem(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string land(Reg* rd, Reg* rs, Value* opr2){
+std::string land(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "and ";
@@ -158,7 +277,7 @@ std::string land(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string lor(Reg* rd, Reg* rs, Value* opr2){
+std::string lor(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "or ";
@@ -171,10 +290,10 @@ std::string lor(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string lxor(Reg* rd, Reg* rs, Value* opr2){
+std::string lxor(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
-    asmstr += "xor ";
+    asmstr += "eor ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += rs->get_code();
@@ -184,7 +303,7 @@ std::string lxor(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string asr(Reg* rd, Reg* rs, Value* opr2){
+std::string asr(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "asr ";
@@ -197,7 +316,7 @@ std::string asr(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string lsl(Reg* rd, Reg* rs, Value* opr2){
+std::string lsl(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "lsl ";
@@ -210,7 +329,7 @@ std::string lsl(Reg* rd, Reg* rs, Value* opr2){
     return asmstr;
 }
 
-std::string lsr(Reg* rd, Reg* rs, Value* opr2){
+std::string lsr(Reg* rd, Reg* rs, Operand2* opr2){
     std::string asmstr;
     asmstr += space;
     asmstr += "lsr ";

@@ -1,6 +1,6 @@
 #include<CodeGen.h>
 #include<RegAlloc.h>
-#include<stack>
+#include<queue>
 
 // namespace CodeGen{
 
@@ -118,7 +118,7 @@
             for(auto iter: reg_map){
                 Value* vreg = iter.first;
                 Interval* interval = iter.second;
-                if(interval->reg_num > 0){
+                if(interval->reg_num >= 0){
                     if(interval->reg_num > 3){
                         used_reg.second.insert(interval->reg_num);
                     }
@@ -156,7 +156,7 @@
             for(auto iter: reg_map){
                 Value* vreg = iter.first;
                 Interval* interval = iter.second;
-                if(interval->reg_num > 0){
+                if(interval->reg_num >= 0){
                     if(interval->reg_num > 3){
                         used_reg.second.insert(interval->reg_num);
                     }
@@ -191,10 +191,10 @@
                 map.second->set_offset(size + offset);
             }
         }
-        int reg_store_size = reg_size * (used_reg.second.size() + (have_func_call)? 1 : 0 );
+        int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
-            item->set_offset(offset + reg_store_size + size - int_size);
+            item->set_offset(offset + reg_store_size + size);
         }
         return size;
     }
@@ -360,6 +360,7 @@
             for(auto use: var->get_use_list()){
                 Function* func_;
                 func_ = dynamic_cast<Instruction *>(use.val_)->get_parent()->get_parent();
+                // std::cout << func_->get_name() << ":" << var->get_name() << "\n";
                 if(global_variable_use.find(func_) != global_variable_use.end()){
                     global_variable_use.find(func_)->second.insert(var);
                 }
@@ -431,6 +432,10 @@
 
     void CodeGen::global_label_gen(Function* fun){
         //TODO: global varibal address store after program(.LCPIx_y), fill in CodeGen::global_variable_table
+        if(global_variable_use.find(fun) == global_variable_use.end()){
+            global_variable_table.clear();
+            return;        
+        }
         auto used_global = global_variable_use.find(fun)->second;
         global_variable_table.clear();
         label_no = 0;
@@ -444,6 +449,7 @@
 
     void CodeGen::func_call_check(Function* fun){
         max_arg_size = 0;
+        have_func_call = false;
         for(auto bb: fun->get_basic_blocks()){
             for(auto inst: bb->get_instructions()){
                 auto call = dynamic_cast<CallInst*>(inst);
@@ -455,10 +461,8 @@
                 }
                 if(arg_size > max_arg_size)max_arg_size = arg_size;
                 have_func_call = true;
-                return;
             }
         }
-        have_func_call = false;
         return;
     }
 
@@ -466,7 +470,7 @@
         //TODO: arg on stack in reversed sequence
         std::string regcode;
         std::string memcode;
-        std::stack<Value *> push_stack;
+        std::queue<Value *> push_queue;//for sequence changing
         auto fun = dynamic_cast<Function *>(call->get_operand(0));
         int i = 0;
         for(auto arg: call->get_operands()){
@@ -498,19 +502,23 @@
                 }
             }
             else{
-                push_stack.push(arg);
+                push_queue.push(arg);
             }
             i++;
         }
-        while(!push_stack.empty()){
-            Value* arg = push_stack.top();
-            push_stack.pop();
+        int offset = 0;
+        while(!push_queue.empty()){
+            Value* arg = push_queue.front();
+            push_queue.pop();
             auto reg = (reg_map).find(arg)->second->reg_num;
             if(reg >= 0){
+                //TODO: check push?
                 memcode += IR2asm::space;
-                memcode += "push {";
+                memcode += "str ";
                 memcode += IR2asm::Reg(reg).get_code();
-                memcode += "}";
+                memcode += ", ";
+                memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp), offset).get_code();
+                offset += arg->get_type()->get_size();
                 memcode += IR2asm::endl;
             }
             else{
@@ -530,10 +538,16 @@
     std::string CodeGen::callee_arg_move(Function* fun){
         std::string code;
         for(auto arg: fun->get_args()){
-            code += IR2asm::space;
-            int reg = reg_map[arg]->reg_num;
+            int reg;
+            if(reg_map.find(arg)!= reg_map.end()){
+                reg = reg_map[arg]->reg_num;
+            }
+            else{
+                reg = -1;
+            }
             if(arg->get_arg_no() < 4){
                 if(reg >= 0){
+                    code += IR2asm::space;
                     code += "mov ";
                     code += IR2asm::Reg(reg).get_code();
                     code += ", ";
@@ -541,6 +555,7 @@
                     code += IR2asm::endl;
                 }
                 else{
+                    code += IR2asm::space;
                     code += "str ";
                     code += IR2asm::Reg(arg->get_arg_no()).get_code();
                     code += ", ";
@@ -550,6 +565,7 @@
             }
             else{
                 if(reg < 0)continue;
+                code += IR2asm::space;
                 code += "ldr ";
                 code += IR2asm::Reg(reg).get_code();
                 code += ", ";
@@ -608,6 +624,311 @@
     std::string CodeGen::instr_gen(Instruction * inst){
         std::string code;
         //TODO: call functions in IR2asm , deal with phi inst(mov inst)
+        auto instr_type = inst->get_instr_type();
+        switch (instr_type)
+        {
+        case Instruction::ret:
+            if (inst->is_void()) {
+                code += IR2asm::ret();
+            } else {
+                auto ret_val = inst->get_operand(0);
+                auto const_ret_val = dynamic_cast<ConstantInt*>(ret_val);
+                if (const_ret_val) {
+                    code += IR2asm::ret(get_asm_const(const_ret_val));
+                } else {
+                    code += IR2asm::ret(get_asm_reg(ret_val));
+                }
+            }
+            break;
+        case Instruction::br:
+            if (inst->get_num_operand() == 1) {
+                code += IR2asm::br(bb_label[dynamic_cast<BasicBlock*>(inst->get_operand(0))]);
+            } else if (inst->get_num_operand() == 3) {
+                auto cond = dynamic_cast<CmpInst*>(inst->get_operand(0));
+                auto true_bb = dynamic_cast<BasicBlock*>(inst->get_operand(1));
+                auto false_bb = dynamic_cast<BasicBlock*>(inst->get_operand(2));
+                auto cmp_op = cond->get_cmp_op();
+                if (cmp_op == CmpInst::EQ) code += IR2asm::br(get_asm_reg(inst->get_operand(0)), bb_label[false_bb], bb_label[true_bb]);
+                else code += IR2asm::br(get_asm_reg(inst->get_operand(0)), bb_label[true_bb], bb_label[false_bb]);
+            }
+            break;
+        case Instruction::add: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                Value *operand1;
+                IR2asm::Operand2 *operand2;
+                if (const_op1) {
+                    operand1 = op2;
+                    operand2 = new IR2asm::Operand2(const_op1->get_value());
+                } else {
+                    operand1 = op1;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
+                }
+                code += IR2asm::add(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+            break;
+        case Instruction::sub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                Value *operand1;
+                IR2asm::Operand2 *operand2;
+                if (const_op1) {
+                    operand1 = op2;
+                    operand2 = new IR2asm::Operand2(const_op1->get_value());
+                    code += IR2asm::r_sub(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+                } else {
+                    operand1 = op1;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
+                    code += IR2asm::sub(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+                }
+            }
+            break;
+        case Instruction::mul: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                Value *operand1;
+                IR2asm::Operand2 *operand2;
+                if (const_op1) {
+                    operand1 = op2;
+                    operand2 = new IR2asm::Operand2(const_op1->get_value());
+                } else {
+                    operand1 = op1;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
+                }
+                code += IR2asm::mul(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+            break;
+        case Instruction::sdiv: { // divide consant can be optimized
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto operand1 = op1;
+                auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                code += IR2asm::sdiv(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+                break;
+            case Instruction::srem: // srem -> sdiv and msub
+                break;
+            case Instruction::alloca:   // has done before
+                break;
+            case Instruction::load: {
+                IR2asm::Location *addr;
+                auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
+                if (global_addr) {
+                    addr = global_variable_table[global_addr];
+                } else {
+                    addr = stack_map[inst->get_operand(0)];
+                }
+                code += IR2asm::load(get_asm_reg(inst), addr);
+            }
+            break;
+        case Instruction::store: {
+                IR2asm::Location *addr;
+                auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(1));
+                if (global_addr) {
+                    addr = global_variable_table[global_addr];
+                } else {
+                    addr = stack_map[inst->get_operand(0)];
+                }
+                code += IR2asm::load(get_asm_reg(inst->get_operand(0)), addr);
+            }
+            break;
+        case Instruction::cmp: {
+                auto cmp_inst = dynamic_cast<CmpInst*>(inst);
+                auto cmp_op = cmp_inst->get_cmp_op();
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                Value *operand1;
+                IR2asm::Operand2 *operand2;
+                if (const_op1) {
+                    operand1 = op2;
+                    operand2 = new IR2asm::Operand2(const_op1->get_value());
+                } else {
+                    operand1 = op1;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
+                }
+                if (cmp_op == CmpInst::EQ || cmp_op == CmpInst::NE) {
+                    code += IR2asm::lxor(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+                } else if (cmp_op == CmpInst::GT || cmp_op == CmpInst::GE || cmp_op == CmpInst::LT || cmp_op == CmpInst::LE) {
+                    code += IR2asm::cmp(get_asm_reg(operand1), operand2);
+                    code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(0));
+                    switch (cmp_op)
+                    {
+                    case CmpInst::GT:
+                        if (const_op1) code += IR2asm::movle(get_asm_reg(inst), new IR2asm::Operand2(1));
+                        else code += IR2asm::movgt(get_asm_reg(inst), new IR2asm::Operand2(1));
+                        break;
+                    case CmpInst::GE:
+                        if (const_op1) code += IR2asm::movlt(get_asm_reg(inst), new IR2asm::Operand2(1));
+                        else code += IR2asm::movge(get_asm_reg(inst), new IR2asm::Operand2(1));
+                        break;
+                    case CmpInst::LT:
+                        if (const_op1) code += IR2asm::movge(get_asm_reg(inst), new IR2asm::Operand2(1));
+                        else code += IR2asm::movlt(get_asm_reg(inst), new IR2asm::Operand2(1));
+                        break;
+                    case CmpInst::LE:
+                        if (const_op1) code += IR2asm::movgt(get_asm_reg(inst), new IR2asm::Operand2(1));
+                        else code += IR2asm::movle(get_asm_reg(inst), new IR2asm::Operand2(1));
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
+        case Instruction::phi:  // has done before
+            break;
+        case Instruction::call:
+            code += IR2asm::call(new IR2asm::label(inst->get_operand(0)->get_name()));
+            break;
+        case Instruction::getelementptr: {
+                IR2asm::Location *addr;
+                auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
+                if (global_addr) {
+                    addr = global_variable_table[global_addr];
+                } else {
+                    addr = stack_map[inst->get_operand(0)];
+                }
+                code += IR2asm::getelementptr(get_asm_reg(inst), addr);
+            }
+            break;
+        case Instruction::land: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                Value *operand1;
+                IR2asm::Operand2 *operand2;
+                if (const_op1) {
+                    operand1 = op2;
+                    operand2 = new IR2asm::Operand2(const_op1->get_value());
+                } else {
+                    operand1 = op1;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
+                }
+                code += IR2asm::land(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+            break;
+        case Instruction::lor: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                Value *operand1;
+                IR2asm::Operand2 *operand2;
+                if (const_op1) {
+                    operand1 = op2;
+                    operand2 = new IR2asm::Operand2(const_op1->get_value());
+                } else {
+                    operand1 = op1;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
+                }
+                code += IR2asm::lor(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+            break;
+        case Instruction::lxor: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+                auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+                Value *operand1;
+                IR2asm::Operand2 *operand2;
+                if (const_op1) {
+                    operand1 = op2;
+                    operand2 = new IR2asm::Operand2(const_op1->get_value());
+                } else {
+                    operand1 = op1;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
+                }
+                code += IR2asm::lxor(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+            break;
+        case Instruction::zext:
+            break;
+        case Instruction::asr: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto operand1 = op1;
+                auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                code += IR2asm::asr(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+            break;
+        case Instruction::lsl: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto operand1 = op1;
+                auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                code += IR2asm::lsl(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+            break;
+        case Instruction::lsr: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto operand1 = op1;
+                auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                code += IR2asm::lsr(get_asm_reg(inst), get_asm_reg(operand1), operand2);
+            }
+            break;
+        case Instruction::cmpbr:
+            break;
+        case Instruction::muladd:
+            break;
+        case Instruction::mulsub:
+            break;
+        case Instruction::asradd:
+            break;
+        case Instruction::lsladd:
+            break;
+        case Instruction::lsradd:
+            break;
+        case Instruction::asrsub:
+            break;
+        case Instruction::lslsub:
+            break;
+        case Instruction::lsrsub:
+            break;
+        case Instruction::smul_lo:
+            break;
+        case Instruction::smul_hi:
+            break;
+        default:
+            break;
+        }
         return code;
     }
 // } // namespace CodeGen

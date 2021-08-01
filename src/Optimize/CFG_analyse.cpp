@@ -3,6 +3,12 @@
 void CFG_analyse::execute(){
     for (auto func : module->get_functions()){
         if (func->get_basic_blocks().size()==0) continue;
+        //reset
+        for (auto BB : func->get_basic_blocks()){
+            BB->incoming_reset();
+            BB->loop_depth_reset();
+        }
+        //analyse
         incoming_find(func);
         loop_find(func);
     }

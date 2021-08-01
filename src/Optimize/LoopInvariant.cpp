@@ -88,6 +88,7 @@ void LoopInvariant::execute(){
                     for (auto inst : pair.second){
                         pair.first->get_instructions().remove(inst);
                         new_BB->add_instruction(inst);
+                        inst->set_parent(new_BB);
                     }
                 }
                 //BB br change

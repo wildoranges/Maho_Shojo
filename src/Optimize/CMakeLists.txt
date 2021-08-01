@@ -11,5 +11,6 @@ add_library(
         CFG_analyse.cpp
         LoopInvariant.cpp
         AvailableExpr.cpp
+        FuncInline.cpp
 )
 
