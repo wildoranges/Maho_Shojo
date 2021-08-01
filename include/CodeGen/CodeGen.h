@@ -54,6 +54,7 @@ public:
     std::string print_global_table();
     std::string bb_gen(BasicBlock* bb);
     std::string instr_gen(Instruction * inst);
+    std::string phi_union(BasicBlock* bb);
     IR2asm::Reg *get_asm_reg(Value *val){return new IR2asm::Reg((reg_map).find(val)->second->reg_num);}
     IR2asm::constant *get_asm_const(Constant *val){if (dynamic_cast<ConstantZero*>(val)) return new IR2asm::constant(0);
                                                     else {
@@ -61,7 +62,7 @@ public:
                                                         if (const_val) return new IR2asm::constant(const_val->get_value());
                                                     }}
     std::string ret_mov(CallInst* call);
-    bool instr_may_need_push_stack(Instruction *instr) { return !(instr->is_ret() || instr->is_gep() || instr->is_phi() || instr->is_load_const_offset() || instr->is_store_const_offset());}
+    bool instr_may_need_push_stack(Instruction *instr) { return !(instr->is_ret() || instr->is_phi() || instr->is_load_const_offset() || instr->is_store_const_offset());}
 };
 
 #endif
