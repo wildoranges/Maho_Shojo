@@ -288,6 +288,11 @@
                         not_to_save = not_to_save && !reg_map[val]->covers(call);
                     }
                     if(!not_to_save){
+                        if(!call->is_void()){
+                            if(reg_map[call]->reg_num==i){
+                                continue;
+                            }
+                        }
                         to_save_reg.push_back(i);
                     }
                 }
