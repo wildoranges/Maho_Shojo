@@ -184,6 +184,7 @@ public:
     void set_id(int id){id_ = id;}
     int get_id() const{return id_;}
 
+    //get a new instruction with old operands(need changing)
     virtual Instruction *copy_inst(BasicBlock *BB)  = 0;
 
 private:
@@ -342,7 +343,10 @@ public:
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        return new CmpBrInst(cmp_op_,get_operand(0),get_operand(1),BB);
+        auto new_inst = new CmpBrInst(cmp_op_,get_operand(0),get_operand(1),BB);
+        new_inst->set_operand(2, get_operand(2));
+        new_inst->set_operand(3, get_operand(3));
+        return new_inst;
     }
 
 private:
@@ -368,7 +372,9 @@ public:
         for (auto i = 1; i < get_num_operand(); i++){
             args.push_back(get_operand(i));
         }
-        return new CallInst(get_function_type()->get_return_type(),args,BB);
+        auto new_inst = new CallInst(get_function_type()->get_return_type(),args,BB);
+        new_inst->set_operand(0, get_operand(0));
+        return new_inst;
     }
 };
 
@@ -392,10 +398,15 @@ public:
 
     Instruction *copy_inst(BasicBlock *BB) override final{
         if (get_num_operand() == 1){
-            return new BranchInst(BB);
+            auto new_inst = new BranchInst(BB);
+            new_inst->set_operand(0, get_operand(0));
+            return new_inst;
         }
         else{
-            return new BranchInst(get_operand(0),BB);
+            auto new_inst = new BranchInst(get_operand(0),BB);
+            new_inst->set_operand(1, get_operand(1));
+            new_inst->set_operand(2, get_operand(2));
+            return new_inst;
         }
     }
 };
@@ -483,7 +494,9 @@ public:
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        return new StoreConstOffsetInst(get_operand(0), get_operand(1), BB);
+        auto new_inst = new StoreConstOffsetInst(get_operand(0), get_operand(1), BB);
+        new_inst->set_operand(2, get_operand(2));
+        return new_inst;
     }
 
 };
@@ -523,7 +536,9 @@ public:
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        return new LoadConstOffsetInst(get_type(), get_operand(0), BB);
+        auto new_inst = new LoadConstOffsetInst(get_type(), get_operand(0), BB);
+        new_inst->set_operand(1, get_operand(1));
+        return new_inst;
     }
 
 };
@@ -541,7 +556,9 @@ public:
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        return new MovConstInst(get_type(), BB);
+        auto new_inst = new MovConstInst(get_type(), BB);
+        new_inst->set_operand(0, get_operand(0));
+        return new_inst;
     }
 
 };
@@ -590,9 +607,6 @@ class PhiInst : public Instruction
 {
 private:
     PhiInst(OpID op, std::vector<Value *> vals, std::vector<BasicBlock *> val_bbs, Type *ty, BasicBlock *bb);
-    PhiInst(Type *ty, OpID op, unsigned num_ops, BasicBlock *bb)
-        : Instruction(ty, op, num_ops, bb) {}
-    Value *l_val_;
 
 public:
     static PhiInst *create_phi(Type *ty, BasicBlock *bb);
@@ -606,8 +620,15 @@ public:
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        return nullptr;
+        auto new_inst = create_phi(get_type(), BB);
+        for (auto op : get_operands()){
+            new_inst->add_operand(op);
+        }
+        return new_inst;
     }
+
+private:
+    Value *l_val_;
 
 };
 
