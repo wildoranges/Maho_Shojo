@@ -17,6 +17,7 @@
 
 #include "LoopInvariant.h"
 #include "AvailableExpr.h"
+#include "FuncInline.h"
 
 
 void print_help(const std::string& exe_name) {
@@ -92,7 +93,7 @@ int main(int argc, char *argv[])
         } else {
             PassMgr passmgr(m.get());
 
-            passmgr.addPass<CFGSimplifier>();
+            //passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DeadCodeElimination>();
 
@@ -126,6 +127,8 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
+            passmgr.addPass<FuncInline>();
+
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
@@ -140,6 +143,7 @@ int main(int argc, char *argv[])
             passmgr.addPass<CFG_analyse>();
             /****passmgr.addPass<CFG_analyse>();****
              ***this is executed in LoopInvariant***/
+
             m->set_print_name();
             passmgr.execute();
         }
