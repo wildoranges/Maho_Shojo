@@ -13,7 +13,7 @@ public:
     explicit FuncInline(Module* module): Pass(module){}
     void execute() final;
     const std::string get_name() const override {return name;}
-    void no_recursive_call_find();
+    void need_inline_call_find();
     void func_inline();
 };
 

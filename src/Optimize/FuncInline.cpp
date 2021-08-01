@@ -1,13 +1,14 @@
 #include "FuncInline.h"
+#include <math.h>
 
 #define HUGE_SIZE 100
 
 void FuncInline::execute(){
-    no_recursive_call_find();
+    need_inline_call_find();
     func_inline();
 }
 
-void FuncInline::no_recursive_call_find(){
+void FuncInline::need_inline_call_find(){
     std::map<Function* ,int> recursive_check;
     for (auto func : module->get_functions()){
         if (func->get_num_basic_blocks() == 0){
@@ -16,9 +17,6 @@ void FuncInline::no_recursive_call_find(){
         auto LOC = 0;
         for (auto BB : func->get_basic_blocks()){
             LOC += BB->get_num_of_instr();
-        }
-        if (LOC > HUGE_SIZE){
-            continue;
         }
         auto use_list = func->get_use_list();
         for (auto use : use_list){
@@ -35,6 +33,10 @@ void FuncInline::no_recursive_call_find(){
         for (auto use : use_list){
             auto inst_val = use.val_;
             auto inst = dynamic_cast<Instruction *>(inst_val);
+            auto depth = inst->get_parent()->get_loop_depth();
+            if (depth + 1 < exp(0.04 * (double)LOC)){
+                continue;
+            }
             calling_pair.push_back({inst->get_parent()->get_parent(),{inst,func}});
         }
     }
