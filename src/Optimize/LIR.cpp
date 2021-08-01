@@ -10,8 +10,8 @@ void LIR::execute() {
         if (func->get_num_basic_blocks()>0){
             for (auto bb : func->get_basic_blocks()){
                 // split instr
-                load_const_offset(bb);
-                store_const_offset(bb);
+                //load_const_offset(bb);
+                //store_const_offset(bb);
                 split_srem(bb);
                 split_gep(bb);
                 //div_const2mul(bb);
@@ -29,6 +29,29 @@ void LIR::execute() {
 
 void LIR::load_const_offset(BasicBlock *bb) {
     // TODO
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
+        auto instr = *iter;
+        if (instr->is_load()) {
+            auto load_instr = dynamic_cast<LoadInst*>(instr);
+            auto ptr = load_instr->get_lval();
+            auto gep_ptr = dynamic_cast<GetElementPtrInst*>(ptr);
+            if (gep_ptr) {
+                auto offset = gep_ptr->get_operand(2);
+                auto const_offset = dynamic_cast<ConstantInt*>(offset);
+                if (const_offset) {
+                    auto load_const_offset_instr = LoadConstOffsetInst::create_load_const_offset(ptr->get_type()->get_pointer_element_type(), gep_ptr->get_operand(0), const_offset, bb);
+                    instructions.pop_back();
+                    bb->add_instruction(iter, load_const_offset_instr);
+                    //bb->delete_instr(op_ins1);
+                    iter--;
+                    instr->replace_all_use_with(load_const_offset_instr);
+                    bb->delete_instr(instr);
+                    continue;
+                }
+            }
+        }
+    }
 }
 
 void LIR::store_const_offset(BasicBlock *bb) {
@@ -36,7 +59,6 @@ void LIR::store_const_offset(BasicBlock *bb) {
 }
 
 void LIR::mov_const(BasicBlock *bb) {
-    // TODO
     auto &instructions = bb->get_instructions();
     for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
         auto instr = *iter;
