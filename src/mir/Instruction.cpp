@@ -788,6 +788,29 @@ std::string LoadConstOffsetInst::print()
     return instr_ir;
 }
 
+MovConstInst::MovConstInst(Type *ty, ConstantInt *const_val, BasicBlock *bb)
+    : Instruction(ty, Instruction::mov_const, 1, bb)
+{
+    set_operand(0, const_val);
+}
+
+MovConstInst *MovConstInst::create_mov_const(Type *ty, ConstantInt *const_val, BasicBlock *bb)
+{
+    return new MovConstInst(ty, const_val, bb);
+}
+
+std::string MovConstInst::print()
+{
+    std::string instr_ir;
+    instr_ir += "%";
+    instr_ir += this->get_name();
+    instr_ir += " = ";
+    instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
+    instr_ir += " ";
+    instr_ir += print_as_op(this->get_operand(0), false);
+    return instr_ir;
+}
+
 AllocaInst::AllocaInst(Type *ty, BasicBlock *bb)
     : Instruction(PointerType::get(ty), Instruction::alloca, 0, bb), alloca_ty_(ty)
 {

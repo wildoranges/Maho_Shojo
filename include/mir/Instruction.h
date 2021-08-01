@@ -56,6 +56,7 @@ public:
         smul_hi,
         load_const_offset,
         store_const_offset,
+        mov_const,
 
     };
     // create instruction, auto insert to bb
@@ -108,6 +109,7 @@ public:
             case smul_hi: return "smul_hi"; break;
             case load_const_offset: return "load_const_offset"; break;
             case store_const_offset: return "store_const_offset"; break;
+            case mov_const: return "mov_const"; break;
         
         default: return ""; break;
         }
@@ -126,6 +128,7 @@ public:
 
     bool is_load_const_offset() { return op_id_ == load_const_offset; }
     bool is_store_const_offset() { return op_id_ == store_const_offset; }
+    bool is_mov_const() { return op_id_ == mov_const; }
 
     bool is_add() { return op_id_ == add; }
     bool is_sub() { return op_id_ == sub; }
@@ -513,6 +516,21 @@ public:
     ConstantInt *get_offset() { return dynamic_cast<ConstantInt*>(this->get_operand(1)); }
 
     Type *get_load_type() const;
+
+    virtual std::string print() override;
+
+    // TODO: copy function
+
+};
+
+class MovConstInst : public Instruction
+{
+private:
+    MovConstInst(Type *ty, ConstantInt *const_val, BasicBlock *bb);
+
+public:
+    static MovConstInst *create_mov_const(Type *ty, ConstantInt *const_val, BasicBlock *bb);
+    ConstantInt *get_const() { return dynamic_cast<ConstantInt*>(this->get_operand(0)); }
 
     virtual std::string print() override;
 
