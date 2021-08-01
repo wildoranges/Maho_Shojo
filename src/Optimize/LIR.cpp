@@ -59,19 +59,56 @@ void LIR::store_const_offset(BasicBlock *bb) {
 }
 
 void LIR::mov_const(BasicBlock *bb) {
+    // TODO: need support other LIR instructions
     auto &instructions = bb->get_instructions();
     for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
         auto instr = *iter;
-        if (instr->is_div() || instr->is_rem() || instr->is_asr() || instr->is_lsl() || instr->is_lsr() || instr->is_store()) {
+        if (instr->is_asr() || instr->is_lsl() || instr->is_lsr() || instr->is_store()) {
             auto op1 = instr->get_operand(0);
             auto const_op1 = dynamic_cast<ConstantInt*>(op1);
             if (const_op1) {
                 auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
                 instructions.pop_back();
                 bb->add_instruction(iter, mov_const_instr);
-                op1->remove_use(op1);
+                mov_const_instr->remove_use(op1);
                 op1->replace_all_use_with(mov_const_instr);
                 mov_const_instr->set_operand(0, op1);
+            }
+        }
+        if (instr->is_add() || instr->is_sub()) {
+            auto op2 = instr->get_operand(1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op2) {
+                auto const_op2_val = const_op2->get_value();
+                if (const_op2_val >= (1<<12) || const_op2_val < -(1<<12)) {
+                    auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+                    instructions.pop_back();
+                    bb->add_instruction(iter, mov_const_instr);
+                    mov_const_instr->remove_use(op2);
+                    op2->replace_all_use_with(mov_const_instr);
+                    mov_const_instr->set_operand(0, op2);
+                }
+            }
+        }
+        if (instr->is_mul() || instr->is_div() || instr->is_rem()) {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                mov_const_instr->remove_use(op1);
+                op1->replace_all_use_with(mov_const_instr);
+                mov_const_instr->set_operand(0, op1);
+            } else if (const_op2) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                mov_const_instr->remove_use(op2);
+                op2->replace_all_use_with(mov_const_instr);
+                mov_const_instr->set_operand(0, op2);
             }
         }
     }
