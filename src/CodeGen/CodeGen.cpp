@@ -624,6 +624,7 @@
     std::string CodeGen::instr_gen(Instruction * inst){
         std::string code;
         //TODO: call functions in IR2asm , deal with phi inst(mov inst)
+        // may have many bugs
         auto instr_type = inst->get_instr_type();
         switch (instr_type)
         {
@@ -943,6 +944,66 @@
         case Instruction::smul_lo:
             break;
         case Instruction::smul_hi:
+            break;
+        case Instruction::load_const_offset: {
+                auto load_const_offset_inst = dynamic_cast<LoadConstOffsetInst*>(inst);
+                auto ptr = load_const_offset_inst->get_lval();
+                auto offset = load_const_offset_inst->get_offset()->get_value();
+                auto arg_ptr = dynamic_cast<Argument*>(ptr);
+                if (arg_ptr) {
+                    auto arg_num = arg_ptr->get_arg_no();
+                    if (arg_num > 4) {
+                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num]);
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), offset));
+                    } else {
+                        if (get_asm_reg(ptr)->get_id() < 0) {
+                            code += IR2asm::getelementptr(get_asm_reg(inst), stack_map[ptr]);
+                            code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), offset));
+                        } else {
+                            code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(ptr), offset));
+                        }
+                    }
+                } else {
+                    if (get_asm_reg(ptr)->get_id() < 0) {
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), stack_map[ptr]->get_offset() + offset));
+                    } else {
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(ptr), offset));
+                    }
+                }
+            }
+            break;
+        case Instruction::store_const_offset: {
+                auto store_const_offset = dynamic_cast<LoadConstOffsetInst*>(inst);
+                auto ptr = store_const_offset->get_lval();
+                auto offset = store_const_offset->get_offset()->get_value();
+                auto arg_ptr = dynamic_cast<Argument*>(ptr);
+                if (arg_ptr) {
+                    auto arg_num = arg_ptr->get_arg_no();
+                    if (arg_num > 4) {
+                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num]);
+                        code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), offset));
+                    } else {
+                        if (get_asm_reg(ptr)->get_id() < 0) {
+                            code += IR2asm::getelementptr(get_asm_reg(inst), stack_map[ptr]);
+                            code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), offset));
+                        } else {
+                            code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(ptr), offset));
+                        }
+                    }
+                } else {
+                    if (get_asm_reg(ptr)->get_id() < 0) {
+                        code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), stack_map[ptr]->get_offset() + offset));
+                    } else {
+                        code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(ptr), offset));
+                    }
+                }
+            }
+            break;
+        case Instruction::mov_const: {
+                auto mov_inst = dynamic_cast<MovConstInst*>(inst);
+                auto const_val = mov_inst->get_const()->get_value();
+                code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(const_val));
+            }
             break;
         default:
             break;
