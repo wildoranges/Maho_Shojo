@@ -806,13 +806,23 @@
             break;
         case Instruction::getelementptr: {
                 IR2asm::Location *addr;
-                auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
-                if (global_addr) {
-                    addr = global_variable_table[global_addr];
+                auto arg_addr = dynamic_cast<Argument*>(inst->get_operand(0));
+                if (arg_addr) {
+                    auto arg_num = arg_addr->get_arg_no();
+                    if (arg_num < 4) {
+                        code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(*get_asm_reg(inst->get_operand(0))));
+                    } else {
+                        code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num]);
+                    }
                 } else {
-                    addr = stack_map[inst->get_operand(0)];
+                    auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
+                    if (global_addr) {
+                        addr = global_variable_table[global_addr];
+                    } else {
+                        addr = stack_map[inst->get_operand(0)];
+                    }
+                    code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                 }
-                code += IR2asm::getelementptr(get_asm_reg(inst), addr);
             }
             break;
         case Instruction::land: {
