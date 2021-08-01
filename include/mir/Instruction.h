@@ -54,6 +54,8 @@ public:
         lsrsub,
         smul_lo,
         smul_hi,
+        load_const_offset,
+        store_const_offset,
 
     };
     // create instruction, auto insert to bb
@@ -104,6 +106,8 @@ public:
             case lsrsub: return "lsrsub"; break;
             case smul_lo: return "smul_lo"; break;
             case smul_hi: return "smul_hi"; break;
+            case load_const_offset: return "load_const_offset"; break;
+            case store_const_offset: return "store_const_offset"; break;
         
         default: return ""; break;
         }
@@ -111,7 +115,7 @@ public:
 
 
 
-    bool is_void() { return ((op_id_ == cmpbr) || (op_id_ == ret) || (op_id_ == br) || (op_id_ == store) || (op_id_ == call && this->get_type()->is_void_type())); }
+    bool is_void() { return ((op_id_ == cmpbr) || (op_id_ == ret) || (op_id_ == br) || (op_id_ == store_const_offset) || (op_id_ == store) || (op_id_ == call && this->get_type()->is_void_type())); }
 
     bool is_phi() { return op_id_ == phi; }
     bool is_store() { return op_id_ == store; }
@@ -119,6 +123,9 @@ public:
     bool is_ret() { return op_id_ == ret; }
     bool is_load() { return op_id_ == load; }
     bool is_br() { return op_id_ == br; }
+
+    bool is_load_const_offset() { return op_id_ == load_const_offset; }
+    bool is_store_const_offset() { return op_id_ == store_const_offset; }
 
     bool is_add() { return op_id_ == add; }
     bool is_sub() { return op_id_ == sub; }
@@ -458,6 +465,24 @@ public:
 
 };
 
+class StoreConstOffsetInst : public Instruction
+{
+private:
+    StoreConstOffsetInst(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+
+public:
+    static StoreConstOffsetInst *create_store_const_offset(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+
+    Value *get_rval() { return this->get_operand(0); }
+    Value *get_lval() { return this->get_operand(1); }
+    ConstantInt *get_offset() { return dynamic_cast<ConstantInt*>(this->get_operand(2)); }
+
+    virtual std::string print() override;
+
+    // TODO: copy function
+
+};
+
 class LoadInst : public Instruction
 {
 private:
@@ -474,6 +499,24 @@ public:
     Instruction *copy_inst(BasicBlock *BB) override final{
         return new LoadInst(get_type(),get_operand(0),BB);
     }
+
+};
+
+class LoadConstOffsetInst : public Instruction
+{
+private:
+    LoadConstOffsetInst(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+
+public:
+    static LoadConstOffsetInst *create_load_const_offset(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+    Value *get_lval() { return this->get_operand(0); }
+    ConstantInt *get_offset() { return dynamic_cast<ConstantInt*>(this->get_operand(1)); }
+
+    Type *get_load_type() const;
+
+    virtual std::string print() override;
+
+    // TODO: copy function
 
 };
 

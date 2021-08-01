@@ -48,6 +48,8 @@ Module::Module(std::string name)
     instr_id2string_.insert({ Instruction::call, "call" });
     instr_id2string_.insert({ Instruction::getelementptr, "getelementptr" });
     instr_id2string_.insert({ Instruction::zext, "zext" });
+    instr_id2string_.insert({ Instruction::load_const_offset, "load_const_offset" });
+    instr_id2string_.insert({ Instruction::store_const_offset, "store_const_offset" });
 }
 
 Module::~Module()
