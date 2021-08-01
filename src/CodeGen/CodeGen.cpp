@@ -627,9 +627,7 @@
                 code += arg_move(call_inst);
                 code += instr_gen(call_inst);
                 code += caller_reg_restore(bb->get_parent(),call_inst);
-            }else if(dynamic_cast<ReturnInst*>(inst)){
-                code += instr_gen(inst);
-            }else{
+            }else if(instr_may_need_push_stack(inst)){
                 std::vector<int> store_list = {};
                 std::set<Value*> to_store_set = {};
                 std::set<Value*> to_ld_set = {};
@@ -713,10 +711,12 @@
                 for(auto inter:interval_set){
                     inter->reg_num = -1;
                 }
+            }else{
+                code += instr_gen(inst);
             }
         }
-        //TODO: instruction gen
         return code;
+        //TODO:PHI INST CHECK
     }
 
     std::string CodeGen::instr_gen(Instruction * inst){
