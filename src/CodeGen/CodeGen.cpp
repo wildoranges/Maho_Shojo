@@ -954,16 +954,45 @@
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
                     if (global_addr) {
                         code += IR2asm::load(get_asm_reg(inst), global_variable_table[global_addr]);
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), 0));
+                    } else {
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst->get_operand(0)), 0));
                     }
-                    code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), 0));
                 }
                 break;
                 case Instruction::store: {
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(1));
+                    int ld_reg_id = 0;
+                    bool need_pop = true;
                     if (global_addr) {
-                        code += IR2asm::load(get_asm_reg(inst->get_operand((1))), global_variable_table[global_addr]);
+                        auto unused_reg = inst->get_parent()->get_parent()->get_unused_reg_num();
+                        if(!unused_reg.empty()){
+                            int reg_id = *unused_reg.begin();
+                            ld_reg_id = reg_id;
+                            if(reg_id<=3&&reg_id>=0){
+                                need_pop = false;
+                            }
+                        }
+                        if(need_pop){
+                            code += IR2asm::space;
+                            code += "push {";
+                            code += IR2asm::Reg(ld_reg_id).get_code();
+                            code += "}";
+                            code += IR2asm::endl;
+                        }
+                        code += IR2asm::load(new IR2asm::Reg(ld_reg_id),global_variable_table[global_addr]);
+                    }else{
+                        need_pop = false;
+                        ld_reg_id = get_asm_reg(inst->get_operand(1))->get_id();
                     }
-                    code += IR2asm::store(get_asm_reg(inst->get_operand((0))), new IR2asm::Regbase(*get_asm_reg(inst->get_operand(1)), 0));
+                    code += IR2asm::store(get_asm_reg(inst->get_operand((0))), new IR2asm::Regbase(IR2asm::Reg(ld_reg_id), 0));
+                    if(need_pop){
+                        code += IR2asm::space;
+                        code += "pop {";
+                        code += IR2asm::Reg(ld_reg_id).get_code();
+                        code += "}";
+                        code += IR2asm::endl;
+                    }
                 }
                 break;
                 case Instruction::cmp: // DONE in cmpbr
