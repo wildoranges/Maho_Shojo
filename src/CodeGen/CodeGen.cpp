@@ -626,7 +626,12 @@
         if(bb_label[bb]->get_code() != ""){
             code += bb_label[bb]->get_code()+":"+IR2asm::endl;
         }
+        Instruction* br_inst = nullptr;
         for(auto inst : bb->get_instructions()){
+            if(inst->isTerminator()){
+                br_inst = inst;
+                break;
+            }
             if(dynamic_cast<CallInst*>(inst)){
                 auto call_inst = dynamic_cast<CallInst*>(inst);        
                 code += caller_reg_store(bb->get_parent(),call_inst);
@@ -722,7 +727,9 @@
                 code += instr_gen(inst);
             }
         }
+
         code += phi_union(bb);
+        code += instr_gen(br_inst);
         return code;
         //TODO:PHI INST CHECK
     }
@@ -866,7 +873,10 @@
                     }
                 }
                 break;
-            case Instruction::br: // DONE in cmpbr
+            case Instruction::br:
+                if (inst->get_num_operand() == 1) {
+                    code += IR2asm::b(bb_label[dynamic_cast<BasicBlock*>(inst->get_operand(0))]);
+                }
                 break;
             case Instruction::add: {
                     auto op1 = inst->get_operand(0);
