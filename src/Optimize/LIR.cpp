@@ -23,7 +23,7 @@ void LIR::execute() {
                 // merge instr (when all optimization finished)
                 //merge_mul_add(bb);
                 //merge_mul_sub(bb);
-                //merge_cmp_br(bb);
+                merge_cmp_br(bb);
             }
         }
     }
@@ -116,31 +116,28 @@ void LIR::mov_const(BasicBlock *bb) {
     }
 }
 
-void LIR::merge_cmp_br(BasicBlock* bb) {
+void LIR::merge_cmp_br(BasicBlock* bb) { // FIXME: may have bugs
     auto terminator = bb->get_terminator();
     if (terminator->is_br()){
         auto br = dynamic_cast<BranchInst *>(terminator);
         if (br->is_cond_br()){
             auto inst = dynamic_cast<Instruction *>(br->get_operand(0));
 
-            if (inst->is_cmp()) {
+            if (inst && inst->is_cmp()) {
                 auto br_operands = br->get_operands();
                 auto inst_cmp = dynamic_cast<CmpInst *>(inst);
-                if (inst_cmp->get_parent() == bb && inst_cmp->get_use_list().size() == 1) {
-                    auto cmp_ops = inst_cmp->get_operands();
-                    auto cmp_op = inst_cmp->get_cmp_op();
-                    auto true_bb = dynamic_cast<BasicBlock* >(br_operands[1]);
-                    auto false_bb = dynamic_cast<BasicBlock* >(br_operands[2]);
-                    true_bb->remove_pre_basic_block(bb);
-                    false_bb->remove_pre_basic_block(bb);
-                    bb->remove_succ_basic_block(true_bb);
-                    bb->remove_succ_basic_block(false_bb);
-                    auto cmp_br = CmpBrInst::create_cmpbr(cmp_op,cmp_ops[0],cmp_ops[1],
-                                                        true_bb,false_bb,
-                                                        bb,module);
-                    bb->delete_instr(inst_cmp);
-                    bb->delete_instr(br);
-                }
+                auto cmp_ops = inst_cmp->get_operands();
+                auto cmp_op = inst_cmp->get_cmp_op();
+                auto true_bb = dynamic_cast<BasicBlock* >(br_operands[1]);
+                auto false_bb = dynamic_cast<BasicBlock* >(br_operands[2]);
+                true_bb->remove_pre_basic_block(bb);
+                false_bb->remove_pre_basic_block(bb);
+                bb->remove_succ_basic_block(true_bb);
+                bb->remove_succ_basic_block(false_bb);
+                auto cmp_br = CmpBrInst::create_cmpbr(cmp_op,cmp_ops[0],cmp_ops[1],
+                                                    true_bb,false_bb,
+                                                    bb,module);
+                bb->delete_instr(br);
             }
         }
     }

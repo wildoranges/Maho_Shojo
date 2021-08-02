@@ -108,7 +108,7 @@ void CFGSimplifier::compute_postorder() {
 }
 
 bool CFGSimplifier::bb_can_delete(BasicBlock *bb) {
-    // for bb end with br (not condbr)
+    if (bb == bb->get_parent()->get_entry_block()) return false;
     auto terminator = bb->get_terminator();
     auto target_bb = terminator->get_operand(0);
     for (auto pre_bb : bb->get_pre_basic_blocks()) {
@@ -215,9 +215,6 @@ bool CFGSimplifier::one_pass() {
     std::vector<BasicBlock*> wait_delete_bb;
     bool changed = false;
     for (auto bb : postorder_bb_list) {
-        if (bb == func_->get_entry_block()) {
-            continue;
-        }
         if (is_self_loop(bb)) {
             wait_delete_bb.push_back(bb);
             continue;
