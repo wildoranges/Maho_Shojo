@@ -812,6 +812,10 @@
     }
 
     std::string CodeGen::phi_union(BasicBlock* bb, Instruction* br_inst){
+        //TODO:right?
+        if(dynamic_cast<ReturnInst *>(br_inst)){
+            return instr_gen(br_inst);
+        }
         std::string cmp;
         std::string succ_code;
         std::string fail_code;
