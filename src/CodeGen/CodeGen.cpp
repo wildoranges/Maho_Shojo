@@ -300,17 +300,18 @@
                 }
             }
             if(!to_save_reg.empty()){
-                code += IR2asm::space;
-                code += "push {";
-                int save_size = to_save_reg.size();
-                int i = 0;
-                for(; i < save_size - 1; i++){
-                    code += IR2asm::Reg(to_save_reg[i]).get_code();
-                    code += ", ";
-                }
-                code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
-                code += "}";
-                code += IR2asm::endl;
+//                code += IR2asm::space;
+//                code += "push {";
+//                int save_size = to_save_reg.size();
+//                int i = 0;
+//                for(; i < save_size - 1; i++){
+//                    code += IR2asm::Reg(to_save_reg[i]).get_code();
+//                    code += ", ";
+//                }
+//                code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
+//                code += "}";
+//                code += IR2asm::endl;
+                code += push_regs(to_save_reg);
             }
         }
         return code;
@@ -334,7 +335,7 @@
                     code += "str ";
                     code += IR2asm::Reg(0).get_code();
                     code += ", ";
-                    code += stack_map[call]->get_code();
+                    code += stack_map[call]->get_ofst_code(sp_extra_ofst);
                     code += IR2asm::endl;
                 }
             }
@@ -342,16 +343,17 @@
 
         if(arg_num > 4)arg_num = 4;
         if(!to_save_reg.empty()){
-            code += IR2asm::space;
-            code += "pop {";
-            auto save_size = to_save_reg.size();
-            for(int i = 0; i < save_size - 1; i++){
-                code += IR2asm::Reg(to_save_reg[i]).get_code();
-                code += ", ";
-            }
-            code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
-            code += "}";
-            code += IR2asm::endl;
+//            code += IR2asm::space;
+//            code += "pop {";
+//            auto save_size = to_save_reg.size();
+//            for(int i = 0; i < save_size - 1; i++){
+//                code += IR2asm::Reg(to_save_reg[i]).get_code();
+//                code += ", ";
+//            }
+//            code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
+//            code += "}";
+//            code += IR2asm::endl;
+            code += pop_regs(to_save_reg);
         }
         return code;
     }
@@ -521,7 +523,7 @@
                     regcode += "ldr ";
                     regcode += IR2asm::Reg(i).get_code();
                     regcode += ", ";
-                    regcode += stack_map.find(arg)->second->get_code();
+                    regcode += stack_map.find(arg)->second->get_ofst_code(sp_extra_ofst);
                     regcode += IR2asm::endl;
                 }
             }
@@ -540,7 +542,9 @@
                 memcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
                 memcode += IR2asm::endl;
                 memcode += IR2asm::space;
-                memcode += "push {r0}";
+                memcode += "str r0, ";
+                memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp), offset).get_ofst_code(sp_extra_ofst);
+                offset += arg->get_type()->get_size();
                 memcode += IR2asm::endl;
                 continue;
             }
@@ -551,7 +555,7 @@
                 memcode += "str ";
                 memcode += IR2asm::Reg(reg).get_code();
                 memcode += ", ";
-                memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp), offset).get_code();
+                memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp), offset).get_ofst_code(sp_extra_ofst);
                 offset += arg->get_type()->get_size();
                 memcode += IR2asm::endl;
             }
@@ -559,10 +563,12 @@
                 auto srcaddr = stack_map.find(arg)->second;
                 memcode += IR2asm::space;
                 memcode += "ldr r0, ";
-                memcode += srcaddr->get_code();
+                memcode += srcaddr->get_ofst_code(sp_extra_ofst);
                 memcode += IR2asm::endl;
                 memcode += IR2asm::space;
-                memcode += "push {r0}";
+                memcode += "str r0, ";
+                memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp), offset).get_ofst_code(sp_extra_ofst);
+                offset += arg->get_type()->get_size();
                 memcode += IR2asm::endl;
             }
         }
@@ -593,7 +599,7 @@
                     code += "str ";
                     code += IR2asm::Reg(arg->get_arg_no()).get_code();
                     code += ", ";
-                    code += stack_map[arg]->get_code();
+                    code += stack_map[arg]->get_ofst_code(sp_extra_ofst);
                     code += IR2asm::endl;
                 }
             }
@@ -612,6 +618,7 @@
 
     std::string CodeGen::function_gen(Function* fun){
         std::string code;
+        sp_extra_ofst = 0;
         global_label_gen(fun);
         make_linear_bb(fun);
         func_call_check(fun);
@@ -634,6 +641,32 @@
         code += IR2asm::space + "bx lr" + IR2asm::endl;
         code += print_global_table();
         // std::cout << code << IR2asm::endl;
+        return code;
+    }
+
+    std::string CodeGen::push_regs(std::vector<int> &reg_list) {
+        std::string code;
+        code += IR2asm::space;
+        code += "push {";
+        for(auto reg: reg_list){
+            code += IR2asm::Reg(reg).get_code();
+            if(reg != *reg_list.rbegin())code += ", ";
+        }
+        code += "}" + IR2asm::endl;
+        sp_extra_ofst += reg_list.size() * reg_size;
+        return code;
+    }
+
+    std::string CodeGen::pop_regs(std::vector<int> &reg_list) {
+        std::string code;
+        code += IR2asm::space;
+        code += "pop {";
+        for(auto reg: reg_list){
+            code += IR2asm::Reg(reg).get_code();
+            if(reg != *reg_list.rbegin())code += ", ";
+        }
+        code += "}" + IR2asm::endl;
+        sp_extra_ofst -= reg_list.size() * reg_size;
         return code;
     }
 
@@ -696,21 +729,23 @@
                     }
                 }
                 if(!store_list.empty()){
-                    code += IR2asm::space;
-                    code += "push {";
-                    int lst_size = store_list.size() - 1;
-                    for(int i = 0;i < lst_size;i++){
-                        code += IR2asm::Reg(store_list[i]).get_code();
-                        code += ", ";
-                    }
-                    code += IR2asm::Reg(store_list[lst_size]).get_code();
-                    code += "}";
-                    code += IR2asm::endl;
+//                    code += IR2asm::space;
+//                    code += "push {";
+//                    int lst_size = store_list.size() - 1;
+//                    for(int i = 0;i < lst_size;i++){
+//                        code += IR2asm::Reg(store_list[i]).get_code();
+//                        code += ", ";
+//                    }
+//                    code += IR2asm::Reg(store_list[lst_size]).get_code();
+//                    code += "}";
+//                    code += IR2asm::endl;
+                    code += push_regs(store_list);
                 }
                 for(auto opr:to_ld_set){
                     code += IR2asm::space;
                     code += "ldr ";
-                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+ stack_map[opr]->get_code();
+                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
+                            stack_map[opr]->get_ofst_code(sp_extra_ofst);
                     code += IR2asm::endl;
                 }
 
@@ -719,21 +754,23 @@
                 for(auto opr:to_store_set){
                     code += IR2asm::space;
                     code += "str ";
-                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+ stack_map[opr]->get_code();
+                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
+                            stack_map[opr]->get_ofst_code(sp_extra_ofst);
                     code += IR2asm::endl;
                 }
 
                 if(!store_list.empty()){
-                    code += IR2asm::space;
-                    code += "pop {";
-                    int lst_size = store_list.size() - 1;
-                    for(int i = 0;i < lst_size;i++){
-                        code += IR2asm::Reg(store_list[i]).get_code();
-                        code += ", ";
-                    }
-                    code += IR2asm::Reg(store_list[lst_size]).get_code();
-                    code += "}";
-                    code += IR2asm::endl;
+//                    code += IR2asm::space;
+//                    code += "pop {";
+//                    int lst_size = store_list.size() - 1;
+//                    for(int i = 0;i < lst_size;i++){
+//                        code += IR2asm::Reg(store_list[i]).get_code();
+//                        code += ", ";
+//                    }
+//                    code += IR2asm::Reg(store_list[lst_size]).get_code();
+//                    code += "}";
+//                    code += IR2asm::endl;
+                    code += pop_regs(store_list);
                 }
 
                 for(auto inter:interval_set){
@@ -793,7 +830,9 @@
                         code += std::to_string(const_val);
                         code += IR2asm::endl;
                     }else{
-                        code += IR2asm::space+"push {r0}"+IR2asm::endl;
+//                        code += IR2asm::space+"push {r0}"+IR2asm::endl;
+                        std::vector<int> save_reg = {0};
+                        code += push_regs(save_reg);
                         code += IR2asm::space;
                         code += "LDR r0,=";
                         code += std::to_string(const_val);
@@ -801,9 +840,10 @@
                         code += IR2asm::space;
                         code += "str r0";
                         code += ", ";
-                        code += stack_map[target]->get_code();
+                        code += stack_map[target]->get_ofst_code(sp_extra_ofst);
                         code += IR2asm::endl;
-                        code += IR2asm::space+"pop {r0}"+IR2asm::endl;
+//                        code += IR2asm::space+"pop {r0}"+IR2asm::endl;
+                        code += pop_regs(save_reg);
                     }
                 }
             }else{
@@ -811,18 +851,20 @@
                     for(auto target:opr2phi[opr]){
                         auto tar_inter = reg_map[target];
                         if(tar_inter->reg_num>=0){
-                            code += IR2asm::space;
-                            code += "mov ";
-                            code += IR2asm::Reg(tar_inter->reg_num).get_code();
-                            code += ", ";
-                            code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
-                            code += IR2asm::endl;
+                            if(tar_inter->reg_num!=reg_map[opr]->reg_num){
+                                code += IR2asm::space;
+                                code += "mov ";
+                                code += IR2asm::Reg(tar_inter->reg_num).get_code();
+                                code += ", ";
+                                code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
+                                code += IR2asm::endl;
+                            }
                         }else{
                             code += IR2asm::space;
                             code += "str ";
                             code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
                             code += ", ";
-                            code += stack_map[target]->get_code();
+                            code += stack_map[target]->get_ofst_code(sp_extra_ofst);
                             code += IR2asm::endl;
                         }
                     }
@@ -834,23 +876,26 @@
                             code += "ldr ";
                             code += IR2asm::Reg(tar_inter->reg_num).get_code();
                             code += ", ";
-                            code += stack_map[opr]->get_code();
+                            code += stack_map[opr]->get_ofst_code(sp_extra_ofst);
                             code += IR2asm::endl;
                         }else{
+//                            code += IR2asm::space;
+//                            code += "push {lr}";
+//                            code += IR2asm::endl;
+                            std::vector<int> save_reg = {0};
+                            code += push_regs(save_reg);
                             code += IR2asm::space;
-                            code += "push {lr}";
-                            code += IR2asm::endl;
-                            code += IR2asm::space;
-                            code += "ldr lr, ";
-                            code += stack_map[opr]->get_code();
+                            code += "ldr r0, ";
+                            code += stack_map[opr]->get_ofst_code(sp_extra_ofst);
                             code += IR2asm::endl;
                             code += IR2asm::space;
                             code += "str lr, ";
-                            code += stack_map[target]->get_code();
+                            code += stack_map[target]->get_ofst_code(sp_extra_ofst);
                             code += IR2asm::endl;
-                            code += IR2asm::space;
-                            code += "pop {lr}";
-                            code += IR2asm::endl;
+//                            code += IR2asm::space;
+//                            code += "pop {lr}";
+//                            code += IR2asm::endl;
+                            code += pop_regs(save_reg);
                         }
                     }
                 }
@@ -990,6 +1035,7 @@
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(1));
                     int ld_reg_id = 0;
                     bool need_pop = true;
+                    std::vector<int> tmp_reg;
                     if (global_addr) {
                         auto unused_reg = inst->get_parent()->get_parent()->get_unused_reg_num();
                         if(!unused_reg.empty()){
@@ -1000,11 +1046,13 @@
                             }
                         }
                         if(need_pop){
-                            code += IR2asm::space;
-                            code += "push {";
-                            code += IR2asm::Reg(ld_reg_id).get_code();
-                            code += "}";
-                            code += IR2asm::endl;
+//                            code += IR2asm::space;
+//                            code += "push {";
+//                            code += IR2asm::Reg(ld_reg_id).get_code();
+//                            code += "}";
+//                            code += IR2asm::endl;
+                            tmp_reg.push_back(ld_reg_id);
+                            code += push_regs(tmp_reg);
                         }
                         code += IR2asm::load(new IR2asm::Reg(ld_reg_id),global_variable_table[global_addr]);
                     }else{
@@ -1013,11 +1061,12 @@
                     }
                     code += IR2asm::store(get_asm_reg(inst->get_operand((0))), new IR2asm::Regbase(IR2asm::Reg(ld_reg_id), 0));
                     if(need_pop){
-                        code += IR2asm::space;
-                        code += "pop {";
-                        code += IR2asm::Reg(ld_reg_id).get_code();
-                        code += "}";
-                        code += IR2asm::endl;
+//                        code += IR2asm::space;
+//                        code += "pop {";
+//                        code += IR2asm::Reg(ld_reg_id).get_code();
+//                        code += "}";
+//                        code += IR2asm::endl;
+                        code += pop_regs(tmp_reg);
                     }
                 }
                 break;

@@ -12,10 +12,6 @@ namespace IR2asm{
     const std::string space = std::string(4, ' ');
     const std::string endl = "\n";
 
-    const int frame_ptr = 11;
-    const int sp = 13;
-    const int lr = 14;
-    const int pc = 15;
 
     // RegAllocDriver* reg_alloc;
     // Module* m_;

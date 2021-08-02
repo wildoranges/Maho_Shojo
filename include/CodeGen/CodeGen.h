@@ -30,11 +30,13 @@ class CodeGen{
     bool have_func_call = true;
     std::map<int, std::vector<Value*>> reg2val;
     std::vector<int> to_save_reg;
+    int sp_extra_ofst = 0;
 
 public:
     void make_linear_bb(Function* fun);
     void func_call_check(Function* fun);
-
+    std::string push_regs(std::vector<int> &reg_list);
+    std::string pop_regs(std::vector<int> &reg_list);
     std::string global(std::string name);
     bool iszeroinit(Constant * init);
     std::string module_gen(Module* module);

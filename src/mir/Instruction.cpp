@@ -428,9 +428,6 @@ bool CmpBrInst::is_cmp_br() const
 std::string CmpBrInst::print()
 {
     std::string instr_ir;
-    instr_ir += "%";
-    instr_ir += this->get_name();
-    instr_ir += " = ";
     instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
     instr_ir += " ";
     instr_ir += print_cmp_type(this->cmp_op_);

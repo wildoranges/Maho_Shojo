@@ -12,6 +12,11 @@ namespace IR2asm {
 
     const int max_reg = 15;
 
+    const int frame_ptr = 11;
+    const int sp = 13;
+    const int lr = 14;
+    const int pc = 15;
+
     const std::string reg_name[] = {"r0", "r1", "r2", "r3", "r4", "r5",
                 "r6", "r7", "r8", "r9", "r10", "r11",
                 "r12", "sp", "lr", "pc"};
@@ -58,6 +63,21 @@ namespace IR2asm {
                 if(!offset)return "[" + reg_.get_code() + "]";
                 else {
                     return "[" + reg_.get_code() + ", #" + std::to_string(offset) + "]";
+                }
+            }
+            std::string get_ofst_code(int extra_ofst = 0){
+                if(!offset){
+                    if(reg_.get_id() == sp){
+                        return "[" + reg_.get_code() + ", #" + std::to_string(extra_ofst) + "]";
+                    }
+                    return "[" + reg_.get_code() + "]";
+                }
+                else {
+                    if(reg_.get_id() == sp)
+                        return "[" + reg_.get_code() + ", #" + std::to_string(offset + extra_ofst) + "]";
+                    else{
+                        return "[" + reg_.get_code() + ", #" + std::to_string(offset) + "]";
+                    }
                 }
             }
     };

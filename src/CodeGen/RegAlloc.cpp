@@ -246,10 +246,10 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         }
     }
     for(auto pair:val2Inter){
-        // std::cerr << "op:" <<pair.first->get_name() << std::endl;
+        std::cerr << "op:" <<pair.first->get_name() << std::endl;
         add_interval(pair.second);
         for(auto range:pair.second->range_list){
-            // std::cerr << "from: " << range->from << " to: " << range->to << std::endl;
+            std::cerr << "from: " << range->from << " to: " << range->to << std::endl;
         }
     }
 }
@@ -289,9 +289,9 @@ void RegAlloc::walk_intervals() {
 //        }
 
         if(try_alloc_free_reg()){//for debug
-            // std::cerr << "alloc reg " << current->reg_num << " for val "<<current->val->get_name()<<std::endl;
+            std::cerr << "alloc reg " << current->reg_num << " for val "<<current->val->get_name()<<std::endl;
         }else{
-            // std::cerr << "spill to stack for val "<<current->val->get_name()<<std::endl;
+            std::cerr << "spill to stack for val "<<current->val->get_name()<<std::endl;
         }
     }
 }
@@ -336,7 +336,7 @@ bool RegAlloc::try_alloc_free_reg() {
             unused_reg_id.erase(spill_val->reg_num);
             active.erase(spill_val);//TODO:CHECK ERASE?
             active.insert(current);
-            // std::cerr << "spill "<< spill_val->val->get_name() <<" to stack" << std::endl;
+            std::cerr << "spill "<< spill_val->val->get_name() <<" to stack" << std::endl;
             return true;
         }
     }
@@ -361,14 +361,17 @@ void RegAlloc::union_phi_val() {
             }else{
                 auto vreg_ptr = val2Inter[vreg];
                 auto final_ptr = val2Inter[final_vreg];
-                // std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
+                interval_list.erase(vreg_ptr);
+                interval_list.erase(final_ptr);
+                std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
                 final_ptr->union_interval(vreg_ptr);
                 std::cerr << "after union:\n";
                 for(auto range:final_ptr->range_list){
-                    // std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
-                } 
+                    std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
+                }
+                val2Inter.erase(vreg);
                 val2Inter[vreg] = final_ptr;
-                interval_list.erase(vreg_ptr);
+                interval_list.insert(final_ptr);
             }
         }
     }
