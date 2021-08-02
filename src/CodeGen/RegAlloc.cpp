@@ -181,7 +181,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         auto lst_instr = instrs.rbegin();
         int block_to = (*(lst_instr))->get_id() + 2;
         for(auto opr:bb->get_live_out()){//TODO:NEW
-            if(!dynamic_cast<Instruction*>(opr) && !dynamic_cast<Argument*>(opr)){
+            if((!dynamic_cast<Instruction*>(opr) && !dynamic_cast<Argument*>(opr))||dynamic_cast<AllocaInst *>(opr)){
                 continue;
             }
             if(val2Inter.find(opr)==val2Inter.end()){
@@ -203,6 +203,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
 //            }
 
             if(!instr->is_void()){
+                if(dynamic_cast<AllocaInst *>(instr))continue;
                 if(val2Inter.find(instr)==val2Inter.end()){//TODO:MUST BE NOT NULL?
                     auto new_interval = new Interval(instr);
                     new_interval->add_range(block_from,block_to);
@@ -224,7 +225,7 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
             }
 
             for(auto opr:instr->get_operands()){//TODO:CONST ALLOC
-                if(!dynamic_cast<Instruction*>(opr) && !dynamic_cast<Argument*>(opr)){
+                if((!dynamic_cast<Instruction*>(opr) && !dynamic_cast<Argument*>(opr))||dynamic_cast<AllocaInst *>(opr)){
                     continue;
                 }
                 if(val2Inter.find(opr)==val2Inter.end()){

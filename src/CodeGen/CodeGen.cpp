@@ -607,9 +607,9 @@
         }
         if(stack_size)code += callee_stack_operation_out(fun, stack_size);
         code += callee_reg_restore(fun);
-        code += IR2asm::space + "br lr" + IR2asm::endl;
+        code += IR2asm::space + "bx lr" + IR2asm::endl;
         code += print_global_table();
-        std::cout << code;
+        std::cout << code << IR2asm::endl;
         return code;
     }
 
@@ -633,7 +633,7 @@
                 std::set<Value*> to_ld_set = {};
                 std::set<Interval*> interval_set = {};
                 bool use_target = false;
-                if(!inst->is_void()){
+                if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
                     auto reg_inter = reg_map[inst];
                     if(reg_inter->reg_num<0){
                         reg_inter->reg_num = store_list.size();
@@ -649,7 +649,8 @@
                 for(auto opr:inst->get_operands()){
                     if(dynamic_cast<Constant*>(opr) || 
                        dynamic_cast<BasicBlock *>(opr) || 
-                       dynamic_cast<GlobalVariable *>(opr)){
+                       dynamic_cast<GlobalVariable *>(opr) ||
+                       dynamic_cast<AllocaInst *>(opr)){
                         continue;
                     }
                     auto reg_inter = reg_map[opr];

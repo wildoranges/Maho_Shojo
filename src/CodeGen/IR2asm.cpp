@@ -125,8 +125,8 @@ std::string ret(Location *addr){
     asmstr += "ldr r0, ";
     asmstr += addr->get_code();
     asmstr += endl;
-    asmstr += space;
-    asmstr += "bx lr" + endl;
+    // asmstr += space;
+    // asmstr += "bx lr" + endl;
     return asmstr;
 }
 
