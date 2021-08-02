@@ -3,7 +3,7 @@ import subprocess
 import os
 
 ASMBuild_ptn = '"{}" "-nocheck" "-S" "-o" "{}" "{}"'
-ExeGen_ptn = '"gcc" "-o" "{}" "{}" "../lib/lib.c"'
+ExeGen_ptn = '"gcc" "-o" "{}" "{}" "../lib/libsysy.a"'
 Exe_ptn = '"{}"'
 
 def eval(EXE_PATH, TEST_BASE_PATH, timeout):

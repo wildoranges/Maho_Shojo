@@ -396,7 +396,7 @@
         driver.compute_reg_alloc();
         make_global_table(module);
         func_no = 0;
-        code += ".text " + IR2asm::endl;
+        code += IR2asm::space + ".text " + IR2asm::endl;
         for(auto func_: module->get_functions()){
             if(func_->get_basic_blocks().empty())continue;
             reg_map = driver.get_reg_alloc_in_func(func_);
@@ -601,6 +601,9 @@
         func_call_check(fun);
         int stack_size = stack_space_allocation(fun) 
                             + std::max(max_arg_size - 4 * reg_size, 0);
+        code += IR2asm::space + ".globl " + fun->get_name() + IR2asm::endl;
+        code += IR2asm::space + ".p2align " + std::to_string(int_p2align) + IR2asm::endl;
+        code += IR2asm::space + ".type " + fun->get_name() + ", %function" + IR2asm::endl;
         code += fun->get_name() + ":" + IR2asm::endl;
         code += callee_reg_store(fun);
         if(stack_size)code += callee_stack_operation_in(fun, stack_size);
