@@ -208,10 +208,16 @@ void LIR::split_gep(BasicBlock* bb) {
     auto &instructions = bb->get_instructions();
     for (auto iter = instructions.begin(); iter != instructions.end(); iter++) {
         auto inst_gep = *iter;
-        if (inst_gep->is_gep() && (inst_gep->get_num_operand() == 3)) {
+        if (inst_gep->is_gep()) {
+            int offset_op_num;
+            if (inst_gep->get_num_operand() == 2) {
+                offset_op_num = 1;
+            } else if (inst_gep->get_num_operand() == 3) {
+                offset_op_num = 2;
+            }
             auto size = ConstantInt::get(inst_gep->get_type()->get_pointer_element_type()->get_size(), module);
-            auto offset = inst_gep->get_operand(2);
-            inst_gep->set_operand(2, ConstantInt::get(0, module));
+            auto offset = inst_gep->get_operand(offset_op_num);
+            inst_gep->set_operand(offset_op_num, ConstantInt::get(0, module));
             auto real_offset = BinaryInst::create_mul(offset, size, bb, module);
             bb->add_instruction(++iter, instructions.back());
             instructions.pop_back();
