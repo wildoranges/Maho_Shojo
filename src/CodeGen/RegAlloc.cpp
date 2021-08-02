@@ -288,9 +288,9 @@ void RegAlloc::walk_intervals() {
 //        }
 
         if(try_alloc_free_reg()){//for debug
-            std::cout << "alloc reg " << current->reg_num << " for val "<<current->val->get_name()<<std::endl;
+            std::cerr << "alloc reg " << current->reg_num << " for val "<<current->val->get_name()<<std::endl;
         }else{
-            std::cout << "spill to stack for val "<<current->val->get_name()<<std::endl;
+            std::cerr << "spill to stack for val "<<current->val->get_name()<<std::endl;
         }
     }
 }

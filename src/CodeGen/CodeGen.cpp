@@ -840,12 +840,12 @@
         switch (instr_type)
         {
         case Instruction::ret:
-            if (inst->is_void()) {
+            if (inst->get_operands().empty()) {
                 code += IR2asm::ret();
             } else {
                 auto ret_val = inst->get_operand(0);
                 auto const_ret_val = dynamic_cast<ConstantInt*>(ret_val);
-                if (get_asm_reg(ret_val)->get_id() == 0) {
+                if (!const_ret_val&&get_asm_reg(ret_val)->get_id() == 0) {
                     code += IR2asm::ret();
                 } else {
                     if (const_ret_val) {
