@@ -201,6 +201,7 @@
 
     std::string CodeGen::callee_reg_store(Function* fun){
         std::string code;
+        if(!used_reg.second.size())return "";
         code += IR2asm::space;
         code += "push {";
         for(auto reg: used_reg.second){
@@ -221,6 +222,7 @@
 
     std::string CodeGen::callee_reg_restore(Function* fun){
         std::string code;
+        if(!used_reg.second.size())return "";
         code += IR2asm::space;
         code += "pop {";
         for(auto reg: used_reg.second){
