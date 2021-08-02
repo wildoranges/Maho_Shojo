@@ -294,8 +294,8 @@
                             if(reg_map[call]->reg_num==i){
                                 continue;
                             }
-                            to_save_reg.push_back(i);
                         }
+                        to_save_reg.push_back(i);
                     }
                 }
             }
