@@ -42,7 +42,6 @@ public:
     
     void remove(BasicBlock* bb);
     BasicBlock *get_entry_block() { return *basic_blocks_.begin(); }
-    BasicBlock *get_exit_block() { return *(++basic_blocks_.begin()); }
 
     std::list<BasicBlock *> &get_basic_blocks() { return basic_blocks_; }
     std::list<Argument *> &get_args() { return arguments_; }

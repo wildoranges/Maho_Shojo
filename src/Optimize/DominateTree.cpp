@@ -85,7 +85,12 @@ void RDominateTree::get_revserse_post_order(Function *f) {
     reverse_post_order.clear();
     bb2int.clear();
     //ret_instr.clear();
-    exit_block = f->get_exit_block();
+    for(auto bb:f->get_basic_blocks()){
+        if(bb->get_terminator()->is_ret()){
+            exit_block = bb;
+            break;
+        }
+    }
 //    for(auto bb:f->get_basic_blocks()){
 //        if(bb==exit_block) continue;
 //        auto terminate_instr = bb->get_terminator();
