@@ -134,11 +134,10 @@ int main(int argc, char *argv[])
 
             passmgr.addPass<DeadCodeElimination>();
 
- 
+
             passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<LIR>();
-            passmgr.addPass<ConstPropagation>();
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
@@ -168,7 +167,7 @@ int main(int argc, char *argv[])
             output_stream << asmcode;
             output_stream.close();
         }
-        else{
+        if (print_IR) {
             std::ofstream output_stream;
             output_stream.open(out_file, std::ios::out);
             output_stream << IR;
