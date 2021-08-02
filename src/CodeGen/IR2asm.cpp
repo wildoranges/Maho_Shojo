@@ -126,7 +126,7 @@ std::string ret(Location *addr){
     asmstr += addr->get_code();
     asmstr += endl;
     asmstr += space;
-    asmstr += "br lr" + endl;
+    asmstr += "bx lr" + endl;
     return asmstr;
 }
 
@@ -144,7 +144,7 @@ std::string ret(Value* retval){
 std::string ret(){
     std::string asmstr;
     asmstr += space;
-    asmstr += "br lr" + endl;
+    asmstr += "bx lr" + endl;
     return asmstr;
 }
 
