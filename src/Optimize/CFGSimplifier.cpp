@@ -232,10 +232,10 @@ bool CFGSimplifier::one_pass() {
             }
         }
         if (terminator->is_br() && terminator->get_num_operand() == 1) {
-            if (bb_can_delete(bb) == false) continue;
             auto succ_bb = dynamic_cast<BasicBlock*>(terminator->get_operand(0));
             auto succ_bb_terminator = dynamic_cast<Instruction*>(succ_bb->get_terminator());
             if (bb->get_num_of_instr() == 1) {  // empty bb
+                if (bb_can_delete(bb) == false) continue;
                 for (auto pre_bb : bb->get_pre_basic_blocks()) {
                     pre_bb->remove_succ_basic_block(bb);
                     pre_bb->add_succ_basic_block(succ_bb);
