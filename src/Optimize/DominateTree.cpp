@@ -28,20 +28,20 @@ void RDominateTree::execute() {
         get_bb_irdom(f);
         get_bb_rdom_front(f);
         get_bb_rdoms(f);
-        clear_tmp_block();
+        //clear_tmp_block();
     }
 }
 
-void RDominateTree::clear_tmp_block() {
-    exit_block->erase_from_parent();
-    for(auto ret : ret_instr){
-        auto parent_bb = ret->get_parent();
-        parent_bb->remove_succ_basic_block(exit_block);
-        exit_block->remove_pre_basic_block(parent_bb);
-    }
-    delete exit_block;//TODO:CHECK DELETE
-    exit_block = nullptr;
-}
+//void RDominateTree::clear_tmp_block() {
+//    exit_block->erase_from_parent();
+//    for(auto ret : ret_instr){
+//        auto parent_bb = ret->get_parent();
+//        parent_bb->remove_succ_basic_block(exit_block);
+//        exit_block->remove_pre_basic_block(parent_bb);
+//    }
+//    delete exit_block;//TODO:CHECK DELETE
+//    exit_block = nullptr;
+//}
 
 
 void DominateTree::get_post_order(BasicBlock *bb,std::set<BasicBlock*>& visited) {
@@ -84,17 +84,17 @@ void RDominateTree::get_revserse_post_order(Function *f) {
     rdoms.clear();
     reverse_post_order.clear();
     bb2int.clear();
-    ret_instr.clear();
-    exit_block = BasicBlock::create(module,"",f);//tmp exit_block;
-    for(auto bb:f->get_basic_blocks()){
-        if(bb==exit_block) continue;
-        auto terminate_instr = bb->get_terminator();
-        if(terminate_instr->is_ret()){
-            ret_instr.push_back(terminate_instr);
-            bb->add_succ_basic_block(exit_block);
-            exit_block->add_pre_basic_block(bb);
-        }
-    }
+    //ret_instr.clear();
+    exit_block = f->get_exit_block();
+//    for(auto bb:f->get_basic_blocks()){
+//        if(bb==exit_block) continue;
+//        auto terminate_instr = bb->get_terminator();
+//        if(terminate_instr->is_ret()){
+//            ret_instr.push_back(terminate_instr);
+//            bb->add_succ_basic_block(exit_block);
+//            exit_block->add_pre_basic_block(bb);
+//        }
+//    }
     std::set<BasicBlock*> visited = {};
     get_post_order(exit_block,visited);
     reverse_post_order.reverse();
