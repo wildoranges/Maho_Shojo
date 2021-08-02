@@ -33,15 +33,17 @@ namespace IR2asm{
 
     std::string ldr_const(Reg* rd, constant *val);
     std::string mov(Reg* rd, Operand2 *opr2);
-    std::string movgt(Reg* rd, Operand2 *opr2);
-    std::string movge(Reg* rd, Operand2 *opr2);
-    std::string movlt(Reg* rd, Operand2 *opr2);
-    std::string movle(Reg* rd, Operand2 *opr2);
     std::string getelementptr(Reg* rd, Location * ptr);
     std::string cond(CmpOp & cop);
     std::string ret();
     std::string ret(Value* retval);
     std::string ret(Location *addr);
+    std::string beq(Location *addr);
+    std::string bne(Location *addr);
+    std::string bgt(Location *addr);
+    std::string bge(Location *addr);
+    std::string blt(Location *addr);
+    std::string ble(Location *addr);
     std::string b(Location* label);
     std::string br(Location* label);
     std::string cbz(Reg* rs, Location* label);

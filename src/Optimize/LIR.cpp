@@ -23,7 +23,7 @@ void LIR::execute() {
                 // merge instr (when all optimization finished)
                 //merge_mul_add(bb);
                 //merge_mul_sub(bb);
-                //merge_cmp_br(bb);
+                merge_cmp_br(bb);
             }
         }
     }
@@ -116,7 +116,7 @@ void LIR::mov_const(BasicBlock *bb) {
     }
 }
 
-void LIR::merge_cmp_br(BasicBlock* bb) {
+void LIR::merge_cmp_br(BasicBlock* bb) { // FIXME: may have bugs
     auto terminator = bb->get_terminator();
     if (terminator->is_br()){
         auto br = dynamic_cast<BranchInst *>(terminator);

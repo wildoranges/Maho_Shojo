@@ -47,46 +47,56 @@ std::string mov(Reg* rd, Operand2 *opr2) {
     return asmstr;
 }
 
-std::string movgt(Reg* rd, Operand2 *opr2) {
+std::string beq(Location *addr) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movgt ";
-    asmstr += rd->get_code();
-    asmstr += ", ";
-    asmstr += opr2->get_code();
+    asmstr += "beq ";
+    asmstr += addr->get_code();
     asmstr += endl;
     return asmstr;
 }
 
-std::string movge(Reg* rd, Operand2 *opr2) {
+std::string bne(Location *addr) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movge ";
-    asmstr += rd->get_code();
-    asmstr += ", ";
-    asmstr += opr2->get_code();
+    asmstr += "bne ";
+    asmstr += addr->get_code();
     asmstr += endl;
     return asmstr;
 }
 
-std::string movlt(Reg* rd, Operand2 *opr2) {
+std::string bgt(Location *addr) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movlt ";
-    asmstr += rd->get_code();
-    asmstr += ", ";
-    asmstr += opr2->get_code();
+    asmstr += "bgt ";
+    asmstr += addr->get_code();
     asmstr += endl;
     return asmstr;
 }
 
-std::string movle(Reg* rd, Operand2 *opr2) {
+std::string bge(Location *addr) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "movle ";
-    asmstr += rd->get_code();
-    asmstr += ", ";
-    asmstr += opr2->get_code();
+    asmstr += "bge ";
+    asmstr += addr->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string blt(Location *addr) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "blt ";
+    asmstr += addr->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string ble(Location *addr) {
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "ble ";
+    asmstr += addr->get_code();
     asmstr += endl;
     return asmstr;
 }
