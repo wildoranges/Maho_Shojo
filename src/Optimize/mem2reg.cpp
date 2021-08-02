@@ -261,7 +261,8 @@ void Mem2Reg::removeAlloc(){
         for(auto inst: bb->get_instructions()){
             if(inst->get_instr_type() != Instruction::OpID::alloca)continue;
             auto alloc_inst = dynamic_cast<AllocaInst *>(inst);
-            if(alloc_inst->get_alloca_type()->is_integer_type())delete_list.insert(inst);
+            if(alloc_inst->get_alloca_type()->is_integer_type() || 
+               alloc_inst->get_alloca_type()->is_pointer_type())delete_list.insert(inst);
         }
         for(auto inst: delete_list){
             bb->delete_instr(inst);
