@@ -46,11 +46,11 @@ public:
     void get_bb_irdom(Function* f);
     void get_bb_rdoms(Function* f);
     void get_bb_rdom_front(Function* f);
-    void clear_tmp_block();
+    //void clear_tmp_block();
     const std::string get_name() const override {return name;}
     BasicBlock* intersect(BasicBlock* b1, BasicBlock* b2);
 private:
-    std::vector<Instruction*> ret_instr;
+    //std::vector<Instruction*> ret_instr;
     BasicBlock* exit_block = nullptr;
     std::list<BasicBlock*> reverse_post_order;
     std::map<BasicBlock*,int> bb2int;
