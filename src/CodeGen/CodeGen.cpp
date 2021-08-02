@@ -201,6 +201,7 @@
 
     std::string CodeGen::callee_reg_store(Function* fun){
         std::string code;
+        if(!used_reg.second.size())return "";
         code += IR2asm::space;
         code += "push {";
         for(auto reg: used_reg.second){
@@ -221,6 +222,7 @@
 
     std::string CodeGen::callee_reg_restore(Function* fun){
         std::string code;
+        if(!used_reg.second.size())return "";
         code += IR2asm::space;
         code += "pop {";
         for(auto reg: used_reg.second){
@@ -288,6 +290,11 @@
                         not_to_save = not_to_save && !reg_map[val]->covers(call);
                     }
                     if(!not_to_save){
+                        if(!call->is_void()){
+                            if(reg_map[call]->reg_num==i){
+                                continue;
+                            }
+                        }
                         to_save_reg.push_back(i);
                     }
                 }
@@ -623,9 +630,7 @@
                 code += arg_move(call_inst);
                 code += instr_gen(call_inst);
                 code += caller_reg_restore(bb->get_parent(),call_inst);
-            }else if(dynamic_cast<ReturnInst*>(inst)){
-                code += instr_gen(inst);
-            }else{
+            }else if(instr_may_need_push_stack(inst)){
                 std::vector<int> store_list = {};
                 std::set<Value*> to_store_set = {};
                 std::set<Value*> to_ld_set = {};
@@ -709,9 +714,121 @@
                 for(auto inter:interval_set){
                     inter->reg_num = -1;
                 }
+            }else{
+                code += instr_gen(inst);
             }
         }
-        //TODO: instruction gen
+        code += phi_union(bb);
+        return code;
+        //TODO:PHI INST CHECK
+    }
+
+    std::string CodeGen::phi_union(BasicBlock* bb){
+
+        std::string code;
+        std::map<Value*,std::set<Value*>> opr2phi;
+        //TODO:PHI INST CHECK
+        std::set<Value*> sux_bb_phi = {};
+        for(auto sux:bb->get_succ_basic_blocks()){
+            for(auto inst:sux->get_instructions()){
+                if(inst->is_phi()){
+                    Value* lst_val = nullptr;
+                    for(auto opr:inst->get_operands()){
+                        if(dynamic_cast<BasicBlock*>(opr)){
+                            auto this_bb = dynamic_cast<BasicBlock*>(opr);
+                            if(this_bb==bb){
+                                sux_bb_phi.insert(lst_val);
+                                if(opr2phi.find(lst_val)==opr2phi.end()){
+                                    opr2phi[lst_val] = std::set<Value*>();
+                                    opr2phi[lst_val].insert(inst);
+                                }
+                            }
+                        }else{
+                            lst_val = opr;
+                        }
+                    }
+                }else{
+                    break;
+                }
+            }
+        }
+        for(auto opr:sux_bb_phi){
+            if(dynamic_cast<ConstantInt*>(opr)){
+                auto const_opr = dynamic_cast<ConstantInt*>(opr);
+                int const_val = const_opr->get_value();
+                for(auto target:opr2phi[opr]){
+                    auto tar_inter = reg_map[target];
+                    if(tar_inter->reg_num>=0){
+                        code += IR2asm::space;
+                        code += "LDR ";
+                        code += IR2asm::Reg(tar_inter->reg_num).get_code();
+                        code += ",=";
+                        code += std::to_string(const_val);
+                        code += IR2asm::endl;
+                    }else{
+                        code += IR2asm::space+"push {r0}"+IR2asm::endl;
+                        code += IR2asm::space;
+                        code += "LDR r0,=";
+                        code += std::to_string(const_val);
+                        code += IR2asm::endl;
+                        code += IR2asm::space;
+                        code += "str r0";
+                        code += ", ";
+                        code += stack_map[target]->get_code();
+                        code += IR2asm::endl;
+                        code += IR2asm::space+"pop {r0}"+IR2asm::endl;
+                    }
+                }
+            }else{
+                if(reg_map[opr]->reg_num>=0){
+                    for(auto target:opr2phi[opr]){
+                        auto tar_inter = reg_map[target];
+                        if(tar_inter->reg_num>=0){
+                            code += IR2asm::space;
+                            code += "mov ";
+                            code += IR2asm::Reg(tar_inter->reg_num).get_code();
+                            code += ", ";
+                            code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
+                            code += IR2asm::endl;
+                        }else{
+                            code += IR2asm::space;
+                            code += "str ";
+                            code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
+                            code += ", ";
+                            code += stack_map[target]->get_code();
+                            code += IR2asm::endl;
+                        }
+                    }
+                }else{
+                    for(auto target:opr2phi[opr]){
+                        auto tar_inter = reg_map[target];
+                        if(tar_inter->reg_num>=0){
+                            code += IR2asm::space;
+                            code += "ldr ";
+                            code += IR2asm::Reg(tar_inter->reg_num).get_code();
+                            code += ", ";
+                            code += stack_map[opr]->get_code();
+                            code += IR2asm::endl;
+                        }else{
+                            code += IR2asm::space;
+                            code += "push {lr}";
+                            code += IR2asm::endl;
+                            code += IR2asm::space;
+                            code += "ldr lr, ";
+                            code += stack_map[opr]->get_code();
+                            code += IR2asm::endl;
+                            code += IR2asm::space;
+                            code += "str lr, ";
+                            code += stack_map[target]->get_code();
+                            code += IR2asm::endl;
+                            code += IR2asm::space;
+                            code += "pop {lr}";
+                            code += IR2asm::endl;
+                        }
+                    }
+                }
+            }
+        }
         return code;
     }
 
@@ -725,12 +842,12 @@
         switch (instr_type)
         {
         case Instruction::ret:
-            if (inst->is_void()) {
+            if (inst->get_operands().empty()) {
                 code += IR2asm::ret();
             } else {
                 auto ret_val = inst->get_operand(0);
                 auto const_ret_val = dynamic_cast<ConstantInt*>(ret_val);
-                if (get_asm_reg(ret_val)->get_id() == 0) {
+                if (!const_ret_val&&get_asm_reg(ret_val)->get_id() == 0) {
                     code += IR2asm::ret();
                 } else {
                     if (const_ret_val) {

@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
             output_stream << asmcode;
             output_stream.close();
         }
-        if (print_IR) {
+        else if (print_IR) {
             std::ofstream output_stream;
             output_stream.open(out_file, std::ios::out);
             output_stream << IR;

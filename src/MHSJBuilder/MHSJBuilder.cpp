@@ -45,6 +45,12 @@ int cur_pos;
 int cur_depth;
 std::map<int, Value *> initval;
 std::vector<Constant *> init_val;
+
+//ret BB
+BasicBlock *ret_BB;
+std::vector<std::pair<Value*, BasicBlock*>> ret_val_BB_pair;
+//
+
 /* Global Variable */
 
 void MHSJBuilder::visit(SyntaxTree::Assembly &node) {
@@ -162,15 +168,41 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
       scope.push_size(func_fparams[i].name, array_sizes);
     }
   }
+  //ret BB
+  ret_BB = BasicBlock::create(module.get(), "ret", fun);
+  ret_val_BB_pair.clear();
+
   node.body->accept(*this);
+
   if (builder->get_insert_block()->get_terminator() == nullptr) {
-    if (cur_fun->get_return_type()->is_void_type())
-      builder->create_void_ret();
-    else
-      builder->create_ret(CONST_INT(0));
+    if (cur_fun->get_return_type()->is_void_type()){
+      builder->create_br(ret_BB);
+    }
+    else {
+      ret_val_BB_pair.push_back({CONST_INT(0), builder->get_insert_block()});
+      builder->create_br(ret_BB);
+    }
   }
   scope.exit();
   cur_basic_block_list.pop_back();
+
+  //ret BB add phi
+  builder->set_insert_point(ret_BB);
+  if (fun->get_return_type()== VOID_T){
+    builder->create_void_ret();
+  }
+  else if (ret_val_BB_pair.size() > 1){
+    //need phi
+    auto ret_phi = PhiInst::create_phi(fun->get_return_type(), ret_BB);
+    for (auto pair : ret_val_BB_pair){
+      ret_phi->add_phi_pair_operand(pair.first, pair.second);
+    }
+    ret_BB->add_instr_begin(ret_phi);
+    builder->create_ret(ret_phi);
+  }
+  else{
+    builder->create_ret(ret_val_BB_pair.begin()->first);
+  }
 }
 
 void MHSJBuilder::visit(SyntaxTree::FuncFParamList &node) {
@@ -479,12 +511,14 @@ void MHSJBuilder::visit(SyntaxTree::Literal &node) {
 
 void MHSJBuilder::visit(SyntaxTree::ReturnStmt &node) {
   if (node.ret == nullptr) {
-    builder->create_void_ret();
+    //builder->create_void_ret();
+    builder->create_br(ret_BB);
   }
   else {
-    //auto fun_ret_type = cur_fun->get_function_type()->get_return_type();
     node.ret->accept(*this);
-    builder->create_ret(tmp_val);
+    //builder->create_ret(tmp_val);
+    ret_val_BB_pair.push_back({tmp_val, builder->get_insert_block()});
+    builder->create_br(ret_BB);
   }
 }
 
