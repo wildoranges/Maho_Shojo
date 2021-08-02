@@ -99,13 +99,13 @@ void RegAllocDriver::compute_reg_alloc() {
         if(func->get_basic_blocks().empty()){
             continue;
         }else{
-            std::cerr << "function " << func->get_name() << std::endl;
+            // std::cerr << "function " << func->get_name() << std::endl;
             auto allocator = new RegAlloc(func);
             allocator->execute();
             reg_alloc[func] = allocator->get_reg_alloc();
         }
     }
-    std::cerr << "finish reg alloc\n";
+    // std::cerr << "finish reg alloc\n";
 }
 
 void RegAlloc::execute() {
@@ -135,7 +135,7 @@ void RegAlloc::compute_block_order() {
         auto bb = work_list.top();
         work_list.pop();
         block_order.push_back(bb);
-        std::cerr << "add "<<bb->get_name()<<" to block order" << std::endl;
+        // std::cerr << "add "<<bb->get_name()<<" to block order" << std::endl;
 
         for(auto sux : bb->get_succ_basic_blocks()){
             sux->incoming_decrement();
@@ -246,10 +246,10 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         }
     }
     for(auto pair:val2Inter){
-        std::cerr << "op:" <<pair.first->get_name() << std::endl;
+        // std::cerr << "op:" <<pair.first->get_name() << std::endl;
         add_interval(pair.second);
         for(auto range:pair.second->range_list){
-            std::cerr << "from: " << range->from << " to: " << range->to << std::endl;
+            // std::cerr << "from: " << range->from << " to: " << range->to << std::endl;
         }
     }
 }
@@ -289,9 +289,9 @@ void RegAlloc::walk_intervals() {
 //        }
 
         if(try_alloc_free_reg()){//for debug
-            std::cerr << "alloc reg " << current->reg_num << " for val "<<current->val->get_name()<<std::endl;
+            // std::cerr << "alloc reg " << current->reg_num << " for val "<<current->val->get_name()<<std::endl;
         }else{
-            std::cerr << "spill to stack for val "<<current->val->get_name()<<std::endl;
+            // std::cerr << "spill to stack for val "<<current->val->get_name()<<std::endl;
         }
     }
 }
@@ -336,7 +336,7 @@ bool RegAlloc::try_alloc_free_reg() {
             unused_reg_id.erase(spill_val->reg_num);
             active.erase(spill_val);//TODO:CHECK ERASE?
             active.insert(current);
-            std::cerr << "spill "<< spill_val->val->get_name() <<" to stack" << std::endl;
+            // std::cerr << "spill "<< spill_val->val->get_name() <<" to stack" << std::endl;
             return true;
         }
     }
@@ -361,11 +361,11 @@ void RegAlloc::union_phi_val() {
             }else{
                 auto vreg_ptr = val2Inter[vreg];
                 auto final_ptr = val2Inter[final_vreg];
-                std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
+                // std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
                 final_ptr->union_interval(vreg_ptr);
                 std::cerr << "after union:\n";
                 for(auto range:final_ptr->range_list){
-                    std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
+                    // std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
                 } 
                 val2Inter[vreg] = final_ptr;
                 interval_list.erase(vreg_ptr);

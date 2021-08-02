@@ -293,8 +293,7 @@
                         if(!call->is_void()){
                             if(reg_map[call]->reg_num==i){
                                 continue;
-                            }
-                        }
+                 r0      }
                         to_save_reg.push_back(i);
                     }
                 }
@@ -617,7 +616,7 @@
         code += callee_reg_restore(fun);
         code += IR2asm::space + "bx lr" + IR2asm::endl;
         code += print_global_table();
-        std::cout << code << IR2asm::endl;
+        // std::cout << code << IR2asm::endl;
         return code;
     }
 
