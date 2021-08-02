@@ -847,7 +847,7 @@
         {
             case Instruction::ret:
                 if (inst->get_operands().empty()) {
-                    code += IR2asm::ret();
+                    //code += IR2asm::ret();
                 } else {
                     auto ret_val = inst->get_operand(0);
                     auto const_ret_val = dynamic_cast<ConstantInt*>(ret_val);
