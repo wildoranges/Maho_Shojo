@@ -84,13 +84,9 @@ void RDominateTree::get_revserse_post_order(Function *f) {
     rdoms.clear();
     reverse_post_order.clear();
     bb2int.clear();
-    //ret_instr.clear();
-    for(auto bb:f->get_basic_blocks()){
-        if(bb->get_terminator()->is_ret()){
-            exit_block = bb;
-            break;
-        }
-    }
+//    ret_instr.clear();
+    //exit_block = f->get_exit_block();
+//    exit_block = BasicBlock::create(module,"",f);
 //    for(auto bb:f->get_basic_blocks()){
 //        if(bb==exit_block) continue;
 //        auto terminate_instr = bb->get_terminator();
@@ -100,6 +96,13 @@ void RDominateTree::get_revserse_post_order(Function *f) {
 //            exit_block->add_pre_basic_block(bb);
 //        }
 //    }
+    for(auto bb:f->get_basic_blocks()){
+        auto terminate_instr = bb->get_terminator();
+        if(terminate_instr->is_ret()){
+            exit_block = bb;
+            break;
+        }
+    }
     std::set<BasicBlock*> visited = {};
     get_post_order(exit_block,visited);
     reverse_post_order.reverse();
