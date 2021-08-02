@@ -113,7 +113,7 @@ std::string getelementptr(Reg* rd, Location * ptr){
         asmstr += rd->get_code();
         asmstr += ", ";
         auto labelexpr = dynamic_cast<label *>(ptr);
-        asmstr += "=";
+        asmstr += "";
         asmstr += labelexpr->get_code();
         asmstr += endl;
     }
