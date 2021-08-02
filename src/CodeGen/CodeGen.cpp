@@ -413,19 +413,35 @@
         bb_label.clear();
         linear_bb.clear();
         bb_no = -1;
+        BasicBlock* ret_bb;
+        IR2asm::label *newlabel;
+        std::string label_str;
         for(auto bb: fun->get_basic_blocks()){
-            if(bb != fun->get_entry_block()){
-                std::string label_str = "bb" + std::to_string(func_no) + "_" + std::to_string(bb_no);
-                IR2asm::label *newlabel = new IR2asm::label(label_str);
+            if(bb != fun->get_entry_block() && !bb->get_terminator()->is_ret()){
+                label_str = "bb" + std::to_string(func_no) + "_" + std::to_string(bb_no);
+                newlabel = new IR2asm::label(label_str);
                 bb_label.insert({bb, newlabel});
             }
-            else{
+            else if(bb == fun->get_entry_block() && bb->get_terminator()->is_ret()){
+                bb_label.insert({bb, new IR2asm::label("")});
+                linear_bb.push_back(bb);
+                return;
+            }
+            else if(bb == fun->get_entry_block()){
                 // bb_label.insert({bb, new IR2asm::label(fun->get_name())});
                 bb_label.insert({bb, new IR2asm::label("")});
+            }
+            else{
+                ret_bb = bb;
+                continue;
             }
             linear_bb.push_back(bb);
             bb_no++;
         }
+        label_str = "bb" + std::to_string(func_no) + "_" + std::to_string(bb_no);
+        newlabel = new IR2asm::label(label_str);
+        bb_label.insert({ret_bb, newlabel});
+        linear_bb.push_back(ret_bb);
         return;
     }
 
