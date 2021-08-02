@@ -19,12 +19,14 @@ void DeadCodeElimination::execute() {
 
 bool DeadCodeElimination::is_critical(Instruction *instr) {
     if (instr->is_ret()) return true;
-    if (instr->is_call()) return true;
-    if (instr->is_store()) {
+    else if (instr->is_call()) return true;
+    else if (instr->is_store()) {
         auto addr = instr->get_operand(1);
         auto alloca_addr = dynamic_cast<AllocaInst*>(addr);
         auto global_addr = dynamic_cast<GlobalVariable*>(addr);
-        if ((alloca_addr && alloca_addr->get_alloca_type() == Type::get_int32_type(module)) || 
+        auto arg_addr = dynamic_cast<Argument*>(addr);
+        if ((arg_addr && arg_addr->get_type()->is_integer_type()) ||
+            (alloca_addr && alloca_addr->get_alloca_type() == Type::get_int32_type(module)) ||
             (global_addr && global_addr->get_type()->is_integer_type())) {
             for (auto use : addr->get_use_list()) {
                 auto use_instr = dynamic_cast<Instruction*>(use.val_);
@@ -32,9 +34,11 @@ bool DeadCodeElimination::is_critical(Instruction *instr) {
                     return true;
                 }
             }
+            return false;
         }
+        return true;
     }
-    return false;
+    else return false;
 }
 
 BasicBlock *DeadCodeElimination::get_nearest_marked_postdominator(Instruction *instr) {
@@ -131,6 +135,7 @@ void DeadCodeElimination::sweep() {
             }
         }
         for (auto instr : wait_delete) {
+            //std::cerr<<"delete "<<instr->print()<<std::endl;
             bb->delete_instr(instr);
         }
     }

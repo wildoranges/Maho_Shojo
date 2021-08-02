@@ -40,7 +40,7 @@ public:
     //std::cout << "inexec\n";
     for (auto pass : pass_list) {
       //i++;
-      //std::cout << i << "\n";
+      //std::cout << pass->get_name() << "\n";
       pass->execute();
       //std::cout << i + 1 << "\n";
       if (print_ir) {
