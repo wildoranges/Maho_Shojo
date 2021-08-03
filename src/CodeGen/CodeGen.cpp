@@ -282,8 +282,9 @@
     std::string CodeGen::caller_reg_store(Function* fun,CallInst* call){
         std::string code = "";
         to_save_reg.clear();
-        int arg_num = fun->get_num_of_args();
-        if(arg_num > 4)arg_num = 4;
+//        int arg_num = fun->get_num_of_args();
+//        if(arg_num > 4)
+        int arg_num = 4;
         if(!used_reg.first.empty()){
             for(int i = 0;i < arg_num;i++){
                 if(used_reg.first.find(i) != used_reg.first.end()){
