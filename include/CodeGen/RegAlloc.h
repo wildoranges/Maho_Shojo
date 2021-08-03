@@ -82,7 +82,7 @@ const int priority[] = {
 struct cmp_reg {
     bool operator()(const int reg1,const int reg2)const{
         assert(reg1>=0&&reg1<=12&&reg2<=12&&reg2>=0&&"invalid reg id");
-        return priority[reg1] < priority[reg2];
+        return priority[reg1] > priority[reg2];
     }
 };
 
@@ -120,7 +120,7 @@ private:
     std::set<int> unused_reg_id = {all_reg_id.begin(),all_reg_id.end()};
     //std::priority_queue<int,std::vector<int>,cmp_reg> remained_general_reg_id = {general_reg_id.begin(),general_reg_id.end()};
     //std::priority_queue<int,std::vector<int>,cmp_reg> remained_func_reg_id = {func_reg_id.begin(),func_reg_id.end()};
-    std::priority_queue<int,std::vector<int>,cmp_reg> remained_all_reg_id = {all_reg_id.begin(),all_reg_id.end()};
+    std::set<int,cmp_reg> remained_all_reg_id = {all_reg_id.begin(),all_reg_id.end()};
     std::set<Interval *> active = {};
     Interval* current = nullptr;
     std::map<Value*, Interval*> val2Inter;
