@@ -1,5 +1,7 @@
 #include "CFGSimplifier.h"
 
+#include <algorithm>
+
 // FIXME: may have bugs
 
 void CFGSimplifier::execute() {
@@ -81,6 +83,7 @@ bool CFGSimplifier::delete_redundant_phi() {
 void CFGSimplifier::compute_postorder() {
     std::map<BasicBlock*, bool> visited_bb;
     std::vector<BasicBlock*> dfs_bb_list;
+    std::vector<BasicBlock*> unreachable_bb_list;
     auto bb_list = func_->get_basic_blocks();
     for (auto bb : bb_list) {
         visited_bb.insert({bb, false});
@@ -103,6 +106,14 @@ void CFGSimplifier::compute_postorder() {
             postorder_bb_list.push_back(cur_bb);
             dfs_bb_list.pop_back();
         }
+    }
+    for (auto bb : func_->get_basic_blocks()) {
+        if (std::find(postorder_bb_list.begin(), postorder_bb_list.end(), bb) == postorder_bb_list.end()) {
+            unreachable_bb_list.push_back(bb);
+        }
+    }
+    for (auto unreachable_bb : unreachable_bb_list) {
+        func_->remove(unreachable_bb);
     }
     return ;
 }
