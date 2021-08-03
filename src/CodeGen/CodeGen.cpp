@@ -282,8 +282,9 @@
     std::string CodeGen::caller_reg_store(Function* fun,CallInst* call){
         std::string code = "";
         to_save_reg.clear();
-        int arg_num = fun->get_num_of_args();
-        if(arg_num > 4)arg_num = 4;
+//        int arg_num = fun->get_num_of_args();
+//        if(arg_num > 4)
+        int arg_num = 4;
         if(!used_reg.first.empty()){
             for(int i = 0;i < arg_num;i++){
                 if(used_reg.first.find(i) != used_reg.first.end()){
@@ -298,6 +299,19 @@
                             }
                         }
                         to_save_reg.push_back(i);
+                    }
+                }
+            }
+        }
+        if(arg_num==0&&!call->is_void()){
+            if(used_reg.first.find(0) != used_reg.first.end()){
+                bool not_to_save = true;
+                for(auto val:reg2val[0]){
+                    not_to_save = not_to_save && !reg_map[val]->covers(call);
+                }
+                if(!not_to_save){
+                    if(reg_map[call]->reg_num!=0){
+                        to_save_reg.push_back(0);
                     }
                 }
             }
@@ -597,7 +611,8 @@
                 reg = reg_map[arg]->reg_num;
             }
             else{
-                reg = -1;
+//                reg = -1;
+                continue;
             }
             if(arg->get_arg_no() < 4){
                 if(reg >= 0){
@@ -986,7 +1001,7 @@
                     auto ret_val = inst->get_operand(0);
                     auto const_ret_val = dynamic_cast<ConstantInt*>(ret_val);
                     if (!const_ret_val&&get_asm_reg(ret_val)->get_id() == 0) {
-                        code += IR2asm::ret();
+//                        code += IR2asm::ret();
                     } else {
                         if (const_ret_val) {
                             code += IR2asm::ret(get_asm_const(const_ret_val));

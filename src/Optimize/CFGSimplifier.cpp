@@ -1,5 +1,7 @@
 #include "CFGSimplifier.h"
 
+#include <algorithm>
+
 // FIXME: may have bugs
 
 void CFGSimplifier::execute() {
@@ -13,7 +15,7 @@ void CFGSimplifier::execute() {
         while (changed) {
             postorder_bb_list.clear();
             compute_postorder();
-            changed = one_pass() && delete_redundant_phi();
+            changed = delete_unreachable_bb() || one_pass() || delete_redundant_phi();
         }
     }
     return ;
@@ -74,6 +76,32 @@ bool CFGSimplifier::delete_redundant_phi() {
             bb->delete_instr(delete_instr);
         }
         wait_delete_instr.clear();
+    }
+    return changed;
+}
+
+bool CFGSimplifier::delete_unreachable_bb() {
+    bool changed = false;
+    std::vector<BasicBlock*> unreachable_bb_list;
+    for (auto bb : func_->get_basic_blocks()) {
+        if (std::find(postorder_bb_list.begin(), postorder_bb_list.end(), bb) == postorder_bb_list.end()) {
+            unreachable_bb_list.push_back(bb);
+            changed = true;
+        }
+    }
+    for (auto unreachable_bb : unreachable_bb_list) {
+        for (auto bb : func_->get_basic_blocks()) {
+            for (auto instr : bb->get_instructions()) {
+                if (instr->is_phi()) {
+                    for (int i = 1; i < instr->get_num_operand(); i+=2) {
+                        if (instr->get_operand(i) == unreachable_bb) {
+                            instr->remove_operands(i - 1, i);
+                        }
+                    }
+                }
+            }
+        }
+        func_->remove(unreachable_bb);
     }
     return changed;
 }

@@ -12,6 +12,7 @@ public:
     void compute_postorder();
     bool one_pass();
     bool delete_redundant_phi();
+    bool delete_unreachable_bb();
     void combine_bb(BasicBlock*, BasicBlock*);
     bool bb_can_delete(BasicBlock*);
     void replace_phi(BasicBlock*, std::list<BasicBlock*>, BasicBlock*);
