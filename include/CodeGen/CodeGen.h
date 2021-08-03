@@ -35,8 +35,8 @@ class CodeGen{
 public:
     void make_linear_bb(Function* fun);
     void func_call_check(Function* fun);
-    std::string push_regs(std::vector<int> &reg_list);
-    std::string pop_regs(std::vector<int> &reg_list);
+    std::string push_regs(std::vector<int> &reg_list, std::string cond = "");
+    std::string pop_regs(std::vector<int> &reg_list, std::string cond = "");
     std::string global(std::string name);
     bool iszeroinit(Constant * init);
     std::string module_gen(Module* module);

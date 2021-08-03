@@ -137,7 +137,10 @@
                 }
                 if(dynamic_cast<Argument*>(vreg)){
                     auto arg = dynamic_cast<Argument*>(vreg);
-                    if(arg->get_arg_no() > 3)continue;
+                    if(arg->get_arg_no() > 3){
+                        stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
+                        continue;
+                    }
                 }
                 int type_size = vreg->get_type()->get_size();
                 size += type_size;
@@ -175,7 +178,10 @@
                 }
                 if(dynamic_cast<Argument*>(vreg)){
                     auto arg = dynamic_cast<Argument*>(vreg);
-                    if(arg->get_arg_no() > 3)continue;
+                    if(arg->get_arg_no() > 3){
+                        stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
+                        continue;
+                    }
                 }
                 int type_size = vreg->get_type()->get_size();
                 size += type_size;
@@ -673,10 +679,10 @@
         return code;
     }
 
-    std::string CodeGen::push_regs(std::vector<int> &reg_list) {
+    std::string CodeGen::push_regs(std::vector<int> &reg_list, std::string cond) {
         std::string code;
         code += IR2asm::space;
-        code += "push {";
+        code += "push" + cond + " {";
         for(auto reg: reg_list){
             code += IR2asm::Reg(reg).get_code();
             if(reg != *reg_list.rbegin())code += ", ";
@@ -686,10 +692,10 @@
         return code;
     }
 
-    std::string CodeGen::pop_regs(std::vector<int> &reg_list) {
+    std::string CodeGen::pop_regs(std::vector<int> &reg_list, std::string cond) {
         std::string code;
         code += IR2asm::space;
-        code += "pop {";
+        code += "pop" + cond + " {";
         for(auto reg: reg_list){
             code += IR2asm::Reg(reg).get_code();
             if(reg != *reg_list.rbegin())code += ", ";
@@ -832,6 +838,7 @@
             return instr_gen(br_inst);
         }
         std::string cmp;
+        std::string cmpop;
         std::string succ_code;
         std::string fail_code;
         std::string succ_br;
@@ -856,6 +863,8 @@
             fail_bb = dynamic_cast<BasicBlock*>(cmpbr->get_operand(3));
             cmp += cmpbr_inst[0] + IR2asm::endl;
             succ_br += cmpbr_inst[1] + IR2asm::endl;
+            cmpop += std::string(1, succ_br[5]);
+            cmpop.push_back(succ_br[6]); //bad for debugging
             fail_br += cmpbr_inst[2] + IR2asm::endl;
         }
         else{
@@ -904,7 +913,9 @@
                         auto tar_inter = reg_map[target];
                         if(tar_inter->reg_num>=0){
                             *code += IR2asm::space;
-                            *code += "LDR ";
+                            *code += "LDR";
+                            *code += cmpop;
+                            *code += " ";
                             *code += IR2asm::Reg(tar_inter->reg_num).get_code();
                             *code += ",=";
                             *code += std::to_string(const_val);
@@ -912,18 +923,18 @@
                         }else{
     //                        code += IR2asm::space+"push {r0}"+IR2asm::endl;
                             std::vector<int> save_reg = {0};
-                            *code += push_regs(save_reg);
+                            *code += push_regs(save_reg, cmpop);
                             *code += IR2asm::space;
-                            *code += "LDR r0,=";
+                            *code += "LDR" + cmpop + " r0,=";
                             *code += std::to_string(const_val);
                             *code += IR2asm::endl;
                             *code += IR2asm::space;
-                            *code += "str r0";
+                            *code += "str" + cmpop + " r0";
                             *code += ", ";
                             *code += stack_map[target]->get_ofst_code(sp_extra_ofst);
                             *code += IR2asm::endl;
     //                        code += IR2asm::space+"pop {r0}"+IR2asm::endl;
-                            *code += pop_regs(save_reg);
+                            *code += pop_regs(save_reg, cmpop);
                         }
                     }
                 }else{
@@ -933,7 +944,7 @@
                             if(tar_inter->reg_num>=0){
                                 if(tar_inter->reg_num!=reg_map[opr]->reg_num){
                                     *code += IR2asm::space;
-                                    *code += "mov ";
+                                    *code += "mov" + cmpop + " ";
                                     *code += IR2asm::Reg(tar_inter->reg_num).get_code();
                                     *code += ", ";
                                     *code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
@@ -941,7 +952,7 @@
                                 }
                             }else{
                                 *code += IR2asm::space;
-                                *code += "str ";
+                                *code += "str" + cmpop + " ";
                                 *code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
                                 *code += ", ";
                                 *code += stack_map[target]->get_ofst_code(sp_extra_ofst);
@@ -953,7 +964,7 @@
                             auto tar_inter = reg_map[target];
                             if(tar_inter->reg_num>=0){
                                 *code += IR2asm::space;
-                                *code += "ldr ";
+                                *code += "ldr" + cmpop + " ";
                                 *code += IR2asm::Reg(tar_inter->reg_num).get_code();
                                 *code += ", ";
                                 *code += stack_map[opr]->get_ofst_code(sp_extra_ofst);
@@ -963,19 +974,19 @@
     //                            code += "push {lr}";
     //                            code += IR2asm::endl;
                                 std::vector<int> save_reg = {0};
-                                *code += push_regs(save_reg);
+                                *code += push_regs(save_reg, cmpop);
                                 *code += IR2asm::space;
-                                *code += "ldr r0, ";
+                                *code += "ldr" + cmpop + " r0, ";
                                 *code += stack_map[opr]->get_ofst_code(sp_extra_ofst);
                                 *code += IR2asm::endl;
                                 *code += IR2asm::space;
-                                *code += "str lr, ";
+                                *code += "str" + cmpop + " lr, ";
                                 *code += stack_map[target]->get_ofst_code(sp_extra_ofst);
                                 *code += IR2asm::endl;
     //                            code += IR2asm::space;
     //                            code += "pop {lr}";
     //                            code += IR2asm::endl;
-                                *code += pop_regs(save_reg);
+                                *code += pop_regs(save_reg, cmpop);
                             }
                         }
                     }
