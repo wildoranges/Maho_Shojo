@@ -137,7 +137,10 @@
                 }
                 if(dynamic_cast<Argument*>(vreg)){
                     auto arg = dynamic_cast<Argument*>(vreg);
-                    if(arg->get_arg_no() > 3)continue;
+                    if(arg->get_arg_no() > 3){
+                        stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
+                        continue;
+                    }
                 }
                 int type_size = vreg->get_type()->get_size();
                 size += type_size;
@@ -175,7 +178,10 @@
                 }
                 if(dynamic_cast<Argument*>(vreg)){
                     auto arg = dynamic_cast<Argument*>(vreg);
-                    if(arg->get_arg_no() > 3)continue;
+                    if(arg->get_arg_no() > 3){
+                        stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
+                        continue;
+                    }
                 }
                 int type_size = vreg->get_type()->get_size();
                 size += type_size;
