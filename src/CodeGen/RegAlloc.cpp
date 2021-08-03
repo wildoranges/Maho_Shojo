@@ -298,8 +298,8 @@ void RegAlloc::walk_intervals() {
 
 bool RegAlloc::try_alloc_free_reg() {
     if(!remained_all_reg_id.empty()){
-        int assigned_id = remained_all_reg_id.top();
-        remained_all_reg_id.pop();
+        int assigned_id = *remained_all_reg_id.begin();
+        remained_all_reg_id.erase(assigned_id);
         current->reg_num = assigned_id;
         unused_reg_id.erase(assigned_id);
         active.insert(current);
@@ -350,7 +350,7 @@ void RegAlloc::add_reg_to_pool(int reg_id) {
 //    }else if(func_reg_id.find(reg_id)!=func_reg_id.end()){
 //        remained_func_reg_id.push(reg_id);
 //    }
-    remained_all_reg_id.push(reg_id);
+    remained_all_reg_id.insert(reg_id);
 }
 
 void RegAlloc::union_phi_val() {
