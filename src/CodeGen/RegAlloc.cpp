@@ -296,7 +296,7 @@ void RegAlloc::walk_intervals() {
     }
 }
 
-bool RegAlloc::try_alloc_free_reg() {
+bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
     if(!remained_all_reg_id.empty()){
         int assigned_id = *remained_all_reg_id.begin();
         remained_all_reg_id.erase(assigned_id);
@@ -344,7 +344,7 @@ bool RegAlloc::try_alloc_free_reg() {
     }
 }
 
-void RegAlloc::add_reg_to_pool(int reg_id) {
+void RegAlloc::add_reg_to_pool(int reg_id) {//TODO:FIX BUG:INTERVAL WITH HOLES
 //    if(general_reg_id.find(reg_id)!=general_reg_id.end()){
 //        remained_general_reg_id.push(reg_id);
 //    }else if(func_reg_id.find(reg_id)!=func_reg_id.end()){
