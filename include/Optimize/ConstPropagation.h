@@ -39,8 +39,8 @@ public:
     void const_propagation();
     void reduce_redundant_cond_br();
 
-    Constant *get_global_const_val(Value *value);
-    Constant *set_global_const_val(Value *value, ConstantInt *const_val);
+    ConstantInt *get_global_const_val(Value *value);
+    void set_global_const_val(Value *value, ConstantInt *const_val);
     const std::string get_name() const override {return name;}
 };
 
