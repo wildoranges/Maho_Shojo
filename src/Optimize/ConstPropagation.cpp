@@ -81,6 +81,8 @@ ConstantInt *ConstFolder::compute(CmpInst::CmpOp op, ConstantInt *value1, Consta
 }
 
 void ConstPropagation::execute() {
+    const_global_var.clear();
+    const_array.clear();
     for (auto func : module->get_functions()) {
         for (auto bb : func->get_basic_blocks()) {
             bb_ = bb;
@@ -266,7 +268,11 @@ Constant *ConstPropagation::set_global_const_val(Value *value, ConstantInt *cons
         ConstantInt *const_offset;
         if (ptr_ins->is_gep()) {
             base = ptr_ins;
-            const_offset = ConstantInt::get(0, module);
+            if (ptr_ins->get_num_operand() == 3) {
+                const_offset = dynamic_cast<ConstantInt*>(ptr_ins->get_operand(2));
+            } else if (ptr_ins->get_num_operand() == 2) {
+                const_offset = dynamic_cast<ConstantInt*>(ptr_ins->get_operand(1));
+            }
         } else if (ptr_ins->is_add()) {
             base = dynamic_cast<Instruction*>(ptr_ins->get_operand(0))->get_operand(0);
             const_offset = dynamic_cast<ConstantInt*>(ptr_ins->get_operand(1));
