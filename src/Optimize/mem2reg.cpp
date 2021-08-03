@@ -5,6 +5,7 @@ void Mem2Reg::execute(){
     for(auto fun: module->get_functions()){
         if(fun->get_basic_blocks().size()==0)continue;
         func_ = fun;
+        lvalue_connection.clear();
         insideBlockForwarding();
         genPhi();
         module->set_print_name();
@@ -38,6 +39,17 @@ void Mem2Reg::insideBlockForwarding(){
             if(inst->get_instr_type() == Instruction::OpID::store){
                 Value* lvalue = static_cast<StoreInst *>(inst)->get_lval();
                 Value* rvalue = static_cast<StoreInst *>(inst)->get_rval();
+                if(!dynamic_cast<LoadInst *>(rvalue)){
+                    if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
+                        lvalue_connection.insert({rvalue, lvalue});
+                    }
+                    else{
+                        auto old_lval = lvalue_connection[rvalue];
+                        if(old_lval != lvalue){
+                            // exit(-1);
+                        }
+                    }
+                }
                 auto load_inst = dynamic_cast<Instruction*>(rvalue);
                 if(load_inst && forward_list.find(load_inst) != forward_list.end()){
                     rvalue = forward_list.find(load_inst)->second;
@@ -59,6 +71,16 @@ void Mem2Reg::insideBlockForwarding(){
             }
             else if(inst->get_instr_type() == Instruction::OpID::load){
                 Value* lvalue = static_cast<LoadInst *>(inst)->get_lval();
+                Value* rvalue = dynamic_cast<Value *>(inst);
+                if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
+                    lvalue_connection.insert({rvalue, lvalue});
+                }
+                else{
+                    auto old_lval = lvalue_connection[rvalue];
+                    if(old_lval != lvalue){
+                        // exit(-1);
+                    }
+                }
                 if(defined_list.find(lvalue) == defined_list.end())continue;
                 Value* value = new_value.find(lvalue)->second;
                 forward_list.insert({inst, value});
@@ -209,6 +231,7 @@ void Mem2Reg::valueForwarding(BasicBlock* bb){
             else{
                 value_status.insert({lvalue, {rvalue}});
             }
+            // if(lvalue_connection.find(rvalue) == lvalue_connection.end())lvalue_connection.insert({rvalue, lvalue});
         }
         delete_list.insert(inst);
     }
@@ -276,8 +299,8 @@ void Mem2Reg::phiStatistic(){
         for(auto inst: bb->get_instructions()){
             if(!inst->is_phi())continue;
             auto phi_value = dynamic_cast<Value *>(inst);
-#ifdef DEBUG
-            std::cout << "phi find: " << phi_value->get_name() << "\n";
+#ifndef DEBUG
+            std::cout << "phi find: " << phi_value->print() << "\n";
 #endif
             Value * reduced_value;
             if(value_map.find(phi_value) != value_map.end()){
@@ -293,14 +316,28 @@ void Mem2Reg::phiStatistic(){
                 if(value_map.find(opr) != value_map.end()){
                     auto opr_reduced_value = value_map.find(opr)->second;
                     if(opr_reduced_value != reduced_value){
-#ifdef DEBUG
+#ifndef DEBUG
                         std::cout << "conflict! " << opr->get_name() << " -> " << opr_reduced_value->get_name();
                         std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
 #endif
                     }
                 }
                 else{
-                    value_map.insert({opr, reduced_value});
+                    if(lvalue_connection.find(opr)!=lvalue_connection.end()){
+                        auto bounded_lval = lvalue_connection[opr];
+                        if(bounded_lval != reduced_value){
+#ifndef DEBUG
+                            std::cout << "conflict! " << opr->get_name() << " -> " << bounded_lval->get_name();
+                            std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
+#endif
+                        }
+                        else{
+                            value_map.insert({opr, reduced_value});
+                        }
+                    }
+                    else{
+                        value_map.insert({opr, reduced_value});
+                    }
                 }
             }
         }
