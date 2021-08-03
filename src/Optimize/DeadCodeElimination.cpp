@@ -27,7 +27,7 @@ bool DeadCodeElimination::is_critical(Instruction *instr) {
         auto arg_addr = dynamic_cast<Argument*>(addr);
         if ((arg_addr && arg_addr->get_type()->is_integer_type()) ||
             (alloca_addr && alloca_addr->get_alloca_type() == Type::get_int32_type(module)) ||
-            (global_addr && global_addr->get_type()->is_pointer_type())) {
+            (global_addr && global_addr->get_type()->is_pointer_type()) && global_addr->get_type()->get_pointer_element_type()->is_integer_type()) {
             for (auto use : addr->get_use_list()) {
                 auto use_instr = dynamic_cast<Instruction*>(use.val_);
                 if (use_instr->is_load()) {
