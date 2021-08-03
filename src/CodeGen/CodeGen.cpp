@@ -611,7 +611,8 @@
                 reg = reg_map[arg]->reg_num;
             }
             else{
-                reg = -1;
+//                reg = -1;
+                continue;
             }
             if(arg->get_arg_no() < 4){
                 if(reg >= 0){
