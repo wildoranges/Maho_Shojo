@@ -297,21 +297,23 @@ void RegAlloc::walk_intervals() {
 }
 
 bool RegAlloc::try_alloc_free_reg() {
-    if(!remained_general_reg_id.empty()){
-        int assigned_id = remained_general_reg_id.top();
-        remained_general_reg_id.pop();
+    if(!remained_all_reg_id.empty()){
+        int assigned_id = remained_all_reg_id.top();
+        remained_all_reg_id.pop();
         current->reg_num = assigned_id;
         unused_reg_id.erase(assigned_id);
         active.insert(current);
         return true;
-    }else if(!remained_func_reg_id.empty()){
-        int assigned_id = remained_func_reg_id.top();
-        remained_func_reg_id.pop();
-        current->reg_num = assigned_id;
-        unused_reg_id.erase(assigned_id);
-        active.insert(current);
-        return true;
-    }else{
+    }
+//    else if(!remained_func_reg_id.empty()){
+//        int assigned_id = remained_func_reg_id.top();
+//        remained_func_reg_id.pop();
+//        current->reg_num = assigned_id;
+//        unused_reg_id.erase(assigned_id);
+//        active.insert(current);
+//        return true;
+//    }
+    else{
         auto spill_val = current;
         int max_expire_pos = (*(current->range_list.rbegin()))->to;
         for(auto it:active){
@@ -343,11 +345,12 @@ bool RegAlloc::try_alloc_free_reg() {
 }
 
 void RegAlloc::add_reg_to_pool(int reg_id) {
-    if(reg_id >= 4&&reg_id<=12){
-        remained_general_reg_id.push(reg_id);
-    }else if(reg_id >= 0&&reg_id <= 3){
-        remained_func_reg_id.push(reg_id);
-    }
+//    if(general_reg_id.find(reg_id)!=general_reg_id.end()){
+//        remained_general_reg_id.push(reg_id);
+//    }else if(func_reg_id.find(reg_id)!=func_reg_id.end()){
+//        remained_func_reg_id.push(reg_id);
+//    }
+    remained_all_reg_id.push(reg_id);
 }
 
 void RegAlloc::union_phi_val() {
