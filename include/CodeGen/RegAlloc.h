@@ -13,8 +13,8 @@
 #include <queue>
 
 
-const std::set<int> param_reg_id = {0,1,2,3};
-const std::set<int> ret_reg_id = {0};
+//const std::set<int> param_reg_id = {0,1,2,3};
+//const std::set<int> ret_reg_id = {0};
 
 
 class Interval;
@@ -62,9 +62,33 @@ struct cmp_interval{
     }
 };
 
-const std::vector<int> general_reg_id = {12,10,9,8,7,6,5,4};
-const std::vector<int> func_reg_id = {3,2,1,0};
-const std::vector<int> all_reg_id = {12,10,9,8,7,6,5,4,3,2,1,0};
+const int priority[] = {
+        12,//r0
+        11,//r1
+        10,//r2
+        9,//r3
+        8,//r4
+        7,//r5
+        6,//r6
+        5,//r7
+        4,//r8
+        3,//r9
+        2,//r10
+        -1,//r11
+        1//r12
+};
+
+
+struct cmp_reg {
+    bool operator()(const int reg1,const int reg2)const{
+        assert(reg1>=0&&reg1<=12&&reg2<=12&&reg2>=0&&"invalid reg id");
+        return priority[reg1] < priority[reg2];
+    }
+};
+
+//const std::set<int> general_reg_id = {10,9,8,7,6,5,4};
+//const std::set<int> func_reg_id = {3,2,1,0,12};
+const std::vector<int> all_reg_id = {0,1,2,3,4,5,6,7,8,9,10,12};
 
 class RegAllocDriver{
 public:
@@ -94,8 +118,9 @@ private:
     void add_reg_to_pool(int reg_id);
     bool try_alloc_free_reg();
     std::set<int> unused_reg_id = {all_reg_id.begin(),all_reg_id.end()};
-    std::priority_queue<int> remained_general_reg_id = {general_reg_id.begin(),general_reg_id.end()};
-    std::priority_queue<int> remained_func_reg_id = {func_reg_id.begin(),func_reg_id.end()};
+    //std::priority_queue<int,std::vector<int>,cmp_reg> remained_general_reg_id = {general_reg_id.begin(),general_reg_id.end()};
+    //std::priority_queue<int,std::vector<int>,cmp_reg> remained_func_reg_id = {func_reg_id.begin(),func_reg_id.end()};
+    std::priority_queue<int,std::vector<int>,cmp_reg> remained_all_reg_id = {all_reg_id.begin(),all_reg_id.end()};
     std::set<Interval *> active = {};
     Interval* current = nullptr;
     std::map<Value*, Interval*> val2Inter;
