@@ -838,7 +838,7 @@
             return instr_gen(br_inst);
         }
         std::string cmp;
-        std::string cmpop;
+        std::string inst_cmpop;
         std::string succ_code;
         std::string fail_code;
         std::string succ_br;
@@ -863,8 +863,8 @@
             fail_bb = dynamic_cast<BasicBlock*>(cmpbr->get_operand(3));
             cmp += cmpbr_inst[0] + IR2asm::endl;
             succ_br += cmpbr_inst[1] + IR2asm::endl;
-            cmpop += std::string(1, succ_br[5]);
-            cmpop.push_back(succ_br[6]); //bad for debugging
+            inst_cmpop += std::string(1, succ_br[5]);
+            inst_cmpop.push_back(succ_br[6]); //bad for debugging
             fail_br += cmpbr_inst[2] + IR2asm::endl;
         }
         else{
@@ -873,11 +873,14 @@
         }
 
         for(auto sux:bb->get_succ_basic_blocks()){
+            std::string cmpop;
             if(sux == succ_bb){
                 code = &succ_code;
+                cmpop = inst_cmpop;
             }
             else{
                 code = &fail_code;
+                cmpop = "";
             }
             sux_bb_phi.clear();
             opr2phi.clear();
