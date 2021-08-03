@@ -302,6 +302,19 @@
                 }
             }
         }
+        if(arg_num==0&&!call->is_void()){
+            if(used_reg.first.find(0) != used_reg.first.end()){
+                bool not_to_save = true;
+                for(auto val:reg2val[0]){
+                    not_to_save = not_to_save && !reg_map[val]->covers(call);
+                }
+                if(!not_to_save){
+                    if(reg_map[call]->reg_num!=0){
+                        to_save_reg.push_back(0);
+                    }
+                }
+            }
+        }
         //TODO:debug caller save reg
         if(used_reg.second.find(12) != used_reg.second.end()){
             bool not_to_save = true;
@@ -986,7 +999,7 @@
                     auto ret_val = inst->get_operand(0);
                     auto const_ret_val = dynamic_cast<ConstantInt*>(ret_val);
                     if (!const_ret_val&&get_asm_reg(ret_val)->get_id() == 0) {
-                        code += IR2asm::ret();
+//                        code += IR2asm::ret();
                     } else {
                         if (const_ret_val) {
                             code += IR2asm::ret(get_asm_const(const_ret_val));
