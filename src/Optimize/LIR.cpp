@@ -14,7 +14,8 @@ void LIR::execute() {
                 //store_const_offset(bb);
                 split_srem(bb);
                 split_gep(bb);
-                //div_const2mul(bb);
+                div_const2mul(bb);
+                remove_unused_op(bb);
                 // convert instr
                 ConstPropagation const_propagation(module);
                 const_propagation.execute();
@@ -303,5 +304,231 @@ void LIR::div_const2mul(BasicBlock* bb) {
 }
 
 void LIR::remove_unused_op(BasicBlock* bb) {
-    // TODO: x+0, x-0, x-x, x*0, x*1, x/1, x or x, x and x, x xor x, x / x, x asr 0, x lsl 0, x lsr 0, and so on
+    // TODO: x+0; x-0, x-x; x*0, x*1; x/1, 0/x, x/x; x or x, x or 0; x and x, x and 0; x xor x, x xor 0;
+    // TODO: x asr 0, 0 asr x; x lsl 0, 0 lsl x; x lsr 0, 0 lsr x; and so on
+    std::vector<Instruction*> unused_instr_list;
+    for (auto instr : bb->get_instructions()) {
+        auto instr_type = instr->get_instr_type();
+        switch (instr_type)
+        {
+        case Instruction::add: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(op2);
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::sub: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    // use rsb instruction
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            } else {
+                if (op1 == op2) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::mul: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                } else if (const_op1->get_value() == 1) {
+                    instr->replace_all_use_with(op2);
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                } else if (const_op2->get_value() == 1) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::sdiv: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    std::cerr<<"divided by zero!"<<std::endl;
+                    exit(-1);
+                } else if (const_op2->get_value() == 1) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            } else {
+                if (op1 == op2) {
+                    instr->replace_all_use_with(ConstantInt::get(1, module));
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::lor: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(op2);
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            } else {
+                if (op1 == op2) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::land: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            } else {
+                if (op1 == op2) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::lxor: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(op2);
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            } else {
+                if (op1 == op2) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::asr: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::lsl: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        case Instruction::lsr: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                if (const_op1->get_value() == 0) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            } else if (const_op2) {
+                if (const_op2->get_value() == 0) {
+                    instr->replace_all_use_with(op1);
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
+        default:
+            break;
+        }
+    }
+    for (auto unused_instr : unused_instr_list) {
+        bb->delete_instr(unused_instr);
+    }
 }
