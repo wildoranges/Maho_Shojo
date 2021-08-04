@@ -722,6 +722,7 @@
                 continue;
             }
             if(arg->get_arg_no() < 4){
+                if(arg->get_arg_no() == reg)continue;
                 if(reg >= 0){
                     code += IR2asm::space;
                     code += "mov ";
