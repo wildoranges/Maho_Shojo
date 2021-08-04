@@ -585,54 +585,83 @@
                 auto reg = (reg_map).find(arg)->second->reg_num;
                 IR2asm::Reg* preg;
                 if(reg >= 0){
-                    if(reg == i){
-                        if(caller_saved_pos.find(i)==caller_saved_pos.end()){//TODO:CHECK NOT END?
-                            i++;
-                            continue;
-                        }else{//TODO:MAY BE SIMPLIFIED
-                            regcode += IR2asm::space;
-                            regcode += "LDR ";
-                            regcode += IR2asm::Reg(i).get_code();
-                            regcode += ", ";
-                            regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[i]).get_ofst_code(sp_extra_ofst);
-                            regcode += IR2asm::endl;
-                            i++;
-                            continue;
-                        }
-                    }
-                    else if(reg!=12){
-                        preg = new IR2asm::Reg(reg);
+                    if(reg<=3){
                         regcode += IR2asm::space;
-                        regcode += "mov ";
+                        regcode += "LDR ";
                         regcode += IR2asm::Reg(i).get_code();
                         regcode += ", ";
-                        regcode += preg->get_code();
+                        regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
                         regcode += IR2asm::endl;
                         i++;
                         continue;
                     }
-                    else{
-                        if(caller_saved_pos.find(12)==caller_saved_pos.end()){
-                            preg = new IR2asm::Reg(reg);
-                            regcode += IR2asm::space;
-                            regcode += "mov ";
-                            regcode += IR2asm::Reg(i).get_code();
-                            regcode += ", ";
-                            regcode += preg->get_code();
-                            regcode += IR2asm::endl;
-                            i++;
-                            continue;
-                        }else{
-                            regcode += IR2asm::space;
-                            regcode += "LDR ";
-                            regcode += IR2asm::Reg(i).get_code();
-                            regcode += ", ";
-                            regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
-                            regcode += IR2asm::endl;
-                            i++;
-                            continue;
-                        }
+                    else if(reg!=12){
+                        regcode += IR2asm::space;
+                        regcode += "MOV ";
+                        regcode += IR2asm::Reg(i).get_code();
+                        regcode += ", ";
+                        regcode += IR2asm::Reg(reg).get_code();
+                        regcode += IR2asm::endl;
+                        i++;
+                        continue;
+                    }else{
+                        regcode += IR2asm::space;
+                        regcode += "LDR ";
+                        regcode += IR2asm::Reg(i).get_code();
+                        regcode += ", ";
+                        regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
+                        regcode += IR2asm::endl;
+                        i++;
+                        continue;
                     }
+//                    if(reg == i){
+//                        if(caller_saved_pos.find(i)==caller_saved_pos.end()){//TODO:CHECK NOT END?
+//                            i++;
+//                            continue;
+//                        }else{//TODO:MAY BE SIMPLIFIED
+//                            regcode += IR2asm::space;
+//                            regcode += "LDR ";
+//                            regcode += IR2asm::Reg(i).get_code();
+//                            regcode += ", ";
+//                            regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[i]).get_ofst_code(sp_extra_ofst);
+//                            regcode += IR2asm::endl;
+//                            i++;
+//                            continue;
+//                        }
+//                    }
+//                    else if(reg!=12){
+//                        preg = new IR2asm::Reg(reg);
+//                        regcode += IR2asm::space;
+//                        regcode += "LDR ";
+//                        regcode += IR2asm::Reg(i).get_code();
+//                        regcode += ", ";
+//                        regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[i]).get_ofst_code(sp_extra_ofst);
+//                        regcode += IR2asm::endl;
+//                        i++;
+//                        continue;
+//                    }
+//                    else{
+//                        if(caller_saved_pos.find(12)==caller_saved_pos.end()){
+//                            preg = new IR2asm::Reg(reg);
+//                            regcode += IR2asm::space;
+//                            regcode += "mov ";
+//                            regcode += IR2asm::Reg(i).get_code();
+//                            regcode += ", ";
+//                            regcode += preg->get_code();
+//                            regcode += IR2asm::endl;
+//                            i++;
+//                            continue;
+//                        }else{
+//                            regcode += IR2asm::space;
+//                            regcode += "LDR ";
+//                            regcode += IR2asm::Reg(i).get_code();
+//                            regcode += ", ";
+//                            regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
+//                            regcode += IR2asm::endl;
+//                            i++;
+//                            continue;
+//                        }
+//                    }
                 }
                 else{
                     regcode += IR2asm::space;
