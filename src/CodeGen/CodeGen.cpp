@@ -1409,24 +1409,42 @@
                 case Instruction::asr: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
+                    auto const_op2 = dynamic_cast<ConstantInt*>(op2);
                     auto operand1 = op1;
-                    auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    IR2asm::Operand2 *operand2;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
                     code += IR2asm::asr(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
                 case Instruction::lsl: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
+                    auto const_op2 = dynamic_cast<ConstantInt*>(op2);
                     auto operand1 = op1;
-                    auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    IR2asm::Operand2 *operand2;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
                     code += IR2asm::lsl(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
                 case Instruction::lsr: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
+                    auto const_op2 = dynamic_cast<ConstantInt*>(op2);
                     auto operand1 = op1;
-                    auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    IR2asm::Operand2 *operand2;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
                     code += IR2asm::lsr(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
