@@ -330,7 +330,7 @@ void Mem2Reg::phiStatistic(){
 #endif
                         }
                         else{
-                            // value_map.insert({opr, reduced_value});
+                            value_map.insert({opr, reduced_value});
                         }
                     }
                     else{
