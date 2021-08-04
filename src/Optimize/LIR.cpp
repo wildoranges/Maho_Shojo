@@ -28,6 +28,9 @@ void LIR::execute() {
                 remove_unused_op(bb);
             }
             for (auto bb : func->get_basic_blocks()){
+                mov_const(bb);
+            }
+            for (auto bb : func->get_basic_blocks()){
                 // merge instr (when all optimization finished)
                 //merge_mul_add(bb);
                 //merge_mul_sub(bb);
