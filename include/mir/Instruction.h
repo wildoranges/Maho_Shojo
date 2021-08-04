@@ -54,6 +54,7 @@ public:
         lsrsub,
         smul_lo,
         smul_hi,
+        smmul,
         load_const_offset,
         store_const_offset,
         mov_const,
@@ -107,6 +108,7 @@ public:
             case lsrsub: return "lsrsub"; break;
             case smul_lo: return "smul_lo"; break;
             case smul_hi: return "smul_hi"; break;
+            case smmul: return "smmul"; break;
             case load_const_offset: return "load_const_offset"; break;
             case store_const_offset: return "store_const_offset"; break;
             case mov_const: return "mov_const"; break;
@@ -138,6 +140,7 @@ public:
 
     bool is_smul_lo() { return op_id_ == smul_lo; }
     bool is_smul_hi() { return op_id_ == smul_hi; }
+    bool is_smmul() { return op_id_ == smmul; }
 
     bool is_muladd() { return op_id_ == muladd; }
     bool is_mulsub() { return op_id_ == mulsub; }
@@ -214,6 +217,7 @@ public:
     static BinaryInst *create_lsr(Value *v1, Value *v2, BasicBlock *bb, Module *m);
     static BinaryInst *create_smul_lo(Value *v1, Value *v2, BasicBlock *bb, Module *m);
     static BinaryInst *create_smul_hi(Value *v1, Value *v2, BasicBlock *bb, Module *m);
+    static BinaryInst *create_smmul(Value *v1, Value *v2, BasicBlock *bb, Module *m);
 
     virtual std::string print() override;
 
