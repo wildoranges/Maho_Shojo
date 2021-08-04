@@ -356,6 +356,7 @@
                 int pop_size = to_save_reg.size()-1;
                 for(int i=0;i<pop_size;i++){
                     code += IR2asm::Reg(to_save_reg[i]).get_code();
+                    code += ", ";
                 }
                 code += IR2asm::Reg(to_save_reg[pop_size]).get_code();
                 code += "}";
@@ -373,6 +374,7 @@
                 code += "LDM sp, {";
                 for(int i=1;i<pop_size;i++){
                     code += IR2asm::Reg(to_save_reg[i]).get_code();
+                    code += ", ";
                 }
                 code += IR2asm::Reg(to_save_reg[pop_size]).get_code();
                 code += "}";
