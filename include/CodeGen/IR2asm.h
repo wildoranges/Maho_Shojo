@@ -67,6 +67,7 @@ namespace IR2asm{
     std::string muladd(Reg* rd, Reg* rs, Reg* rt, Reg* rn);
     std::string mulsub(Reg* rd, Reg* rs, Reg* rt, Reg* rn);
     std::string smul(Reg* rd1, Reg* rd2, Reg* rs, Reg* rt);
+    std::string smmul(Reg* rd, Reg* rs, Reg* rt);
 }
 
 #endif
