@@ -31,6 +31,8 @@ class CodeGen{
     std::map<int, std::vector<Value*>> reg2val;
     std::vector<int> to_save_reg;
     int sp_extra_ofst = 0;
+    int func_param_extra_offset = 0;
+    std::map<int,int> caller_saved_pos;
 
 public:
     void make_linear_bb(Function* fun);
