@@ -1550,25 +1550,23 @@
                     break;
                 case Instruction::load_offset: {
                     auto load_offset_inst = dynamic_cast<LoadOffsetInst*>(inst);
-                    auto ptr = load_offset_inst->get_lval();
                     auto offset = load_offset_inst->get_offset();
                     auto const_offset = dynamic_cast<ConstantInt*>(offset);
                     if (const_offset) {
-                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), const_offset->get_value()));
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst->get_operand(0)), const_offset->get_value()));
                     } else {
-                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), *get_asm_reg(offset)));
+                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst->get_operand(0)), *get_asm_reg(offset)));
                     }
                 }
                 break;
                 case Instruction::store_offset: {
-                    auto store_offset_inst = dynamic_cast<LoadOffsetInst*>(inst);
-                    auto ptr = store_offset_inst->get_lval();
+                    auto store_offset_inst = dynamic_cast<StoreOffsetInst*>(inst);
                     auto offset = store_offset_inst->get_offset();
                     auto const_offset = dynamic_cast<ConstantInt*>(offset);
                     if (const_offset) {
-                        code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), const_offset->get_value()));
+                        code += IR2asm::store(get_asm_reg(inst->get_operand(0)), new IR2asm::Regbase(*get_asm_reg(inst->get_operand(1)), const_offset->get_value()));
                     } else {
-                        code += IR2asm::store(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), *get_asm_reg(offset)));
+                        code += IR2asm::store(get_asm_reg(inst->get_operand(0)), new IR2asm::Regbase(*get_asm_reg(inst->get_operand(1)), *get_asm_reg(offset)));
                     }
                 }
                 break;
