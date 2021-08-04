@@ -14,6 +14,7 @@ private:
 	IRBuilder *builder;
 	std::map<BasicBlock *, std::vector<Value *>> define_var;
     std::string name = "mem2reg";
+	std::map<Value*, Value*> lvalue_connection;
 
 public:
 	explicit Mem2Reg(Module *m) : Pass(m) {}

@@ -105,6 +105,7 @@ public:
     explicit RegAlloc(Function* f):func(f){}
     //int get_reg(Value* value);
     void execute();
+    void init();
     void compute_block_order();
     void number_operations();
     void build_intervals();
@@ -115,7 +116,7 @@ public:
 private:
     void get_dfs_order(BasicBlock* bb,std::set<BasicBlock*>& visited);
     void add_interval(Interval* interval){interval_list.insert(interval);}
-    void add_reg_to_pool(int reg_id);
+    void add_reg_to_pool(Interval* inter);
     bool try_alloc_free_reg();
     std::set<int> unused_reg_id = {all_reg_id.begin(),all_reg_id.end()};
     //std::priority_queue<int,std::vector<int>,cmp_reg> remained_general_reg_id = {general_reg_id.begin(),general_reg_id.end()};
@@ -127,6 +128,7 @@ private:
     Function* func;
     std::list<BasicBlock*> block_order={};
     std::set<Interval*,cmp_interval> interval_list;
+    std::map<int,std::set<Interval*>> reg2ActInter;
 };
 
 #endif //MHSJ_REG_ALLOC_H
