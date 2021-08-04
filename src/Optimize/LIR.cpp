@@ -67,7 +67,7 @@ void LIR::store_offset(BasicBlock *bb) {
     auto &instructions = bb->get_instructions();
     for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
         auto instr = *iter;
-        if (instr->is_load()) {
+        if (instr->is_store()) {
             auto store_instr = dynamic_cast<StoreInst*>(instr);
             auto ptr = store_instr->get_lval();
             auto gep_ptr = dynamic_cast<GetElementPtrInst*>(ptr);
