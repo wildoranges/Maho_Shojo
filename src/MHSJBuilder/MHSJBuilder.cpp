@@ -48,7 +48,7 @@ std::vector<Constant *> init_val;
 
 //ret BB
 BasicBlock *ret_BB;
-std::vector<std::pair<Value*, BasicBlock*>> ret_val_BB_pair;
+Value *ret_addr;
 //
 
 /* Global Variable */
@@ -169,8 +169,10 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
     }
   }
   //ret BB
+  if (ret_type == INT32_T){
+    ret_addr = builder->create_alloca(INT32_T);
+  }
   ret_BB = BasicBlock::create(module.get(), "ret", fun);
-  ret_val_BB_pair.clear();
 
   node.body->accept(*this);
 
@@ -179,29 +181,21 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
       builder->create_br(ret_BB);
     }
     else {
-      ret_val_BB_pair.push_back({CONST_INT(0), builder->get_insert_block()});
+      builder->create_store(CONST_INT(0), ret_addr);
       builder->create_br(ret_BB);
     }
   }
   scope.exit();
   cur_basic_block_list.pop_back();
 
-  //ret BB add phi
+  //ret BB
   builder->set_insert_point(ret_BB);
   if (fun->get_return_type()== VOID_T){
     builder->create_void_ret();
   }
-  else if (ret_val_BB_pair.size() > 1){
-    //need phi
-    auto ret_phi = PhiInst::create_phi(fun->get_return_type(), ret_BB);
-    for (auto pair : ret_val_BB_pair){
-      ret_phi->add_phi_pair_operand(pair.first, pair.second);
-    }
-    ret_BB->add_instr_begin(ret_phi);
-    builder->create_ret(ret_phi);
-  }
   else{
-    builder->create_ret(ret_val_BB_pair.begin()->first);
+    auto ret_val = builder->create_load(ret_addr);
+    builder->create_ret(ret_val);
   }
 }
 
@@ -511,13 +505,11 @@ void MHSJBuilder::visit(SyntaxTree::Literal &node) {
 
 void MHSJBuilder::visit(SyntaxTree::ReturnStmt &node) {
   if (node.ret == nullptr) {
-    //builder->create_void_ret();
     builder->create_br(ret_BB);
   }
   else {
     node.ret->accept(*this);
-    //builder->create_ret(tmp_val);
-    ret_val_BB_pair.push_back({tmp_val, builder->get_insert_block()});
+    builder->create_store(tmp_val, ret_addr);
     builder->create_br(ret_BB);
   }
 }

@@ -223,7 +223,6 @@ int LoopExpansion::const_val_check(Instruction *inst){
 }
 
 void LoopExpansion::expand(int time, std::vector<BasicBlock *>* loop){
-    std::cout<<"loop expand"<<std::endl;
     auto entry_BB = *(*loop).rbegin();
     auto body_BB = *(*loop).begin();
 
