@@ -102,7 +102,6 @@ void Mem2Reg::insideBlockForwarding(){
         // //std::cout << "\n";
 
         for(auto submap: forward_list){
-            // Value * lvalue = submap.first.first;
             Instruction * inst = submap.first; 
             Value * value = submap.second;
             for(auto use: inst->get_use_list()){
@@ -231,7 +230,6 @@ void Mem2Reg::valueForwarding(BasicBlock* bb){
             else{
                 value_status.insert({lvalue, {rvalue}});
             }
-            // if(lvalue_connection.find(rvalue) == lvalue_connection.end())lvalue_connection.insert({rvalue, lvalue});
         }
         delete_list.insert(inst);
     }
@@ -324,7 +322,7 @@ void Mem2Reg::phiStatistic(){
                 }
                 else{
                     if(lvalue_connection.find(opr)!=lvalue_connection.end()){
-                        auto bounded_lval = lvalue_connection[opr];
+                        auto bounded_lval = lvalue_connection.find(opr)->second;
                         if(bounded_lval != reduced_value){
 #ifndef DEBUG
                             std::cout << "conflict! " << opr->get_name() << " -> " << bounded_lval->get_name();
@@ -332,11 +330,11 @@ void Mem2Reg::phiStatistic(){
 #endif
                         }
                         else{
-                            value_map.insert({opr, reduced_value});
+                            // value_map.insert({opr, reduced_value});
                         }
                     }
                     else{
-                        value_map.insert({opr, reduced_value});
+                        // value_map.insert({opr, reduced_value});
                     }
                 }
             }
