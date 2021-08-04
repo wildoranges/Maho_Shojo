@@ -63,7 +63,7 @@ namespace IR2asm {
             void set_offset(int x){offset = x;}
             std::string get_code(){
                 if (offset_reg_.get_id() >= 0) {
-                    return "[" + reg_.get_code() + ", " + offset_reg_.get_code() + ", lsl, #2" + "]";
+                    return "[" + reg_.get_code() + ", " + offset_reg_.get_code() + ", lsl #2" + "]";
                 } else if(!offset)return "[" + reg_.get_code() + "]";
                 else {
                     return "[" + reg_.get_code() + ", #" + std::to_string(offset*4) + "]";
