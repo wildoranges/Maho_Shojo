@@ -326,7 +326,7 @@
         }
         if(!to_save_reg.empty()){
             code += IR2asm::space;
-            code += "STM {";
+            code += "STM SP, {";
             int save_size = to_save_reg.size();
             for(int i = 0; i < save_size - 1; i++){
                 code += IR2asm::Reg(to_save_reg[i]).get_code();
@@ -343,16 +343,17 @@
     std::string CodeGen::caller_reg_restore(Function* fun, CallInst* call){
         std::string code = "";
         int arg_num = fun->get_num_of_args();
-        code += IR2asm::space;
-        code += "ADD sp, sp, #";
-        code += std::to_string(func_param_extra_offset*4);
-        code += IR2asm::endl;
-        sp_extra_ofst -= func_param_extra_offset*4;
-
+        if(func_param_extra_offset>0){
+            code += IR2asm::space;
+            code += "ADD sp, sp, #";
+            code += std::to_string(func_param_extra_offset*4);
+            code += IR2asm::endl;
+            sp_extra_ofst -= func_param_extra_offset*4;
+        }
         if(call->is_void()){
             if(!to_save_reg.empty()){
                 code += IR2asm::space;
-                code += "LDM sp!, {";
+                code += "LDM sp, {";
                 int pop_size = to_save_reg.size()-1;
                 for(int i=0;i<pop_size;i++){
                     code += IR2asm::Reg(to_save_reg[i]).get_code();
@@ -361,7 +362,7 @@
                 code += IR2asm::Reg(to_save_reg[pop_size]).get_code();
                 code += "}";
                 code += IR2asm::endl;
-                sp_extra_ofst -= to_save_reg.size() * 4;
+                //sp_extra_ofst -= to_save_reg.size() * 4;
             }
             return code;
         }
@@ -384,7 +385,7 @@
             code += "ADD SP, SP,#";
             code += std::to_string(caller_saved_pos.size()*4);
             code += IR2asm::endl;
-            sp_extra_ofst -= to_save_reg.size() * 4;
+            //sp_extra_ofst -= to_save_reg.size() * 4;
             if(ret_id!=0){
                 if(ret_id > 0){
                     code += IR2asm::space;
