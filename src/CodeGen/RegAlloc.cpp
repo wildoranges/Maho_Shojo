@@ -314,6 +314,20 @@ bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
         return true;
     }
     else{
+        for(auto& pair:reg2ActInter){
+            bool insert_in_hole = true;
+            int cur_reg_id = pair.first;
+            for(auto inter:pair.second){
+                insert_in_hole = insert_in_hole & !inter->intersects(current);
+            }
+            if(insert_in_hole){
+                current->reg_num = cur_reg_id;
+                unused_reg_id.erase(cur_reg_id);
+                active.insert(current);
+                pair.second.insert(current);//TODO:CHECK STL
+                return true;
+            }
+        }
         auto spill_val = current;
         int max_expire_pos = (*(current->range_list.rbegin()))->to;
         for(auto it:active){
@@ -322,13 +336,13 @@ bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
                 max_expire_pos = cur_expire_pos;
                 spill_val = it;
             }
-            if(!it->intersects(current)){
-                current->reg_num = it->reg_num;
-                unused_reg_id.erase(it->reg_num);
-                active.insert(current);
-                reg2ActInter[it->reg_num].insert(current);
-                return true;
-            }
+//            if(!it->intersects(current)){
+//                current->reg_num = it->reg_num;
+//                unused_reg_id.erase(it->reg_num);
+//                active.insert(current);
+//                reg2ActInter[it->reg_num].insert(current);
+//                return true;
+//            }
         }
         if(spill_val==current){
             current->reg_num = -1;
