@@ -381,11 +381,11 @@
                 code += "}";
                 code += IR2asm::endl;
             }
-            code += IR2asm::space;
-            code += "ADD SP, SP,#";
-            code += std::to_string(caller_saved_pos.size()*4);
-            code += IR2asm::endl;
-            //sp_extra_ofst -= to_save_reg.size() * 4;
+//            code += IR2asm::space;
+//            code += "ADD SP, SP,#";
+//            code += std::to_string(caller_saved_pos.size()*4);
+//            code += IR2asm::endl;
+//            sp_extra_ofst -= to_save_reg.size() * 4;
             if(ret_id!=0){
                 if(ret_id > 0){
                     code += IR2asm::space;
@@ -435,6 +435,7 @@
             }
         }
     }
+//                        }
     
     std::string CodeGen::print_global_table(){
         std::string code;
@@ -552,6 +553,7 @@
         std::stack<Value *> push_queue;//for sequence changing
         auto fun = dynamic_cast<Function *>(call->get_operand(0));
         int i = 0;
+        sp_extra_ofst += (call->get_num_operand() - 1 - 4) * reg_size;
         for(auto arg: call->get_operands()){
             if(dynamic_cast<Function *>(arg))continue;
             if(i < 4){
@@ -631,6 +633,7 @@
             }
             i++;
         }
+        sp_extra_ofst -= (call->get_num_operand() - 1 - 4) * reg_size;
         std::vector<int> to_push_regs = {};
         const int tmp_reg_id[] = {0,1,2,3,12};
         int remained_off_reg_num = 5;
