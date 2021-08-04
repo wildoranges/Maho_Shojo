@@ -248,7 +248,7 @@ std::string r_sub(Reg* rd, Reg* rs, Operand2* opr2){
     return asmstr;
 }
 
-std::string mul(Reg* rd, Reg* rs, Operand2* opr2){
+std::string mul(Reg* rd, Reg* rs, Reg* rt){
     std::string asmstr;
     asmstr += space;
     asmstr += "mul ";
@@ -256,12 +256,12 @@ std::string mul(Reg* rd, Reg* rs, Operand2* opr2){
     asmstr += ", ";
     asmstr += rs->get_code();
     asmstr += ", ";
-    asmstr += opr2->get_code();
+    asmstr += rt->get_code();
     asmstr += endl;
     return asmstr;
 }
 
-std::string sdiv(Reg* rd, Reg* rs, Operand2* opr2){
+std::string sdiv(Reg* rd, Reg* rs, Reg* rt){
     std::string asmstr;
     asmstr += space;
     asmstr += "sdiv ";
@@ -269,7 +269,7 @@ std::string sdiv(Reg* rd, Reg* rs, Operand2* opr2){
     asmstr += ", ";
     asmstr += rs->get_code();
     asmstr += ", ";
-    asmstr += opr2->get_code();
+    asmstr += rt->get_code();
     asmstr += endl;
     return asmstr;
 }

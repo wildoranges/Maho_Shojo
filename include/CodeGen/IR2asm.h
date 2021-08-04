@@ -49,8 +49,8 @@ namespace IR2asm{
     std::string add(Reg* rd, Reg* rs, Operand2* opr2);
     std::string sub(Reg* rd, Reg* rs, Operand2* opr2);
     std::string r_sub(Reg* rd, Reg* rs, Operand2* opr2);
-    std::string mul(Reg* rd, Reg* rs, Operand2* opr2);
-    std::string sdiv(Reg* rd, Reg* rs, Operand2* opr2);
+    std::string mul(Reg* rd, Reg* rs, Reg* rt);
+    std::string sdiv(Reg* rd, Reg* rs, Reg* rt);
     std::string srem(Reg* rd, Reg* rs, Operand2* opr2);
     std::string load(Reg* rd, Location* addr);
     std::string store(Reg* rs, Location* addr);
