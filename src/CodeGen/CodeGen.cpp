@@ -369,15 +369,21 @@
 
         else{
             int ret_id = reg_map[call]->reg_num;
-            int pop_size = caller_saved_pos.size() - 1;
-            if(pop_size > 0){
+            int pop_size = caller_saved_pos.size();
+            int init_id = 0;
+
+            if(caller_saved_pos.find(0)!=caller_saved_pos.end()){
+                init_id = 1;
+            }
+
+            if((pop_size - init_id)> 0){
                 code += IR2asm::space;
-                code += "LDM sp, {";
-                for(int i=1;i<pop_size;i++){
+                code += "LDMIB SP, {";
+                for(int i=init_id;i<pop_size-1;i++){
                     code += IR2asm::Reg(to_save_reg[i]).get_code();
                     code += ", ";
                 }
-                code += IR2asm::Reg(to_save_reg[pop_size]).get_code();
+                code += IR2asm::Reg(to_save_reg[pop_size-1]).get_code();
                 code += "}";
                 code += IR2asm::endl;
             }
@@ -553,7 +559,10 @@
         std::stack<Value *> push_queue;//for sequence changing
         auto fun = dynamic_cast<Function *>(call->get_operand(0));
         int i = 0;
-        sp_extra_ofst += (call->get_num_operand() - 1 - 4) * reg_size;
+        int num_of_arg = call->get_num_operand()-1;
+        if(num_of_arg>4){
+            sp_extra_ofst += (call->get_num_operand() - 1 - 4) * reg_size;
+        }
         for(auto arg: call->get_operands()){
             if(dynamic_cast<Function *>(arg))continue;
             if(i < 4){
@@ -633,7 +642,9 @@
             }
             i++;
         }
-        sp_extra_ofst -= (call->get_num_operand() - 1 - 4) * reg_size;
+        if(num_of_arg>4){
+            sp_extra_ofst -= (call->get_num_operand() - 1 - 4) * reg_size;
+        }
         std::vector<int> to_push_regs = {};
         const int tmp_reg_id[] = {0,1,2,3,12};
         int remained_off_reg_num = 5;
