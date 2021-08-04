@@ -12,5 +12,6 @@ add_library(
         LoopInvariant.cpp
         AvailableExpr.cpp
         FuncInline.cpp
+        LoopExpansion.cpp
 )
 
