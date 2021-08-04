@@ -136,6 +136,10 @@ void DeadCodeElimination::sweep() {
         }
         for (auto instr : wait_delete) {
             //std::cerr<<"delete "<<instr->print()<<std::endl;
+            // TODO: 绑定成一条汇编指令的ir指令集合(如smul_lo和smul_hi绑定为smul)要么全部传播,要么都不传播
+            if (instr->is_smul_lo() || instr->is_smul_hi()) {
+                continue;
+            }
             bb->delete_instr(instr);
         }
     }
