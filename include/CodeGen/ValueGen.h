@@ -52,17 +52,21 @@ namespace IR2asm {
     class Regbase: public Location{
         private:
             Reg reg_;
-            int offset;
+            int offset = 0;
+            Reg offset_reg_ = IR2asm::Reg(-1);
 
         public:
             Regbase(Reg reg, int offset): reg_(reg), offset(offset){}
+            Regbase(Reg reg, Reg offset_reg): reg_(reg), offset_reg_(offset_reg){}
             Reg &get_reg(){return reg_;}
             int get_offset(){return offset;}
             void set_offset(int x){offset = x;}
             std::string get_code(){
-                if(!offset)return "[" + reg_.get_code() + "]";
+                if (offset_reg_.get_id() >= 0) {
+                    return "[" + reg_.get_code() + ", " + offset_reg_.get_code() + ", lsl, #2" + "]";
+                } else if(!offset)return "[" + reg_.get_code() + "]";
                 else {
-                    return "[" + reg_.get_code() + ", #" + std::to_string(offset) + "]";
+                    return "[" + reg_.get_code() + ", #" + std::to_string(offset*4) + "]";
                 }
             }
             std::string get_ofst_code(int extra_ofst = 0){

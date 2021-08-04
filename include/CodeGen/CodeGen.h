@@ -66,7 +66,7 @@ public:
                                                         if (const_val) return new IR2asm::constant(const_val->get_value());
                                                     }}
     std::string ret_mov(CallInst* call);
-    bool instr_may_need_push_stack(Instruction *instr) { return !(instr->is_ret() || instr->is_phi() || instr->is_load_const_offset() || instr->is_store_const_offset());}
+    bool instr_may_need_push_stack(Instruction *instr) { return !(instr->is_ret() || instr->is_phi());}
 };
 
 #endif

@@ -721,27 +721,27 @@ std::string StoreInst::print()
     return instr_ir;
 }
 
-StoreConstOffsetInst::StoreConstOffsetInst(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb)
-    : Instruction(Type::get_void_type(bb->get_module()), Instruction::store_const_offset, 3, bb)
+StoreOffsetInst::StoreOffsetInst(Value *val, Value *ptr, Value *offset, BasicBlock *bb)
+    : Instruction(Type::get_void_type(bb->get_module()), Instruction::store_offset, 3, bb)
 {
     set_operand(0, val);
     set_operand(1, ptr);
     set_operand(2, offset);
 }
 
-StoreConstOffsetInst::StoreConstOffsetInst(Value *val, Value *ptr, BasicBlock *bb)
-    : Instruction(Type::get_void_type(bb->get_module()), Instruction::store_const_offset, 3, bb)
+StoreOffsetInst::StoreOffsetInst(Value *val, Value *ptr, BasicBlock *bb)
+    : Instruction(Type::get_void_type(bb->get_module()), Instruction::store_offset, 3, bb)
 {
     set_operand(0, val);
     set_operand(1, ptr);
 }
 
-StoreConstOffsetInst *StoreConstOffsetInst::create_store_const_offset(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb)
+StoreOffsetInst *StoreOffsetInst::create_store_offset(Value *val, Value *ptr, Value *offset, BasicBlock *bb)
 {
-    return new StoreConstOffsetInst(val, ptr, offset, bb);
+    return new StoreOffsetInst(val, ptr, offset, bb);
 }
 
-std::string StoreConstOffsetInst::print()
+std::string StoreOffsetInst::print()
 {
     std::string instr_ir;
     instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
@@ -752,7 +752,7 @@ std::string StoreConstOffsetInst::print()
     instr_ir += ", ";
     instr_ir += print_as_op(this->get_operand(1), true);
     instr_ir += ", ";
-    instr_ir += print_as_op(this->get_operand(2), false);
+    instr_ir += print_as_op(this->get_operand(2), true);
     return instr_ir;
 }
 
@@ -790,8 +790,8 @@ std::string LoadInst::print()
     return instr_ir;
 }
 
-LoadConstOffsetInst::LoadConstOffsetInst(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb)
-    : Instruction(ty, Instruction::load_const_offset, 2, bb)
+LoadOffsetInst::LoadOffsetInst(Type *ty, Value *ptr, Value *offset, BasicBlock *bb)
+    : Instruction(ty, Instruction::load_offset, 2, bb)
 {
     assert(ptr->get_type()->is_pointer_type());
     assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
@@ -799,25 +799,25 @@ LoadConstOffsetInst::LoadConstOffsetInst(Type *ty, Value *ptr, ConstantInt *offs
     set_operand(1, offset);
 }
 
-LoadConstOffsetInst::LoadConstOffsetInst(Type *ty, Value *ptr, BasicBlock *bb)
-    : Instruction(ty, Instruction::load_const_offset, 2, bb)
+LoadOffsetInst::LoadOffsetInst(Type *ty, Value *ptr, BasicBlock *bb)
+    : Instruction(ty, Instruction::load_offset, 2, bb)
 {
     assert(ptr->get_type()->is_pointer_type());
     assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
     set_operand(0, ptr);
 }
 
-LoadConstOffsetInst *LoadConstOffsetInst::create_load_const_offset(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb)
+LoadOffsetInst *LoadOffsetInst::create_load_offset(Type *ty, Value *ptr, Value *offset, BasicBlock *bb)
 {
-    return new LoadConstOffsetInst(ty, ptr, offset, bb);
+    return new LoadOffsetInst(ty, ptr, offset, bb);
 }
 
-Type *LoadConstOffsetInst::get_load_type() const
+Type *LoadOffsetInst::get_load_type() const
 {
     return static_cast<PointerType *>(get_operand(0)->get_type())->get_element_type();
 }
 
-std::string LoadConstOffsetInst::print()
+std::string LoadOffsetInst::print()
 {
     std::string instr_ir;
     instr_ir += "%";
@@ -831,7 +831,7 @@ std::string LoadConstOffsetInst::print()
     instr_ir += " ";
     instr_ir += print_as_op(this->get_operand(0), true);
     instr_ir += ", ";
-    instr_ir += print_as_op(this->get_operand(1), false);
+    instr_ir += print_as_op(this->get_operand(1), true);
     return instr_ir;
 }
 
