@@ -408,6 +408,12 @@
                     code += IR2asm::endl;
                 }
             }
+
+            if(init_id && ret_id != 0){
+                code += IR2asm::space;
+                code += "LDR r0, [SP]";
+                code += IR2asm::endl;
+            }
         }
 //        if(arg_num > 4)arg_num = 4;
 //        if(!to_save_reg.empty()){
