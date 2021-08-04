@@ -733,6 +733,15 @@
 
     std::string CodeGen::callee_arg_move(Function* fun){
         std::string code;
+        int arg_num = fun->get_args().size();
+        if(!arg_num)return code;
+        if(arg_num > 4)arg_num = 4;
+        code += IR2asm::space + "STMDB SP, {";
+        for(int i = 0; i < arg_num - 1; i++){
+            code += IR2asm::Reg(i).get_code();
+            code += ", ";
+        }
+        code += IR2asm::Reg(arg_num - 1).get_code() + "}" + IR2asm::endl;
         for(auto arg: fun->get_args()){
             int reg;
             if(reg_map.find(arg)!= reg_map.end()){
@@ -745,11 +754,17 @@
             if(arg->get_arg_no() < 4){
                 if(arg->get_arg_no() == reg)continue;
                 if(reg >= 0){
+                    // code += IR2asm::space;
+                    // code += "mov ";
+                    // code += IR2asm::Reg(reg).get_code();
+                    // code += ", ";
+                    // code += IR2asm::Reg(arg->get_arg_no()).get_code();
+                    // code += IR2asm::endl;
                     code += IR2asm::space;
-                    code += "mov ";
+                    code += "Ldr ";
                     code += IR2asm::Reg(reg).get_code();
                     code += ", ";
-                    code += IR2asm::Reg(arg->get_arg_no()).get_code();
+                    code += IR2asm::Regbase(IR2asm::sp, - int_size * (arg->get_arg_no() + 1)).get_code();
                     code += IR2asm::endl;
                 }
                 else{
