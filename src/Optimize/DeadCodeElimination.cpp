@@ -20,7 +20,7 @@ void DeadCodeElimination::execute() {
 bool DeadCodeElimination::is_critical(Instruction *instr) {
     if (instr->is_ret()) return true;
     else if (instr->is_call()) return true;
-    else if (instr->is_store()) {
+    else if (instr->is_store() || instr->is_store_offset()) {
         auto addr = instr->get_operand(1);
         auto alloca_addr = dynamic_cast<AllocaInst*>(addr);
         auto global_addr = dynamic_cast<GlobalVariable*>(addr);
