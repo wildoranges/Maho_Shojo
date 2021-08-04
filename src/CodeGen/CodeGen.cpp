@@ -1548,6 +1548,12 @@
                         break;
                     case Instruction::smul_hi:
                         break;
+                    case Instruction::smmul: {
+                            auto op1 = inst->get_operand(0);
+                            auto op2 = inst->get_operand(1);
+                            code += IR2asm::smmul(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2));
+                        }
+                        break;
                     case Instruction::load_const_offset: {
                         auto load_const_offset_inst = dynamic_cast<LoadConstOffsetInst*>(inst);
                         auto ptr = load_const_offset_inst->get_lval();

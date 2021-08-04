@@ -93,7 +93,7 @@ void LIR::mov_const(BasicBlock *bb) {
                 }
             }
         }
-        if (instr->is_mul() || instr->is_div() || instr->is_rem()) {
+        if (instr->is_mul() || instr->is_div() || instr->is_rem() || instr->is_smmul() || instr->is_smul_lo() || instr->is_smul_hi()) {
             auto op1 = instr->get_operand(0);
             auto op2 = instr->get_operand(1);
             auto const_op1 = dynamic_cast<ConstantInt*>(op1);
@@ -279,16 +279,13 @@ void LIR::div_const2mul(BasicBlock* bb) {
                     long long L = pow(2, c);
                     int B = (divisor > 0) ? (floor(L / abs_divisor) + 1) : - (floor(L / abs_divisor) + 1);
                     iter++;
-                    auto smul_lo = BinaryInst::create_smul_lo(op1, ConstantInt::get(B, module), bb, module);
+                    auto smmul = BinaryInst::create_smmul(op1, ConstantInt::get(B, module), bb, module);
                     bb->add_instruction(iter, instructions.back());
                     instructions.pop_back();
-                    auto smul_hi = BinaryInst::create_smul_hi(op1, ConstantInt::get(B, module), bb, module);
+                    auto asr = BinaryInst::create_asr(smmul, ConstantInt::get(c - 32, module), bb, module);
                     bb->add_instruction(iter, instructions.back());
                     instructions.pop_back();
-                    auto asr = BinaryInst::create_asr(smul_hi, ConstantInt::get(c - 32, module), bb, module);
-                    bb->add_instruction(iter, instructions.back());
-                    instructions.pop_back();
-                    auto lsr = BinaryInst::create_lsr(smul_hi, ConstantInt::get(31, module), bb, module);
+                    auto lsr = BinaryInst::create_lsr(smmul, ConstantInt::get(31, module), bb, module);
                     bb->add_instruction(iter, instructions.back());
                     instructions.pop_back();
                     auto add = BinaryInst::create_add(asr, lsr, bb, module);

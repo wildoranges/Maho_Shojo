@@ -19,6 +19,7 @@ Module::Module(std::string name)
 
     instr_id2string_.insert({ Instruction::smul_lo, "smul_lo" });
     instr_id2string_.insert({ Instruction::smul_hi, "smul_hi" });
+    instr_id2string_.insert({ Instruction::smmul, "smmul" });
 
     instr_id2string_.insert({ Instruction::muladd, "muladd" });
     instr_id2string_.insert({ Instruction::mulsub, "mulsub" });

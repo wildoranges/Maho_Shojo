@@ -420,10 +420,23 @@ std::string mulsub(Reg* rd, Reg* rs, Reg* rt, Reg* rn){
 std::string smul(Reg* rd1, Reg* rd2, Reg* rs, Reg* rt){
     std::string asmstr;
     asmstr += space;
-    asmstr += "mls ";
+    asmstr += "smull ";
     asmstr += rd1->get_code();
     asmstr += ", ";
     asmstr += rd2->get_code();
+    asmstr += ", ";
+    asmstr += rs->get_code();
+    asmstr += ", ";
+    asmstr += rt->get_code();
+    asmstr += endl;
+    return asmstr;
+}
+
+std::string smmul(Reg* rd, Reg* rs, Reg* rt){
+    std::string asmstr;
+    asmstr += space;
+    asmstr += "smmul ";
+    asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += rs->get_code();
     asmstr += ", ";
