@@ -76,12 +76,13 @@ void CFG_analyse::tarjan_DFS(BasicBlock *BB){
     BB_DFN[BB] = DFN;
     BB_LOW[BB] = DFN;
     BB_Stack.push(BB);
+    color[BB] = 0;
     for (auto succ : BB->get_succ_basic_blocks()){
         if (color[succ] != 1){
             if (BB_DFN[succ] == 0){
                 tarjan_DFS(succ);
             }
-            if (BB_LOW[succ] < BB_LOW[BB] && color[succ]!=1){
+            if (BB_LOW[succ] < BB_LOW[BB] && color[succ]<1){
                 BB_LOW[BB] = BB_LOW[succ];
             }
         }
@@ -92,7 +93,7 @@ void CFG_analyse::tarjan_DFS(BasicBlock *BB){
         while (BB_LOW[bb_instack] == BB_LOW[BB]){
             BB_Stack.pop();
             BBs->push_back(bb_instack);
-            color[bb_instack] = 1;
+            color[bb_instack] = 2;
             if (BB_Stack.empty()){
                 break;
             }
