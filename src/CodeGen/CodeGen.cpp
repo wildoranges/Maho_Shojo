@@ -934,7 +934,7 @@
                             } else {
                                 std::set<int> inst_reg_num_set = {};
                                 if (reg_map[inst]->reg_num >= 0) {
-                                    inst_reg_num_set.insert(reg_map[inst]->reg_num)
+                                    inst_reg_num_set.insert(reg_map[inst]->reg_num);
                                 }
                                 for (auto opr : inst->get_operands()) {
                                     if(dynamic_cast<Constant*>(opr) || 
@@ -944,7 +944,7 @@
                                             continue;
                                         }
                                     if (reg_map[opr]->reg_num >= 0) {
-                                        inst_reg_num_set.insert(reg_map[opr]->reg_num)
+                                        inst_reg_num_set.insert(reg_map[opr]->reg_num);
                                     }
                                 }
                                 for (int i = 0; i <= 12; i++) {
