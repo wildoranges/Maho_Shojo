@@ -795,7 +795,7 @@
                     code += "Ldr ";
                     code += IR2asm::Reg(reg).get_code();
                     code += ", ";
-                    code += IR2asm::Regbase(IR2asm::sp, - int_size * (arg->get_arg_no() + 1)).get_code();
+                    code += IR2asm::Regbase(IR2asm::sp, - int_size * (arg_num-arg->get_arg_no())).get_code();
                     code += IR2asm::endl;
                 }
                 else{
