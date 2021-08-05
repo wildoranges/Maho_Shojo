@@ -108,7 +108,9 @@ void ActiveVar::get_live_in_live_out() {
             std::set_union(tmp_live_in.begin(), tmp_live_in.end(), use_var[bb].begin(), use_var[bb].end(), std::inserter(tmp_live_in, tmp_live_in.begin()));
             auto old_live_in_size = live_in[bb].size();
             std::set_union(live_in[bb].begin(), live_in[bb].end(), tmp_live_in.begin(), tmp_live_in.end(), std::inserter(live_in[bb], live_in[bb].begin()));
-            repeat = (live_in[bb].size() > old_live_in_size);
+            if (live_in[bb].size() > old_live_in_size) {
+                repeat = true;
+            }
         }
     }
     return ;

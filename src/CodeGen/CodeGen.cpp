@@ -682,8 +682,9 @@
             sp_extra_ofst -= (call->get_num_operand() - 1 - 4) * reg_size;
         }
         std::vector<int> to_push_regs = {};
-        const int tmp_reg_id[] = {0,1,2,3,12};
-        int remained_off_reg_num = 5;
+        const int tmp_reg_id[] = {12};
+        const int tmp_reg_size = 1;
+        int remained_off_reg_num = 1;
         func_param_extra_offset = 0;
         while(!push_queue.empty()){
             Value* arg = push_queue.top();
@@ -692,11 +693,11 @@
             if(dynamic_cast<ConstantInt *>(arg)){
                 memcode += IR2asm::space;
                 memcode += "LDR ";
-                memcode += IR2asm::Reg(tmp_reg_id[5-remained_off_reg_num]).get_code();
+                memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                 memcode += " ,=";
                 memcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
                 memcode += IR2asm::endl;
-                to_push_regs.push_back(tmp_reg_id[5-remained_off_reg_num]);
+                to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                 remained_off_reg_num--;
 //                memcode += IR2asm::space;
 //                memcode += "str r0, ";
@@ -709,14 +710,15 @@
                 if(reg >= 0){
                     if(reg>=4&&reg<12){
                         to_push_regs.push_back(reg);
+                        remained_off_reg_num--;
                     }else{
                         memcode += IR2asm::space;
                         memcode += "LDR ";
-                        memcode += IR2asm::Reg(tmp_reg_id[5-remained_off_reg_num]).get_code();
+                        memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                         memcode += ", ";
                         memcode += IR2asm::Regbase(IR2asm::Reg(reg),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
                         memcode += IR2asm::endl;
-                        to_push_regs.push_back(tmp_reg_id[5-remained_off_reg_num]);
+                        to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                         remained_off_reg_num--;
                         //TODO:null ptr?segment fault?
                     }
@@ -736,11 +738,11 @@
                     auto srcaddr = stack_map.find(arg)->second;
                     memcode += IR2asm::space;
                     memcode += "LDR ";
-                    memcode += IR2asm::Reg(tmp_reg_id[5-remained_off_reg_num]).get_code();
+                    memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                     memcode += ", ";
                     memcode += srcaddr->get_ofst_code(sp_extra_ofst);
                     memcode += IR2asm::endl;
-                    to_push_regs.push_back(tmp_reg_id[5-remained_off_reg_num]);
+                    to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                     remained_off_reg_num--;
 //                    memcode += IR2asm::space;
 //                    memcode += "str r0, ";
@@ -752,7 +754,7 @@
             if(remained_off_reg_num==0){
                 memcode += push_regs(to_push_regs);
                 to_push_regs.clear();
-                remained_off_reg_num = 5;
+                remained_off_reg_num = tmp_reg_size;
             }
         }
         if(!to_push_regs.empty()){
@@ -794,7 +796,7 @@
                     code += "Ldr ";
                     code += IR2asm::Reg(reg).get_code();
                     code += ", ";
-                    code += IR2asm::Regbase(IR2asm::sp, - int_size * (arg->get_arg_no() + 1)).get_code();
+                    code += IR2asm::Regbase(IR2asm::sp, - int_size * (arg_num-arg->get_arg_no())).get_code();
                     code += IR2asm::endl;
                 }
                 else{
@@ -920,6 +922,7 @@
                 std::set<Value*> to_ld_set = {};
                 std::set<Interval*> interval_set = {};
                 bool use_target = false;
+                bool can_use_inst_reg = false;
                 if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
                     auto reg_inter = reg_map[inst];
                     if(reg_inter->reg_num<0){
@@ -931,6 +934,22 @@
                         interval_set.insert(reg_inter);
                         to_store_set.insert(inst);
                         use_target = true;
+                        can_use_inst_reg = true;
+                    }
+                }
+                std::set<int> inst_reg_num_set = {};
+                if (!inst->is_void() && !dynamic_cast<AllocaInst *>(inst) && reg_map[inst]->reg_num >= 0) {
+                    inst_reg_num_set.insert(reg_map[inst]->reg_num);
+                }
+                for (auto opr : inst->get_operands()) {
+                    if(dynamic_cast<Constant*>(opr) || 
+                        dynamic_cast<BasicBlock *>(opr) ||
+                        dynamic_cast<GlobalVariable *>(opr) ||
+                        dynamic_cast<AllocaInst *>(opr)){
+                            continue;
+                        }
+                    if (reg_map[opr]->reg_num >= 0) {
+                        inst_reg_num_set.insert(reg_map[opr]->reg_num);
                     }
                 }
                 for(auto opr:inst->get_operands()){
@@ -948,8 +967,23 @@
                             reg_inter->reg_num = store_list.size();
                         }
                         auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                        if(it==store_list.end()){
+                        auto reg_it = std::find(inst_reg_num_set.begin(),inst_reg_num_set.end(),reg_inter->reg_num);
+                        if(it==store_list.end() && reg_it == inst_reg_num_set.end()){
                             store_list.push_back(reg_inter->reg_num);
+                        } else {
+                            if (can_use_inst_reg == true) {
+                                can_use_inst_reg = false;
+                            } else {
+                                for (int i = 0; i <= 12; i++) {
+                                    if (i == 11) continue;
+                                    if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() && 
+                                        std::find(inst_reg_num_set.begin(),inst_reg_num_set.end(),i) == inst_reg_num_set.end()) {
+                                        reg_inter->reg_num = i;
+                                        store_list.push_back(reg_inter->reg_num);
+                                        break;
+                                    }
+                                }
+                            }
                         }
                         interval_set.insert(reg_inter);
                         to_ld_set.insert(opr);
@@ -1465,24 +1499,42 @@
                 case Instruction::asr: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
+                    auto const_op2 = dynamic_cast<ConstantInt*>(op2);
                     auto operand1 = op1;
-                    auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    IR2asm::Operand2 *operand2;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
                     code += IR2asm::asr(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
                 case Instruction::lsl: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
+                    auto const_op2 = dynamic_cast<ConstantInt*>(op2);
                     auto operand1 = op1;
-                    auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    IR2asm::Operand2 *operand2;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
                     code += IR2asm::lsl(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
                 case Instruction::lsr: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
+                    auto const_op2 = dynamic_cast<ConstantInt*>(op2);
                     auto operand1 = op1;
-                    auto operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    IR2asm::Operand2 *operand2;
+                    if (const_op2) {
+                        operand2 = new IR2asm::Operand2(const_op2->get_value());
+                    } else {
+                        operand2 = new IR2asm::Operand2(*get_asm_reg(op2));
+                    }
                     code += IR2asm::lsr(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
