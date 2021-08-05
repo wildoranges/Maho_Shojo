@@ -376,6 +376,43 @@ std::string load(Reg* rd, Location* addr){
     return asmstr;
 }
 
+std::string safe_load(Reg* rd, Location* addr, int sp_extra_ofst, bool long_func){
+    std::string asmstr;
+    if(dynamic_cast<Regbase*>(addr)){
+        Regbase* regbase = dynamic_cast<Regbase*>(addr);
+        int offset = regbase->get_offset() + ((regbase->get_reg().get_id() == sp)?sp_extra_ofst: 0);
+        if(abs(offset) > 4095){
+            asmstr += space;
+            asmstr += "ldr lr, =";
+            asmstr += std::to_string(offset);
+            asmstr += endl;
+            asmstr += space;
+            asmstr += "add lr, lr, ";
+            asmstr += regbase->get_reg().get_code();
+            asmstr += endl;
+            asmstr += load(rd, new Regbase(Reg(lr), 0));
+        }
+        else{
+            asmstr += load(rd, addr);
+        }
+    }
+    else{
+        label* labl = dynamic_cast<label*>(addr);
+        if(long_func || labl->get_offset()){
+            asmstr += space;
+            asmstr += "ldr lr, =";
+            asmstr += labl->get_code();
+            asmstr += endl;
+            asmstr += space;
+            asmstr += load(rd, new Regbase(Reg(lr), 0));
+        }
+        else{
+            asmstr += load(rd, addr);
+        }
+    }
+    return asmstr;
+}
+
 std::string store(Reg* rd, Location* addr){
     std::string asmstr;
     asmstr += space;
@@ -384,6 +421,43 @@ std::string store(Reg* rd, Location* addr){
     asmstr += ", ";
     asmstr += addr->get_code();
     asmstr += endl;
+    return asmstr;
+}
+
+std::string safe_load(Reg* rd, Location* addr, int sp_extra_ofst, bool long_func){
+    std::string asmstr;
+    if(dynamic_cast<Regbase*>(addr)){
+        Regbase* regbase = dynamic_cast<Regbase*>(addr);
+        int offset = regbase->get_offset() + ((regbase->get_reg().get_id() == sp)?sp_extra_ofst: 0);
+        if(abs(offset) > 4095){
+            asmstr += space;
+            asmstr += "str lr, =";
+            asmstr += std::to_string(offset);
+            asmstr += endl;
+            asmstr += space;
+            asmstr += "add lr, lr, ";
+            asmstr += regbase->get_reg().get_code();
+            asmstr += endl;
+            asmstr += store(rd, new Regbase(Reg(lr), 0));
+        }
+        else{
+            asmstr += store(rd, addr);
+        }
+    }
+    else{
+        label* labl = dynamic_cast<label*>(addr);
+        if(long_func || labl->get_offset()){
+            asmstr += space;
+            asmstr += "str lr, =";
+            asmstr += labl->get_code();
+            asmstr += endl;
+            asmstr += space;
+            asmstr += store(rd, new Regbase(Reg(lr), 0));
+        }
+        else{
+            asmstr += store(rd, addr);
+        }
+    }
     return asmstr;
 }
 

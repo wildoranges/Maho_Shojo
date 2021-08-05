@@ -95,6 +95,7 @@ namespace IR2asm {
                 if(!offset)return label_;
                 return label_ + std::to_string(offset);
             }
+            int get_offset(){return offset;}
     };
     class constant: public Value{
         private:
