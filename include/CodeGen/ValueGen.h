@@ -67,7 +67,7 @@ namespace IR2asm {
             }
             std::string get_ofst_code(int extra_ofst = 0){
                 if(!offset){
-                    if(reg_.get_id() == sp){
+                    if(reg_.get_id() == sp && extra_ofst){
                         return "[" + reg_.get_code() + ", #" + std::to_string(extra_ofst) + "]";
                     }
                     return "[" + reg_.get_code() + "]";
@@ -95,6 +95,7 @@ namespace IR2asm {
                 if(!offset)return label_;
                 return label_ + std::to_string(offset);
             }
+            int get_offset(){return offset;}
     };
     class constant: public Value{
         private:

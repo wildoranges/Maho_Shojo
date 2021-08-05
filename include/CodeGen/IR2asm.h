@@ -52,8 +52,10 @@ namespace IR2asm{
     std::string mul(Reg* rd, Reg* rs, Reg* rt);
     std::string sdiv(Reg* rd, Reg* rs, Reg* rt);
     std::string srem(Reg* rd, Reg* rs, Operand2* opr2);
-    std::string load(Reg* rd, Location* addr);
-    std::string store(Reg* rs, Location* addr);
+    std::string load(Reg* rd, Location* addr, std::string cmpop = "");
+    std::string safe_load(Reg* rd, Location* addr, int sp_extra_ofst, bool long_func, std::string cmpop = "");
+    std::string store(Reg* rs, Location* addr, std::string cmpop = "");
+    std::string safe_store(Reg* rd, Location* addr, int sp_extra_ofst, bool long_func, std::string cmpop = "");
     std::string call(label* fun);
     
     std::string land(Reg* rd, Reg* rs, Operand2* opr2);
