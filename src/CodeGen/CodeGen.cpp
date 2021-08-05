@@ -246,10 +246,12 @@
         }
         // code += (IR2asm::frame_ptr).get_code();
         // code += ", ";
-        if(have_func_call)code += ", lr}";
-        else{
-            code += "}";
-        }
+        /******always save lr for temporary use********/
+        // if(have_func_call)code += ", lr}";
+        // else{
+        //     code += "}";
+        // }
+        code += ", lr}";
         code += IR2asm::endl;
         return code;
     }
