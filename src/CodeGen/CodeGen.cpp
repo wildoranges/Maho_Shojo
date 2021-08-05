@@ -806,12 +806,13 @@
                 }
             }
             else{
+                int max_arg_no = fun->get_num_of_args();
                 if(reg < 0)continue;
                 code += IR2asm::space;
                 code += "ldr ";
                 code += IR2asm::Reg(reg).get_code();
                 code += ", ";
-                code += arg_on_stack[arg->get_arg_no() - 4]->get_code();
+                code += arg_on_stack[max_arg_no - arg->get_arg_no() - 1]->get_code();
                 code += IR2asm::endl;
             }
         }
