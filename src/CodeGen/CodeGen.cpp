@@ -108,6 +108,7 @@
         stack_map.clear();
         arg_on_stack.clear();
         reg2val.clear();
+        std::vector<Value*> stack_args;
         //arg on stack in reversed sequence
         if(fun->get_num_of_args() > 4){
             for(auto arg: fun->get_args()){
@@ -115,6 +116,7 @@
                 int type_size = arg->get_type()->get_size();
                 arg_on_stack.push_back(new IR2asm::Regbase(IR2asm::sp, arg_size));
                 arg_size += type_size;
+                stack_args.push_back(dynamic_cast<Value*>(arg));
             }
         }
         if(have_func_call){
@@ -180,7 +182,7 @@
                 if(dynamic_cast<Argument*>(vreg)){
                     auto arg = dynamic_cast<Argument*>(vreg);
                     if(arg->get_arg_no() > 3){
-                        stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
+                        // stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
                         continue;
                     }
                 }
@@ -204,9 +206,12 @@
         /******always save lr for tmp use*******/
         int reg_store_size = reg_size * (used_reg.second.size() + 1);
 //        int reg_store_size = reg_size * ((have_func_call)? 5 : 0);
+        int i = 0;
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
             item->set_offset(offset + reg_store_size + size + ((have_func_call)?20:0));
+            stack_map.insert({stack_args[i], item});
+            i++;
         }
         return size;
     }
