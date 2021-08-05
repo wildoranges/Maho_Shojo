@@ -1196,19 +1196,35 @@
                     IR2asm::Location* src = phi_src[i];
                     if(dynamic_cast<IR2asm::Regbase*>(src)){
                         *code += IR2asm::space;
-                        *code += "LDR ";
+                        *code += "LDR";
+                        *code += cmpop;
+                        *code += " ";
                         *code += tar->get_code();
                         *code += ", ";
                         auto src_base = dynamic_cast<IR2asm::Regbase*>(src);
                         *code += src_base->get_ofst_code(sp_extra_ofst);
                         *code += IR2asm::endl;
                     }else{
-                        *code += IR2asm::space;
-                        *code += "MOV ";
-                        *code += tar->get_code();
-                        *code += ", ";
-                        *code += src->get_code();
-                        *code += IR2asm::endl;
+                        auto reg_loc = dynamic_cast<IR2asm::RegLoc*>(src);
+                        if(!reg_loc->is_constant()){
+                            *code += IR2asm::space;
+                            *code += "MOV";
+                            *code += cmpop;
+                            *code += " ";
+                            *code += tar->get_code();
+                            *code += ", ";
+                            *code += src->get_code();
+                            *code += IR2asm::endl;
+                        }else{
+                            *code += IR2asm::space;
+                            *code += "LDR";
+                            *code += cmpop;
+                            *code += " ";
+                            *code += tar->get_code();
+                            *code += " ,=";
+                            *code += std::to_string(reg_loc->get_constant());
+                            *code += IR2asm::endl;
+                        }
                     }
                 }
             }
@@ -1219,7 +1235,9 @@
                     IR2asm::Location* src = phi_src[i];
                     if(dynamic_cast<IR2asm::Regbase*>(tar)){
                         *code += IR2asm::space;
-                        *code += "STR ";
+                        *code += "STR";
+                        *code += cmpop;
+                        *code += " ";
                         *code += src->get_code();
                         *code += ", ";
                         auto tar_base = dynamic_cast<IR2asm::Regbase*>(tar);
@@ -1227,7 +1245,9 @@
                         *code += IR2asm::endl;
                     }else{
                         *code += IR2asm::space;
-                        *code += "MOV ";
+                        *code += "MOV";
+                        *code += cmpop;
+                        *code += " ";
                         *code += tar->get_code();
                         *code += ", ";
                         *code += src->get_code();
@@ -1250,7 +1270,9 @@
                 int cur_offset = -4;
                 reg_offset[tmp_reg_id] = cur_offset;
                 *code += IR2asm::space;
-                *code += "STR ";
+                *code += "STR";
+                *code += cmpop;
+                *code += " ";
                 *code += IR2asm::Reg(tmp_reg_id).get_code();
                 *code += ", ";
                 *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
@@ -1267,7 +1289,9 @@
                             if(reg_offset.find(reg_id)==reg_offset.end()){
                                 reg_offset[reg_id] = cur_offset;
                                 *code += IR2asm::space;
-                                *code += "STR ";
+                                *code += "STR";
+                                *code += cmpop;
+                                *code += " ";
                                 *code += IR2asm::Reg(reg_id).get_code();
                                 *code += ", ";
                                 *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
@@ -1280,13 +1304,17 @@
                         if(stack_offset.find(stack_src_ptr)==stack_offset.end()){
                             stack_offset[stack_src_ptr] = cur_offset;
                             *code += IR2asm::space;
-                            *code += "LDR ";
+                            *code += "LDR";
+                            *code += cmpop;
+                            *code += " ";
                             *code += IR2asm::Reg(tmp_reg_id).get_code();
                             *code += ", ";
                             *code += stack_src_ptr->get_ofst_code(sp_extra_ofst);
                             *code += IR2asm::endl;
                             *code += IR2asm::space;
-                            *code += "STR ";
+                            *code += "STR";
+                            *code += cmpop;
+                            *code += " ";
                             *code += IR2asm::Reg(tmp_reg_id).get_code();
                             *code += ", ";
                             *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
@@ -1309,7 +1337,9 @@
                         if(reg_src_ptr){
                             if(reg_src_ptr->is_constant()){
                                 *code += IR2asm::space;
-                                *code += "LDR ";
+                                *code += "LDR";
+                                *code += cmpop;
+                                *code += " ";
                                 *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
                                 *code += " ,=";
                                 *code += std::to_string(reg_src_ptr->get_constant());
@@ -1317,7 +1347,9 @@
                             }
                             else{
                                 *code += IR2asm::space;
-                                *code += "LDR ";
+                                *code += "LDR";
+                                *code += cmpop;
+                                *code += " ";
                                 *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
                                 *code += ", ";
                                 *code += IR2asm::Regbase(IR2asm::Reg(13),
@@ -1327,7 +1359,9 @@
                         }
                         else{
                             *code += IR2asm::space;
-                            *code += "LDR ";
+                            *code += "LDR";
+                            *code += cmpop;
+                            *code += " ";
                             *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
                             *code += ", ";
                             *code += IR2asm::Regbase(IR2asm::Reg(13),
@@ -1338,7 +1372,9 @@
                         if(reg_src_ptr){
                             if(reg_src_ptr->is_constant()){
                                 *code += IR2asm::space;
-                                *code += "LDR ";
+                                *code += "LDR";
+                                *code += cmpop;
+                                *code += " ";
                                 *code += IR2asm::Reg(tmp_reg_id).get_code();
                                 *code += " ,=";
                                 *code += std::to_string(reg_src_ptr->get_constant());
@@ -1346,7 +1382,9 @@
                             }
                             else{
                                 *code += IR2asm::space;
-                                *code += "LDR ";
+                                *code += "LDR";
+                                *code += cmpop;
+                                *code += " ";
                                 *code += IR2asm::Reg(tmp_reg_id).get_code();
                                 *code += ", ";
                                 *code += IR2asm::Regbase(IR2asm::Reg(13),
@@ -1355,7 +1393,9 @@
                             }
                         }else{
                             *code += IR2asm::space;
-                            *code += "LDR ";
+                            *code += "LDR";
+                            *code += cmpop;
+                            *code += " ";
                             *code += IR2asm::Reg(tmp_reg_id).get_code();
                             *code += ", ";
                             *code += IR2asm::Regbase(IR2asm::Reg(13),
@@ -1363,7 +1403,9 @@
                             *code += IR2asm::endl;
                         }
                         *code += IR2asm::space;
-                        *code += "STR ";
+                        *code += "STR";
+                        *code += cmpop;
+                        *code += " ";
                         *code += IR2asm::Reg(tmp_reg_id).get_code();
                         *code += ", ";
                         *code += stack_tar_ptr->get_ofst_code(sp_extra_ofst);
@@ -1372,7 +1414,9 @@
                 }
                 if(need_to_save){
                     *code += IR2asm::space;
-                    *code += "LDR ";
+                    *code += "LDR";
+                    *code += cmpop;
+                    *code += " ";
                     *code += IR2asm::Reg(tmp_reg_id).get_code();
                     *code += ", ";
                     *code += IR2asm::Regbase(IR2asm::Reg(13),reg_offset[tmp_reg_id]).get_ofst_code();
