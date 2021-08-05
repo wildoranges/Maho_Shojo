@@ -1018,6 +1018,51 @@
             }
         }
 
+        cmp_br_tmp_reg.clear();
+        cmp_br_tmp_inter.clear();
+        if(br_inst->is_cmpbr()){
+            std::set<int> used_regs = {};
+            std::set<Value*> need_push_val;
+            for(auto opr:br_inst->get_operands()){
+                if(dynamic_cast<ConstantInt*>(opr)||dynamic_cast<BasicBlock*>(opr)){
+                    continue;
+                }
+                else{
+                    auto cur_inter = reg_map[opr];
+                    if(cur_inter->reg_num<0){
+                        need_push_val.insert(opr);
+                    }else{
+                        used_regs.insert(cur_inter->reg_num);
+                    }
+                }
+            }
+            if(!need_push_val.empty()){
+                for(auto opr:need_push_val){
+                    for(int i = 0;i <= 12;i++){
+                        if(i == 11){
+                            continue;
+                        }
+                        //auto reg_it = std::find(cmp_br_tmp_reg.begin(),cmp_br_tmp_reg.end(),i);
+                        if(used_regs.find(i)==used_regs.end()){
+                            auto cur_inter = reg_map[opr];
+                            cur_inter->reg_num = i;
+                            used_regs.insert(i);
+                            cmp_br_tmp_inter.insert(cur_inter);
+                            cmp_br_tmp_reg.push_back(i);
+                            break;
+                        }
+                    }
+                }
+                code += push_regs(cmp_br_tmp_reg);
+                for(auto opr:need_push_val){
+                    code += IR2asm::space;
+                    code += "ldr ";
+                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
+                            stack_map[opr]->get_ofst_code(sp_extra_ofst);
+                    code += IR2asm::endl;
+                }
+            }
+        }
         code += phi_union(bb, br_inst);
         // code += instr_gen(br_inst);
         return code;
@@ -1057,6 +1102,13 @@
         //std::set<Value*> sux_bb_phi = {};
         std::vector<std::string> cmpbr_inst;
         std::string cmpbr_code = instr_gen(br_inst);
+        std::string pop_code;
+        if(!cmp_br_tmp_reg.empty()){
+            pop_code += pop_regs(cmp_br_tmp_reg);
+            for(auto inter:cmp_br_tmp_inter){
+                inter->reg_num = -1;
+            }
+        }
         spilt_str(cmpbr_code, cmpbr_inst, IR2asm::endl[0]);
         std::vector<IR2asm::Location*> phi_target;
         std::vector<IR2asm::Location*> phi_src;
@@ -1511,7 +1563,7 @@
 //                }
 //            }
         }
-        return cmp + succ_code + succ_br + fail_code + fail_br;
+        return cmp + pop_code + succ_code + succ_br + fail_code + fail_br;
     }
 
     //TODO: return bb
