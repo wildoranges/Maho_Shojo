@@ -932,9 +932,25 @@
                             if (can_use_inst_reg == true) {
                                 can_use_inst_reg = false;
                             } else {
+                                std::set<int> inst_reg_num_set = {};
+                                if (reg_map[inst]->reg_num >= 0) {
+                                    inst_reg_num_set.push_back(reg_map[inst]->reg_num)
+                                }
+                                for (auto opr : inst->get_operands()) {
+                                    if(dynamic_cast<Constant*>(opr) || 
+                                        dynamic_cast<BasicBlock *>(opr) ||
+                                        dynamic_cast<GlobalVariable *>(opr) ||
+                                        dynamic_cast<AllocaInst *>(opr)){
+                                            continue;
+                                        }
+                                    if (reg_map[opr]->reg_num >= 0) {
+                                        inst_reg_num_set.push_back(reg_map[opr]->reg_num)
+                                    }
+                                }
                                 for (int i = 0; i <= 12; i++) {
                                     if (i == 11) continue;
-                                    if (std::find(store_list.begin(),store_list.end(),i) == store_list.end()) {
+                                    if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() && 
+                                        std::find(inst_reg_num_set.begin(),inst_reg_num_set.end(),i) == inst_reg_num_set.end()) {
                                         reg_inter->reg_num = i;
                                         store_list.push_back(reg_inter->reg_num);
                                         break;
