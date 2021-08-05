@@ -913,7 +913,7 @@
                     }
                 }
                 std::set<int> inst_reg_num_set = {};
-                if (reg_map[inst]->reg_num >= 0) {
+                if (!inst->is_void() && !dynamic_cast<AllocaInst *>(inst) && reg_map[inst]->reg_num >= 0) {
                     inst_reg_num_set.insert(reg_map[inst]->reg_num);
                 }
                 for (auto opr : inst->get_operands()) {
