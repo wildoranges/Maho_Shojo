@@ -222,10 +222,13 @@
         }
         // code += (IR2asm::frame_ptr).get_code();
         // code += ", ";
-        if(have_func_call)code += ", lr}";
-        else{
-            code += "}";
-        }
+
+        /******always save lr for temporary use********/
+        // if(have_func_call)code += ", lr}";
+        // else{
+        //     code += "}";
+        // }
+        code += ", lr}";
         code += IR2asm::endl;
         return code;
     }
@@ -587,12 +590,30 @@
                 IR2asm::Reg* preg;
                 if(reg >= 0){
                     if(reg<=3){
-                        regcode += IR2asm::space;
-                        regcode += "LDR ";
-                        regcode += IR2asm::Reg(i).get_code();
-                        regcode += ", ";
-                        regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
-                        regcode += IR2asm::endl;
+                        int offset = caller_saved_pos[reg] + sp_extra_ofst;
+                        if(abs(offset) > 4095){
+                            regcode += IR2asm::space;
+                            regcode += "mov lr, sp";
+                            regcode += IR2asm::endl;
+                            regcode += IR2asm::space;
+                            regcode += "add lr, lr, ";
+                            regcode += IR2asm::constant(offset).get_code();
+                            regcode += IR2asm::endl;
+                            regcode += IR2asm::space;
+                            regcode += IR2asm::space;
+                            regcode += "LDR ";
+                            regcode += IR2asm::Reg(i).get_code();
+                            regcode += ", [lr]";
+                            regcode += IR2asm::endl;
+                        }
+                        else{
+                            regcode += IR2asm::space;
+                            regcode += "LDR ";
+                            regcode += IR2asm::Reg(i).get_code();
+                            regcode += ", ";
+                            regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
+                            regcode += IR2asm::endl;
+                        }
                         i++;
                         continue;
                     }
@@ -606,12 +627,30 @@
                         i++;
                         continue;
                     }else{
-                        regcode += IR2asm::space;
-                        regcode += "LDR ";
-                        regcode += IR2asm::Reg(i).get_code();
-                        regcode += ", ";
-                        regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
-                        regcode += IR2asm::endl;
+                        int offset = caller_saved_pos[12] + sp_extra_ofst;
+                        if(abs(offset) > 4095){
+                            regcode += IR2asm::space;
+                            regcode += "mov lr, sp";
+                            regcode += IR2asm::endl;
+                            regcode += IR2asm::space;
+                            regcode += "add lr, lr, ";
+                            regcode += IR2asm::constant(offset).get_code();
+                            regcode += IR2asm::endl;
+                            regcode += IR2asm::space;
+                            regcode += IR2asm::space;
+                            regcode += "LDR ";
+                            regcode += IR2asm::Reg(i).get_code();
+                            regcode += ", [lr]";
+                            regcode += IR2asm::endl;
+                        }
+                        else{
+                            regcode += IR2asm::space;
+                            regcode += "LDR ";
+                            regcode += IR2asm::Reg(i).get_code();
+                            regcode += ", ";
+                            regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
+                            regcode += IR2asm::endl;
+                        }
                         i++;
                         continue;
                     }
