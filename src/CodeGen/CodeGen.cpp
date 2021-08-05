@@ -276,7 +276,7 @@
             remain_stack_size -= 2000;
         }
         code += "sub sp, sp, #";
-        code += std::to_string(stack_size);
+        code += std::to_string(remain_stack_size);
         code += IR2asm::endl;
         return code;
     }
@@ -301,7 +301,7 @@
         code += "add sp, sp, #";
         // code += IR2asm::frame_ptr.get_code();
         // code += ", #";
-        code += std::to_string(stack_size);
+        code += std::to_string(remain_stack_size);
         code += IR2asm::endl;
         return code;
     }
