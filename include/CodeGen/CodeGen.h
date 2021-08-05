@@ -30,6 +30,7 @@ class CodeGen{
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
+    bool long_func = false;
     std::map<int, std::vector<Value*>> reg2val;
     std::vector<int> to_save_reg;
     int sp_extra_ofst = 0;
