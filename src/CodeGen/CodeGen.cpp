@@ -200,7 +200,9 @@
                 map.second->set_offset(size + offset);
             }
         }
-        int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
+        // int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
+        /******always save lr for tmp use*******/
+        int reg_store_size = reg_size * (used_reg.second.size() + 1);
 //        int reg_store_size = reg_size * ((have_func_call)? 5 : 0);
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
