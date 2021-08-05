@@ -113,7 +113,7 @@ void RegAlloc::execute() {
     compute_block_order();
     number_operations();
     build_intervals();
-    union_phi_val();
+    //union_phi_val();
     walk_intervals();
     set_unused_reg_num();
 }
