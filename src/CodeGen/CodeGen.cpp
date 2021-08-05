@@ -942,17 +942,17 @@
                             reg_inter->reg_num = store_list.size();
                         }
                         auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                        auto reg_it = std::find(inst_reg_num_set.begin(),inst_reg_num_set.end(),reg_inter->reg_num);
+                        auto reg_it = inst_reg_num_set.find(reg_inter->reg_num);
                         if(it==store_list.end() && reg_it == inst_reg_num_set.end()){
                             store_list.push_back(reg_inter->reg_num);
                         } else {
-                            if (can_use_inst_reg == true) {
+                            if (can_use_inst_reg) {
                                 can_use_inst_reg = false;
                             } else {
                                 for (int i = 0; i <= 12; i++) {
                                     if (i == 11) continue;
                                     if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() && 
-                                        std::find(inst_reg_num_set.begin(),inst_reg_num_set.end(),i) == inst_reg_num_set.end()) {
+                                        inst_reg_num_set.find(i) == inst_reg_num_set.end()) {
                                         reg_inter->reg_num = i;
                                         store_list.push_back(reg_inter->reg_num);
                                         break;
@@ -1110,7 +1110,7 @@
                             if(this_bb==bb){
                                 if(target_pos>=0){
                                     target_reg = true;
-                                }else{
+                                }else{//TODO:CHECK ASSIGN IN IF?
                                     target_stack = true;
                                 }
                                 if(dynamic_cast<ConstantInt*>(lst_val)){
@@ -1122,10 +1122,12 @@
                                 }else{
                                     int src_pos = reg_map[lst_val]->reg_num;
                                     if(src_pos>=0){
-                                        auto src = new IR2asm::RegLoc(src_pos, false);
-                                        phi_src.push_back(src);
-                                        phi_target.push_back(target_ptr);
-                                        src_reg = true;
+                                        if(src_pos!=target_pos){
+                                            auto src = new IR2asm::RegLoc(src_pos, false);
+                                            phi_src.push_back(src);
+                                            phi_target.push_back(target_ptr);
+                                            src_reg = true;
+                                        }
                                     }else{
                                         auto src = stack_map[lst_val];
                                         phi_src.push_back(src);
@@ -1162,7 +1164,7 @@
                 auto reg_ptr = dynamic_cast<IR2asm::RegLoc*>(loc);
                 if(stack_ptr){
                     for(auto tgt_ptr:phi_target){
-                        auto phi_stack_ptr = dynamic_cast<IR2asm::Regbase*>(loc);
+                        auto phi_stack_ptr = dynamic_cast<IR2asm::Regbase*>(tgt_ptr);
                         if(!phi_stack_ptr){
                             continue;
                         }else{
@@ -1174,7 +1176,7 @@
                     }
                 }else if(!reg_ptr->is_constant()){
                     for(auto tgt_ptr:phi_target){
-                        auto phi_reg_ptr = dynamic_cast<IR2asm::RegLoc*>(loc);
+                        auto phi_reg_ptr = dynamic_cast<IR2asm::RegLoc*>(tgt_ptr);
                         if(!phi_reg_ptr){
                             continue;
                         }else{

@@ -121,7 +121,7 @@ namespace IR2asm {
         }
         bool is_constant() const{return is_const;}
         int get_constant() const{
-            assert(!is_const&&"not a const");
+            assert(is_const&&"not a const");
             return const_value;
         }
         RegLoc(int id,bool is_const_val=false){
@@ -134,7 +134,7 @@ namespace IR2asm {
             }
         }
         int get_reg_id() const{
-            assert(is_const&&"not a reg");
+            assert(!is_const&&"not a reg");
             return reg_id;
         }
     private:
