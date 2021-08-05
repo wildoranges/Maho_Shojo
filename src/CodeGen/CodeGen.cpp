@@ -1665,28 +1665,16 @@
                     code += IR2asm::call(new IR2asm::label(inst->get_operand(0)->get_name()));
                 break;
                 case Instruction::getelementptr: {
+                    auto base_addr = inst->get_operand(0);
                     IR2asm::Location *addr;
-                    auto arg_addr = dynamic_cast<Argument*>(inst->get_operand(0));
-                    if (arg_addr) {
-                        auto arg_num = arg_addr->get_arg_no();
-                        if (arg_num < 4 && get_asm_reg(inst)->get_id() != get_asm_reg(inst->get_operand(0))->get_id()) {
-                            code += IR2asm::mov(get_asm_reg(inst), new IR2asm::Operand2(*get_asm_reg(inst->get_operand(0))));
-                        } else {
-                            code += IR2asm::getelementptr(get_asm_reg(inst), arg_on_stack[arg_num - 4]);
-                        }
+                    if (dynamic_cast<GlobalVariable*>(base_addr)) {
+                        addr = global_variable_table[dynamic_cast<GlobalVariable*>(base_addr)];
+                    } else if (dynamic_cast<AllocaInst*>(base_addr)) {
+                        addr = stack_map[base_addr];
                     } else {
-                        auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
-                        if (global_addr) {
-                            addr = global_variable_table[global_addr];
-                        } else {
-                            if (dynamic_cast<AllocaInst*>(inst->get_operand(0))) {
-                                addr = stack_map[inst->get_operand(0)];
-                            } else {
-                            addr = new IR2asm::Regbase(*get_asm_reg(inst), 0);
-                            }
-                        }
-                        code += IR2asm::getelementptr(get_asm_reg(inst), addr);
+                        addr = new IR2asm::Regbase(*get_asm_reg(base_addr), 0);
                     }
+                    code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                 }
                 break;
                 case Instruction::land: {
