@@ -473,6 +473,7 @@
         driver.compute_reg_alloc();
         make_global_table(module);
         func_no = 0;
+        code += IR2asm::space + ".arch armv7ve" + IR2asm::endl;
         code += IR2asm::space + ".text " + IR2asm::endl;
         for(auto func_: module->get_functions()){
             if(func_->get_basic_blocks().empty())continue;
@@ -821,6 +822,7 @@
     std::string CodeGen::function_gen(Function* fun){
         std::string code;
         sp_extra_ofst = 0;
+        pool_number = 0;
         global_label_gen(fun);
         make_linear_bb(fun);
         func_call_check(fun);
@@ -872,6 +874,22 @@
         return code;
     }
 
+    std::string CodeGen::make_lit_pool(bool have_br = false){
+        if(have_br){
+            return IR2asm::space + ".pool" + IR2asm::endl;
+        }
+        std::string code;
+        code += IR2asm::space;
+        IR2asm::label pool_label("litpool" + std::to_string(func_no) + "_" + std::to_string(pool_number), 0);
+        pool_number++;
+        code += IR2asm::space;
+        code += "b " + pool_label.get_code();
+        code += IR2asm::endl;
+        code += IR2asm::space + ".pool" + IR2asm::endl;
+        code += pool_label.get_code() + ":" + IR2asm::endl;
+        return code;
+    }
+
     std::string CodeGen::bb_gen(BasicBlock* bb){
         std::string code;
         if(bb_label[bb]->get_code() != ""){
@@ -879,16 +897,23 @@
         }
         Instruction* br_inst = nullptr;
         for(auto inst : bb->get_instructions()){
+            std::string new_code;
             if(inst->isTerminator()){
                 br_inst = inst;
                 break;
             }
             if(dynamic_cast<CallInst*>(inst)){
                 auto call_inst = dynamic_cast<CallInst*>(inst);        
-                code += caller_reg_store(bb->get_parent(),call_inst);
-                code += arg_move(call_inst);
-                code += instr_gen(call_inst);
-                code += caller_reg_restore(bb->get_parent(),call_inst);
+                new_code += caller_reg_store(bb->get_parent(),call_inst);
+                new_code += arg_move(call_inst);
+                new_code += instr_gen(call_inst);
+                new_code += caller_reg_restore(bb->get_parent(),call_inst);
+                code += new_code;
+                accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
+                if(accumulate_line_num > 1000){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
+                }
             }else if(instr_may_need_push_stack(inst)){
                 std::vector<int> store_list = {};
                 std::set<Value*> to_store_set = {};
@@ -941,24 +966,24 @@
 //                    code += IR2asm::Reg(store_list[lst_size]).get_code();
 //                    code += "}";
 //                    code += IR2asm::endl;
-                    code += push_regs(store_list);
+                    new_code += push_regs(store_list);
                 }
                 for(auto opr:to_ld_set){
-                    code += IR2asm::space;
-                    code += "ldr ";
-                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
+                    new_code += IR2asm::space;
+                    new_code += "ldr ";
+                    new_code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
                             stack_map[opr]->get_ofst_code(sp_extra_ofst);
-                    code += IR2asm::endl;
+                    new_code += IR2asm::endl;
                 }
 
-                code += instr_gen(inst);
+                new_code += instr_gen(inst);
 
                 for(auto opr:to_store_set){
-                    code += IR2asm::space;
-                    code += "str ";
-                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
+                    new_code += IR2asm::space;
+                    new_code += "str ";
+                    new_code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
                             stack_map[opr]->get_ofst_code(sp_extra_ofst);
-                    code += IR2asm::endl;
+                    new_code += IR2asm::endl;
                 }
 
                 if(!store_list.empty()){
@@ -972,14 +997,28 @@
 //                    code += IR2asm::Reg(store_list[lst_size]).get_code();
 //                    code += "}";
 //                    code += IR2asm::endl;
-                    code += pop_regs(store_list);
+                    new_code += pop_regs(store_list);
+                }
+
+                code += new_code;
+
+                accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
+                if(accumulate_line_num > 1000){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
                 }
 
                 for(auto inter:interval_set){
                     inter->reg_num = -1;
                 }
             }else{
-                code += instr_gen(inst);
+                new_code += instr_gen(inst);
+                code += new_code;
+                accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
+                if(accumulate_line_num > 1000){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
+                }
             }
         }
 
@@ -1002,7 +1041,13 @@
     std::string CodeGen::phi_union(BasicBlock* bb, Instruction* br_inst){
         //TODO:right?
         if(dynamic_cast<ReturnInst *>(br_inst)){
-            return instr_gen(br_inst);
+            std::string code;
+            accumulate_line_num += 1;
+            if(accumulate_line_num > 1000){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
+            }
+            return code + instr_gen(br_inst);
         }
         std::string cmp;
         std::string inst_cmpop;
@@ -1163,7 +1208,18 @@
                 }
             }
         }
-        return cmp + succ_code + succ_br + fail_code + fail_br;
+        std::string ret_code = cmp + succ_code + succ_br + fail_code + fail_br;
+        accumulate_line_num += std::count(ret_code.begin(), ret_code.end(), IR2asm::endl[0]);
+        if(accumulate_line_num > 1000){
+            if(dynamic_cast<BranchInst *>(bb->get_terminator()) && bb->get_terminator()->get_num_operand() == 1){
+                ret_code += make_lit_pool(true);
+            }
+            else{
+                ret_code += make_lit_pool();
+            }
+            accumulate_line_num = 0;
+        }
+        return ret_code;
     }
 
     //TODO: return bb

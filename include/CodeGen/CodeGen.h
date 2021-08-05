@@ -25,6 +25,8 @@ class CodeGen{
     int bb_no = 0;
     int label_no = 0;
     int max_arg_size = 0;
+    int pool_number = 0;
+    int accumulate_line_num = 0;
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
@@ -37,6 +39,7 @@ class CodeGen{
 public:
     void make_linear_bb(Function* fun);
     void func_call_check(Function* fun);
+    std::string CodeGen::make_lit_pool(bool have_br = false);
     std::string push_regs(std::vector<int> &reg_list, std::string cond = "");
     std::string pop_regs(std::vector<int> &reg_list, std::string cond = "");
     std::string global(std::string name);
