@@ -897,6 +897,7 @@
                 std::set<Value*> to_ld_set = {};
                 std::set<Interval*> interval_set = {};
                 bool use_target = false;
+                bool can_use_inst_reg = true;
                 if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
                     auto reg_inter = reg_map[inst];
                     if(reg_inter->reg_num<0){
@@ -927,6 +928,19 @@
                         auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
                         if(it==store_list.end()){
                             store_list.push_back(reg_inter->reg_num);
+                        } else {
+                            if (can_use_inst_reg == true) {
+                                can_use_inst_reg = false;
+                            } else {
+                                for (int i = 0; i <= 12; i++) {
+                                    if (i == 11) continue;
+                                    if (std::find(store_list.begin(),store_list.end(),i) == store_list.end()) {
+                                        reg_inter->reg_num = i;
+                                        store_list.push_back(reg_inter->reg_num);
+                                        break;
+                                    }
+                                }
+                            }
                         }
                         interval_set.insert(reg_inter);
                         to_ld_set.insert(opr);
