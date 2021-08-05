@@ -14,7 +14,7 @@ void LIR::execute() {
                 //store_const_offset(bb);
                 split_srem(bb);
                 split_gep(bb);
-                div_const2mul(bb);
+                // div_const2mul(bb);
                 remove_unused_op(bb);
                 // convert instr
                 ConstPropagation const_propagation(module);

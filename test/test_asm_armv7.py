@@ -27,7 +27,7 @@ def eval(EXE_PATH, TEST_BASE_PATH, timeout):
                     input_option = fin.read()
 
             try:
-                subprocess.run(ExeGen_ptn.format(TEST_PATH, ASM_PATH), shell=True, stderr=subprocess.PIPE)
+                subprocess.run(ExeGen_ptn.format(TEST_PATH, ASM_PATH), shell=True, stderr=subprocess.PIPE, timeout=timeout)
                 result = subprocess.run(Exe_ptn.format(TEST_PATH), shell=True, input=input_option, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
                 out = result.stdout.split(b'\n')
                 if result.returncode != b'':
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                  #'./performance_test2021_pre/'
                  ]
     #TEST_BASE_PATH = './performance_test2021_pre/'
-    timeout = 50             # generally less than 50s
+    timeout = 5             # generally less than 50s
     # you should only revise this
     for TEST_BASE_PATH in TEST_DIRS:
         testcases = {}  # { name: need_input }

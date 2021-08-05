@@ -473,6 +473,7 @@
         driver.compute_reg_alloc();
         make_global_table(module);
         func_no = 0;
+        code += IR2asm::space + ".arch armv7ve " + IR2asm::endl;
         code += IR2asm::space + ".text " + IR2asm::endl;
         for(auto func_: module->get_functions()){
             if(func_->get_basic_blocks().empty())continue;
