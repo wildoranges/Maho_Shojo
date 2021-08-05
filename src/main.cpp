@@ -18,7 +18,7 @@
 #include "LoopInvariant.h"
 #include "AvailableExpr.h"
 #include "FuncInline.h"
-
+#include "LoopExpansion.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     if (print_IR) {
         root->accept(builder);
         auto m = builder.getModule();
-        if (no_optimize == true) {
+        if (no_optimize) {
             PassMgr passmgr(m.get());
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
             passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DeadCodeElimination>();
-
+            //passmgr.addPass<LoopExpansion>();
 
             passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();
@@ -141,8 +141,6 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
-            /****passmgr.addPass<CFG_analyse>();****
-             ***this is executed in LoopInvariant***/
 
             m->set_print_name();
             passmgr.execute();
