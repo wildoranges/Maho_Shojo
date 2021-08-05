@@ -915,7 +915,7 @@
         return code;
     }
 
-    std::string CodeGen::make_lit_pool(bool have_br = false){
+    std::string CodeGen::make_lit_pool(bool have_br){
         if(have_br){
             return IR2asm::space + ".pool" + IR2asm::endl;
         }
