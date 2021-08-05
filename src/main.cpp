@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     if (print_IR) {
         root->accept(builder);
         auto m = builder.getModule();
-        if (no_optimize == true) {
+        if (no_optimize) {
             PassMgr passmgr(m.get());
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
             passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DeadCodeElimination>();
-            // passmgr.addPass<LoopExpansion>();
+            //passmgr.addPass<LoopExpansion>();
 
             passmgr.addPass<AvailableExpr>();
             passmgr.addPass<DeadCodeElimination>();

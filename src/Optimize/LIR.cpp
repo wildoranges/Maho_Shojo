@@ -14,7 +14,7 @@ void LIR::execute() {
                 //store_const_offset(bb);
                 split_srem(bb);
                 split_gep(bb);
-                // div_const2mul(bb);
+                //div_const2mul(bb);
                 remove_unused_op(bb);
                 // convert instr
                 ConstPropagation const_propagation(module);
@@ -259,6 +259,11 @@ void LIR::mul_const2shift(BasicBlock* bb) {
     
 }
 
+bool is_power_of_two(int x) {
+    // First x in the below expression is for the case when x is 0
+    return x && (!(x & (x - 1)));
+}
+
 void LIR::div_const2mul(BasicBlock* bb) {
     // FIXME: may have bugs, need many tests
     auto &instructions = bb->get_instructions();
@@ -273,6 +278,24 @@ void LIR::div_const2mul(BasicBlock* bb) {
                 if (divisor == 0) {
                     std::cerr<<"divided by zero!"<<std::endl;
                     exit(-1);
+                } else if (is_power_of_two(op_const2->get_value())) {
+                    int k = ceil(std::log2(op_const2->get_value()));
+                    iter++;
+                    auto asr_1 = BinaryInst::create_asr(op1, ConstantInt::get(31, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    auto lsr = BinaryInst::create_lsr(asr_1, ConstantInt::get(32 - k, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    auto add = BinaryInst::create_add(op1, lsr, bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    auto asr_2 = BinaryInst::create_asr(add, ConstantInt::get(k, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    instruction->replace_all_use_with(asr_2);
+                    bb->delete_instr(instruction);
+                    iter--;
                 } else {
                     int abs_divisor = (divisor > 0) ? divisor : -divisor;
                     int c = 31 + floor(log2(abs_divisor));
