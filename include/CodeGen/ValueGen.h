@@ -158,13 +158,6 @@ enum ShiftOp{
         int const_value;
     };
 
-enum ShiftOp{
-    ASR,
-    LSL,
-    LSR,
-    NOSHIFT
-};
-
 enum Operand2Type{
     RegTy,
     ConstTy,
