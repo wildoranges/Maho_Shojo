@@ -681,8 +681,9 @@
             sp_extra_ofst -= (call->get_num_operand() - 1 - 4) * reg_size;
         }
         std::vector<int> to_push_regs = {};
-        const int tmp_reg_id[] = {0,1,2,3,12};
-        int remained_off_reg_num = 5;
+        const int tmp_reg_id[] = {12};
+        const int tmp_reg_size = 1;
+        int remained_off_reg_num = 1;
         func_param_extra_offset = 0;
         while(!push_queue.empty()){
             Value* arg = push_queue.top();
@@ -691,11 +692,11 @@
             if(dynamic_cast<ConstantInt *>(arg)){
                 memcode += IR2asm::space;
                 memcode += "LDR ";
-                memcode += IR2asm::Reg(tmp_reg_id[5-remained_off_reg_num]).get_code();
+                memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                 memcode += " ,=";
                 memcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
                 memcode += IR2asm::endl;
-                to_push_regs.push_back(tmp_reg_id[5-remained_off_reg_num]);
+                to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                 remained_off_reg_num--;
 //                memcode += IR2asm::space;
 //                memcode += "str r0, ";
@@ -708,14 +709,15 @@
                 if(reg >= 0){
                     if(reg>=4&&reg<12){
                         to_push_regs.push_back(reg);
+                        remained_off_reg_num--;
                     }else{
                         memcode += IR2asm::space;
                         memcode += "LDR ";
-                        memcode += IR2asm::Reg(tmp_reg_id[5-remained_off_reg_num]).get_code();
+                        memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                         memcode += ", ";
                         memcode += IR2asm::Regbase(IR2asm::Reg(reg),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
                         memcode += IR2asm::endl;
-                        to_push_regs.push_back(tmp_reg_id[5-remained_off_reg_num]);
+                        to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                         remained_off_reg_num--;
                         //TODO:null ptr?segment fault?
                     }
@@ -735,11 +737,11 @@
                     auto srcaddr = stack_map.find(arg)->second;
                     memcode += IR2asm::space;
                     memcode += "LDR ";
-                    memcode += IR2asm::Reg(tmp_reg_id[5-remained_off_reg_num]).get_code();
+                    memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                     memcode += ", ";
                     memcode += srcaddr->get_ofst_code(sp_extra_ofst);
                     memcode += IR2asm::endl;
-                    to_push_regs.push_back(tmp_reg_id[5-remained_off_reg_num]);
+                    to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                     remained_off_reg_num--;
 //                    memcode += IR2asm::space;
 //                    memcode += "str r0, ";
@@ -751,7 +753,7 @@
             if(remained_off_reg_num==0){
                 memcode += push_regs(to_push_regs);
                 to_push_regs.clear();
-                remained_off_reg_num = 5;
+                remained_off_reg_num = tmp_reg_size;
             }
         }
         if(!to_push_regs.empty()){
@@ -806,13 +808,12 @@
                 }
             }
             else{
-                int max_arg_no = fun->get_num_of_args();
                 if(reg < 0)continue;
                 code += IR2asm::space;
                 code += "ldr ";
                 code += IR2asm::Reg(reg).get_code();
                 code += ", ";
-                code += arg_on_stack[max_arg_no - arg->get_arg_no() - 1]->get_code();
+                code += arg_on_stack[arg->get_arg_no() - 4]->get_code();
                 code += IR2asm::endl;
             }
         }
