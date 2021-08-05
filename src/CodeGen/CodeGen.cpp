@@ -897,7 +897,7 @@
                 std::set<Value*> to_ld_set = {};
                 std::set<Interval*> interval_set = {};
                 bool use_target = false;
-                bool can_use_inst_reg = true;
+                bool can_use_inst_reg = false;
                 if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
                     auto reg_inter = reg_map[inst];
                     if(reg_inter->reg_num<0){
@@ -909,6 +909,22 @@
                         interval_set.insert(reg_inter);
                         to_store_set.insert(inst);
                         use_target = true;
+                        can_use_inst_reg = true;
+                    }
+                }
+                std::set<int> inst_reg_num_set = {};
+                if (reg_map[inst]->reg_num >= 0) {
+                    inst_reg_num_set.insert(reg_map[inst]->reg_num);
+                }
+                for (auto opr : inst->get_operands()) {
+                    if(dynamic_cast<Constant*>(opr) || 
+                        dynamic_cast<BasicBlock *>(opr) ||
+                        dynamic_cast<GlobalVariable *>(opr) ||
+                        dynamic_cast<AllocaInst *>(opr)){
+                            continue;
+                        }
+                    if (reg_map[opr]->reg_num >= 0) {
+                        inst_reg_num_set.insert(reg_map[opr]->reg_num);
                     }
                 }
                 for(auto opr:inst->get_operands()){
@@ -926,27 +942,13 @@
                             reg_inter->reg_num = store_list.size();
                         }
                         auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                        if(it==store_list.end()){
+                        auto reg_it = std::find(inst_reg_num_set.begin(),inst_reg_num_set.end(),reg_inter->reg_num);
+                        if(it==store_list.end() && reg_it == inst_reg_num_set.end()){
                             store_list.push_back(reg_inter->reg_num);
                         } else {
                             if (can_use_inst_reg == true) {
                                 can_use_inst_reg = false;
                             } else {
-                                std::set<int> inst_reg_num_set = {};
-                                if (reg_map[inst]->reg_num >= 0) {
-                                    inst_reg_num_set.insert(reg_map[inst]->reg_num);
-                                }
-                                for (auto opr : inst->get_operands()) {
-                                    if(dynamic_cast<Constant*>(opr) || 
-                                        dynamic_cast<BasicBlock *>(opr) ||
-                                        dynamic_cast<GlobalVariable *>(opr) ||
-                                        dynamic_cast<AllocaInst *>(opr)){
-                                            continue;
-                                        }
-                                    if (reg_map[opr]->reg_num >= 0) {
-                                        inst_reg_num_set.insert(reg_map[opr]->reg_num);
-                                    }
-                                }
                                 for (int i = 0; i <= 12; i++) {
                                     if (i == 11) continue;
                                     if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() && 
