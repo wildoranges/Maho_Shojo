@@ -219,6 +219,10 @@ void ConstPropagation::const_propagation() {
                         const_offset = nullptr;
                     }
                 } else {
+                    std::cerr << instr->get_parent()->print()<<std::endl;
+                    std::cerr << instr->print() << std::endl;
+                    std::cerr << ptr_ins->print()<<std::endl;
+                    std::cerr << ptr_ins->get_parent()->print()<<std::endl;
                     std::cerr<<"bad store variable, incorrect instruction!"<<std::endl;
                     exit(-1);
                 }
@@ -291,6 +295,8 @@ ConstantInt *ConstPropagation::get_global_const_val(Value *value) {
                 const_offset = nullptr;
             }
         } else {
+            std::cerr << ptr_ins->print()<<std::endl;
+            std::cerr << ptr_ins->get_parent()->print()<<std::endl;
             std::cerr<<"bad load, incorrect instruction!"<<std::endl;
             exit(-1);
         }
@@ -347,6 +353,8 @@ void ConstPropagation::set_global_const_val(Value *value, ConstantInt *const_val
                 const_offset = nullptr;
             }
         } else {
+            std::cerr << ptr_ins->print()<<std::endl;
+            std::cerr << ptr_ins->get_parent()->print()<<std::endl;
             std::cerr<<"bad store const, incorrect instruction!"<<std::endl;
             exit(-1);
         }
