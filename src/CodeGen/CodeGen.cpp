@@ -1875,7 +1875,7 @@
 //                }
 //            }
         }
-        std::string ret_code = cmp + succ_code + succ_br + fail_code + fail_br;
+        std::string ret_code = cmp + pop_code + succ_code + succ_br + fail_code + fail_br;
         accumulate_line_num += std::count(ret_code.begin(), ret_code.end(), IR2asm::endl[0]);
         if(accumulate_line_num > 1000){
             if(dynamic_cast<BranchInst *>(bb->get_terminator()) && bb->get_terminator()->get_num_operand() == 1){
