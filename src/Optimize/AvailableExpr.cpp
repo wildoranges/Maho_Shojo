@@ -21,7 +21,7 @@ void AvailableExpr::execute() {
 
 bool AvailableExpr::is_valid_expr(Instruction *inst) {
     // TODO: 绑定成一条汇编指令的ir指令集合(如smul_lo和smul_hi绑定为smul)要么全部传播,要么都不传播
-    return !(inst->is_void()||inst->is_call()||inst->is_phi()||inst->is_alloca()||inst->is_load());//TODO:CHECK VALID INST
+    return !(inst->is_void()||inst->is_call()||inst->is_phi()||inst->is_alloca()||inst->is_load()||inst->is_load_offset());//TODO:CHECK VALID INST
 }
 
 void AvailableExpr::compute_local_gen(Function *f) {
