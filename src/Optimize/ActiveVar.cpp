@@ -101,14 +101,14 @@ void ActiveVar::get_live_in_live_out() {
                     if (instr->is_phi()) {
                         for (int i = 1; i < instr->get_num_operand(); i+=2) {
                             if (instr->get_operand(i) != bb) {
-                                if (succ_tmp_live_in.find(instr->get_operand(i - 1)) != succ_tmp_live_in.end()) {
+                                if (succ_tmp_live_in.find(instr->get_operand(i - 1)) != succ_tmp_live_in.end() && 
+                                    active_val.find(instr->get_operand(i - 1)) == active_val.end()) {
                                     succ_tmp_live_in.erase(instr->get_operand(i - 1));
                                 }
                             }
                         }
                     }
                 }
-                std::set_union(succ_tmp_live_in.begin(), succ_tmp_live_in.end(), active_val.begin(), active_val.end(), std::inserter(succ_tmp_live_in, succ_tmp_live_in.begin()));
                 std::set_union(tmp_live_out.begin(), tmp_live_out.end(), succ_tmp_live_in.begin(), succ_tmp_live_in.end(), std::inserter(tmp_live_out, tmp_live_out.begin()));
             }
             // 迭代后的in和out必不可能小于迭代前的in和out(归纳法可证)
