@@ -75,7 +75,15 @@ BasicBlock *DeadCodeElimination::get_nearest_marked_postdominator(Instruction *i
 void DeadCodeElimination::remove_unmarked_bb() {
     std::vector<BasicBlock*> wait_delete_bb;
     for (auto bb : func_->get_basic_blocks()) {
-        if (instr_mark[bb->get_terminator()] == false) {
+        if (bb == func_->get_entry_block()) continue;
+        bool marked = false;
+        for (auto instr : bb->get_instructions()) {
+            if (instr_mark[instr] == true) {
+                marked = true;
+                break;
+            }
+        }
+        if (marked == false) {
             wait_delete_bb.push_back(bb);
         }
     }
