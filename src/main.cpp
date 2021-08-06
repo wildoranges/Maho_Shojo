@@ -122,10 +122,12 @@ int main(int argc, char *argv[])
         auto m = builder.getModule();
         if(!optimize){
             PassMgr passmgr(m.get());
+            //passmgr.addPass<CFGSimplifier>();
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
             if(!print_mir){
                 passmgr.addPass<LIR>();
+                passmgr.addPass<CFGSimplifier>();
                 passmgr.addPass<ActiveVar>();
                 passmgr.addPass<CFG_analyse>();
             }
