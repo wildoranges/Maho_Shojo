@@ -82,7 +82,7 @@ enum ShiftOp{
             }
             std::string get_ofst_code(int extra_ofst = 0){
                 if(!offset){
-                    if(reg_.get_id() == sp){
+                    if(reg_.get_id() == sp && extra_ofst){
                         return "[" + reg_.get_code() + ", #" + std::to_string(extra_ofst) + "]";
                     }
                     return "[" + reg_.get_code() + "]";
@@ -110,6 +110,7 @@ enum ShiftOp{
                 if(!offset)return label_;
                 return label_ + std::to_string(offset);
             }
+            int get_offset(){return offset;}
     };
     class constant: public Value{
         private:
@@ -123,6 +124,39 @@ enum ShiftOp{
             int get_val(){return value_;}
             std::string get_code(){return "#" + std::to_string(value_);}
             std::string get_num(){return std::to_string(value_);}
+    };
+
+    class RegLoc: public Location{
+    public:
+        std::string get_code()override{
+            if(is_const){
+                return "#" + std::to_string(const_value);
+            }else{
+                return reg_name[reg_id];
+            }
+        }
+        bool is_constant() const{return is_const;}
+        int get_constant() const{
+            assert(is_const&&"not a const");
+            return const_value;
+        }
+        RegLoc(int id,bool is_const_val=false){
+            if(is_const_val){
+                is_const = true;
+                const_value = id;
+            }else{
+                is_const = false;
+                reg_id = id;
+            }
+        }
+        int get_reg_id() const{
+            assert(!is_const&&"not a reg");
+            return reg_id;
+        }
+    private:
+        int reg_id;
+        bool is_const = false;
+        int const_value;
     };
 
 enum Operand2Type{
