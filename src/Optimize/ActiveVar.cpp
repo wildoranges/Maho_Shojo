@@ -73,16 +73,28 @@ void ActiveVar::get_live_in_live_out() {
             std::set<Value *> tmp_live_out = {};
             for (auto succBB : bb->get_succ_basic_blocks()) {
                 auto succ_tmp_live_in = live_in[succBB];
-                std::set<Value *> active_phi_val = {};
+                std::set<Value *> active_val = {};
                 for (auto instr : succBB->get_instructions()) {
                     if (instr->is_phi()) {
                         for (int i = 1; i < instr->get_num_operand(); i+=2) {
                             if (instr->get_operand(i) == bb) {
-                                if (active_phi_val.find(instr->get_operand(i - 1)) == active_phi_val.end()) {
-                                    active_phi_val.insert(instr->get_operand(i - 1));
+                                if (active_val.find(instr->get_operand(i - 1)) == active_val.end()) {
+                                    active_val.insert(instr->get_operand(i - 1));
                                 }
                             }
                         }
+                    } else {
+                        for (auto op: instr->get_operands()) {
+                            if (dynamic_cast<ConstantInt*>(op)) continue;
+                            if (dynamic_cast<BasicBlock*>(op)) continue;
+                            if (dynamic_cast<Function*>(op)) continue;
+                            active_val.insert(op);
+                        }
+                    }
+                }
+                for (auto var : def_var[bb]) {
+                    if (active_val.find(var) != active_val.end()) {
+                        active_val.erase(var);
                     }
                 }
                 for (auto instr : succBB->get_instructions()) {
@@ -96,7 +108,7 @@ void ActiveVar::get_live_in_live_out() {
                         }
                     }
                 }
-                std::set_union(succ_tmp_live_in.begin(), succ_tmp_live_in.end(), active_phi_val.begin(), active_phi_val.end(), std::inserter(succ_tmp_live_in, succ_tmp_live_in.begin()));
+                std::set_union(succ_tmp_live_in.begin(), succ_tmp_live_in.end(), active_val.begin(), active_val.end(), std::inserter(succ_tmp_live_in, succ_tmp_live_in.begin()));
                 std::set_union(tmp_live_out.begin(), tmp_live_out.end(), succ_tmp_live_in.begin(), succ_tmp_live_in.end(), std::inserter(tmp_live_out, tmp_live_out.begin()));
             }
             // 迭代后的in和out必不可能小于迭代前的in和out(归纳法可证)
