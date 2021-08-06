@@ -12,6 +12,7 @@ public:
     void execute() final;
     void mark();
     void sweep();
+    void remove_unmarked_bb();
     bool is_critical(Instruction *);
     BasicBlock* get_nearest_marked_postdominator(Instruction *);
     const std::string get_name() const override {return name;}

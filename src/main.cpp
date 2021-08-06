@@ -247,7 +247,6 @@ int main(int argc, char *argv[])
 
             m->set_print_name();
             passmgr.execute();
-        }
         m->set_print_name();
         auto IR = m->print();
         if(codegen&&!(print_LIR||print_mir)){
