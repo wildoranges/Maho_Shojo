@@ -159,6 +159,9 @@ int main(int argc, char *argv[])
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
 
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
@@ -179,6 +182,9 @@ int main(int argc, char *argv[])
 
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
 
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
