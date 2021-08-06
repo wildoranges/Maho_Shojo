@@ -365,10 +365,10 @@ std::string lsr(Reg* rd, Reg* rs, Operand2* opr2){
     return asmstr;
 }
 
-std::string load(Reg* rd, Location* addr){
+std::string load(Reg* rd, Location* addr, std::string cmpop){
     std::string asmstr;
     asmstr += space;
-    asmstr += "ldr ";
+    asmstr += "ldr" + cmpop + " ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += addr->get_code();
@@ -376,14 +376,106 @@ std::string load(Reg* rd, Location* addr){
     return asmstr;
 }
 
-std::string store(Reg* rd, Location* addr){
+std::string safe_load(Reg* rd, Location* addr, int sp_extra_ofst, bool long_func, std::string cmpop){
+    std::string asmstr;
+    bool is_sp_based = false;
+    if(dynamic_cast<Regbase*>(addr)){
+        Regbase* regbase = dynamic_cast<Regbase*>(addr);
+        is_sp_based = (regbase->get_reg().get_id() == sp);
+        int offset = regbase->get_offset() + ((is_sp_based)?sp_extra_ofst: 0);
+        if(abs(offset) > 4095){
+            asmstr += space;
+            asmstr += "ldr lr, =";
+            asmstr += std::to_string(offset);
+            asmstr += endl;
+            asmstr += space;
+            asmstr += "add lr, lr, ";
+            asmstr += regbase->get_reg().get_code();
+            asmstr += endl;
+            asmstr += load(rd, new Regbase(Reg(lr), 0), cmpop);
+        }
+        else{
+            if(is_sp_based){
+                Regbase* new_regbase = new Regbase(*regbase);
+                new_regbase->set_offset(offset);
+                asmstr += load(rd, new_regbase, cmpop);
+            }
+            else{
+                asmstr += load(rd, addr, cmpop);
+            }
+        }
+    }
+    else{
+        label* labl = dynamic_cast<label*>(addr);
+        if(long_func || labl->get_offset()){
+            asmstr += space;
+            asmstr += "ldr lr, =";
+            asmstr += labl->get_code();
+            asmstr += endl;
+            asmstr += space;
+            asmstr += load(rd, new Regbase(Reg(lr), 0), cmpop);
+        }
+        else{
+            asmstr += load(rd, addr, cmpop);
+        }
+    }
+    return asmstr;
+}
+
+std::string store(Reg* rd, Location* addr, std::string cmpop){
     std::string asmstr;
     asmstr += space;
-    asmstr += "str ";
+    asmstr += "str" + cmpop + " ";
     asmstr += rd->get_code();
     asmstr += ", ";
     asmstr += addr->get_code();
     asmstr += endl;
+    return asmstr;
+}
+
+std::string safe_store(Reg* rd, Location* addr, int sp_extra_ofst, bool long_func, std::string cmpop){
+    std::string asmstr;
+    bool is_sp_based = false;
+    if(dynamic_cast<Regbase*>(addr)){
+        Regbase* regbase = dynamic_cast<Regbase*>(addr);
+        is_sp_based = (regbase->get_reg().get_id() == sp);
+        int offset = regbase->get_offset() + ((is_sp_based)?sp_extra_ofst: 0);
+        if(abs(offset) > 4095){
+            asmstr += space;
+            asmstr += "ldr lr, =";
+            asmstr += std::to_string(offset);
+            asmstr += endl;
+            asmstr += space;
+            asmstr += "add lr, lr, ";
+            asmstr += regbase->get_reg().get_code();
+            asmstr += endl;
+            asmstr += store(rd, new Regbase(Reg(lr), 0), cmpop);
+        }
+        else{
+            if(is_sp_based){
+                Regbase* new_regbase = new Regbase(*regbase);
+                new_regbase->set_offset(offset);
+                asmstr += store(rd, new_regbase, cmpop);
+            }
+            else{
+                asmstr += store(rd, addr, cmpop);
+            }
+        }
+    }
+    else{
+        label* labl = dynamic_cast<label*>(addr);
+        if(long_func || labl->get_offset()){
+            asmstr += space;
+            asmstr += "ldr lr, =";
+            asmstr += labl->get_code();
+            asmstr += endl;
+            asmstr += space;
+            asmstr += store(rd, new Regbase(Reg(lr), 0), cmpop);
+        }
+        else{
+            asmstr += store(rd, addr, cmpop);
+        }
+    }
     return asmstr;
 }
 

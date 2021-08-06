@@ -108,6 +108,7 @@
         stack_map.clear();
         arg_on_stack.clear();
         reg2val.clear();
+        std::vector<Value*> stack_args;
         //arg on stack in reversed sequence
         if(fun->get_num_of_args() > 4){
             for(auto arg: fun->get_args()){
@@ -115,6 +116,7 @@
                 int type_size = arg->get_type()->get_size();
                 arg_on_stack.push_back(new IR2asm::Regbase(IR2asm::sp, arg_size));
                 arg_size += type_size;
+                stack_args.push_back(dynamic_cast<Value*>(arg));
             }
         }
         if(have_func_call){
@@ -180,7 +182,7 @@
                 if(dynamic_cast<Argument*>(vreg)){
                     auto arg = dynamic_cast<Argument*>(vreg);
                     if(arg->get_arg_no() > 3){
-                        stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
+                        // stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
                         continue;
                     }
                 }
@@ -200,11 +202,16 @@
                 map.second->set_offset(size + offset);
             }
         }
-        int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
+        // int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
+        /******always save lr for tmp use*******/
+        int reg_store_size = reg_size * (used_reg.second.size() + 1);
 //        int reg_store_size = reg_size * ((have_func_call)? 5 : 0);
+        int i = 0;
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
             item->set_offset(offset + reg_store_size + size + ((have_func_call)?20:0));
+            stack_map.insert({stack_args[i], item});
+            i++;
         }
         return size;
     }
@@ -222,10 +229,13 @@
         }
         // code += (IR2asm::frame_ptr).get_code();
         // code += ", ";
-        if(have_func_call)code += ", lr}";
-        else{
-            code += "}";
-        }
+
+        /******always save lr for temporary use********/
+        // if(have_func_call)code += ", lr}";
+        // else{
+        //     code += "}";
+        // }
+        code += ", lr}";
         code += IR2asm::endl;
         return code;
     }
@@ -243,16 +253,19 @@
         }
         // code += (IR2asm::frame_ptr).get_code();
         // code += ", ";
-        if(have_func_call)code += ", lr}";
-        else{
-            code += "}";
-        }
+        /******always save lr for temporary use********/
+        // if(have_func_call)code += ", lr}";
+        // else{
+        //     code += "}";
+        // }
+        code += ", lr}";
         code += IR2asm::endl;
         return code;
     }
 
     std::string CodeGen::callee_stack_operation_in(Function* fun, int stack_size){
         //TODO: immediate overflow
+        int remain_stack_size = stack_size;
         std::string code;
         code += IR2asm::space;
         if(have_func_call){
@@ -263,8 +276,14 @@
             code += IR2asm::endl;
             code += IR2asm::space;
         }
+        while(remain_stack_size > 2000){
+            code += "sub sp, sp, #2000";
+            code += IR2asm::endl;
+            code += IR2asm::space;
+            remain_stack_size -= 2000;
+        }
         code += "sub sp, sp, #";
-        code += std::to_string(stack_size);
+        code += std::to_string(remain_stack_size);
         code += IR2asm::endl;
         return code;
     }
@@ -279,10 +298,17 @@
             code += IR2asm::endl;
             return code;
         }
+        int remain_stack_size = stack_size;
+        while(remain_stack_size > 2000){
+            code += "add sp, sp, #2000";
+            code += IR2asm::endl;
+            code += IR2asm::space;
+            remain_stack_size -= 2000;
+        }
         code += "add sp, sp, #";
         // code += IR2asm::frame_ptr.get_code();
         // code += ", #";
-        code += std::to_string(stack_size);
+        code += std::to_string(remain_stack_size);
         code += IR2asm::endl;
         return code;
     }
@@ -543,8 +569,10 @@
     void CodeGen::func_call_check(Function* fun){
         max_arg_size = 0;
         have_func_call = false;
+        int inst_count = 0;
         for(auto bb: fun->get_basic_blocks()){
             for(auto inst: bb->get_instructions()){
+                inst_count++;
                 auto call = dynamic_cast<CallInst*>(inst);
                 if(!call)continue;
                 int arg_size = 0;
@@ -556,6 +584,8 @@
                 have_func_call = true;
             }
         }
+        if(inst_count > 500)long_func = true;
+        else{long_func = false;}
         return;
     }
 
@@ -587,12 +617,32 @@
                 IR2asm::Reg* preg;
                 if(reg >= 0){
                     if(reg<=3){
-                        regcode += IR2asm::space;
-                        regcode += "LDR ";
-                        regcode += IR2asm::Reg(i).get_code();
-                        regcode += ", ";
-                        regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
-                        regcode += IR2asm::endl;
+                        regcode += IR2asm::safe_load(new IR2asm::Reg(i), 
+                                                new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),caller_saved_pos[reg]),
+                                                sp_extra_ofst, long_func);
+                        // int offset = caller_saved_pos[reg] + sp_extra_ofst;
+                        // if(abs(offset) > 4095){
+                        //     regcode += IR2asm::space;
+                        //     regcode += "ldr lr, =";
+                        //     regcode += std::to_string(offset);
+                        //     regcode += IR2asm::endl;
+                        //     regcode += IR2asm::space;
+                        //     regcode += "add lr, lr, sp";
+                        //     regcode += IR2asm::endl;
+                        //     regcode += IR2asm::space;
+                        //     regcode += "LDR ";
+                        //     regcode += IR2asm::Reg(i).get_code();
+                        //     regcode += ", [lr]";
+                        //     regcode += IR2asm::endl;
+                        // }
+                        // else{
+                        //     regcode += IR2asm::space;
+                        //     regcode += "LDR ";
+                        //     regcode += IR2asm::Reg(i).get_code();
+                        //     regcode += ", ";
+                        //     regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
+                        //     regcode += IR2asm::endl;
+                        // }
                         i++;
                         continue;
                     }
@@ -606,12 +656,32 @@
                         i++;
                         continue;
                     }else{
-                        regcode += IR2asm::space;
-                        regcode += "LDR ";
-                        regcode += IR2asm::Reg(i).get_code();
-                        regcode += ", ";
-                        regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
-                        regcode += IR2asm::endl;
+                        regcode += IR2asm::safe_load(new IR2asm::Reg(i), 
+                                                new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),caller_saved_pos[12]),
+                                                sp_extra_ofst, long_func);
+                        // int offset = caller_saved_pos[12] + sp_extra_ofst;
+                        // if(abs(offset) > 4095){
+                        //     regcode += IR2asm::space;
+                        //     regcode += "ldr lr, =";
+                        //     regcode += std::to_string(offset);
+                        //     regcode += IR2asm::endl;
+                        //     regcode += IR2asm::space;
+                        //     regcode += "add lr, lr, sp";
+                        //     regcode += IR2asm::endl;
+                        //     regcode += IR2asm::space;
+                        //     regcode += "LDR ";
+                        //     regcode += IR2asm::Reg(i).get_code();
+                        //     regcode += ", [lr]";
+                        //     regcode += IR2asm::endl;
+                        // }
+                        // else{
+                        //     regcode += IR2asm::space;
+                        //     regcode += "LDR ";
+                        //     regcode += IR2asm::Reg(i).get_code();
+                        //     regcode += ", ";
+                        //     regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
+                        //     regcode += IR2asm::endl;
+                        // }
                         i++;
                         continue;
                     }
@@ -665,12 +735,41 @@
 //                    }
                 }
                 else{
-                    regcode += IR2asm::space;
-                    regcode += "ldr ";
-                    regcode += IR2asm::Reg(i).get_code();
-                    regcode += ", ";
-                    regcode += stack_map.find(arg)->second->get_ofst_code(sp_extra_ofst);
-                    regcode += IR2asm::endl;
+                    regcode += IR2asm::safe_load(new IR2asm::Reg(i),
+                                                 stack_map.find(arg)->second,
+                                                 sp_extra_ofst,
+                                                 long_func);
+                    // IR2asm::Regbase* regbase = stack_map.find(arg)->second;
+                    // int offset;
+                    // if(regbase->get_reg().get_id() == IR2asm::sp){
+                    //     offset = regbase->get_offset() + sp_extra_ofst;
+                    // }
+                    // else{
+                    //     offset = regbase->get_offset();
+                    // }
+                    // if(offset > 4095){
+                    //     regcode += IR2asm::space;
+                    //     regcode += "ldr lr, =";
+                    //     regcode += std::to_string(offset);
+                    //     regcode += IR2asm::endl;
+                    //     regcode += IR2asm::space;
+                    //     regcode += "add lr, lr, ";
+                    //     regcode += regbase->get_reg().get_code();
+                    //     regcode += IR2asm::endl;
+                    //     regcode += IR2asm::space;
+                    //     regcode += "ldr ";
+                    //     regcode += IR2asm::Reg(i).get_code();
+                    //     regcode += ", [lr]";
+                    //     regcode += IR2asm::endl;
+                    // }
+                    // else{
+                    //     regcode += IR2asm::space;
+                    //     regcode += "ldr ";
+                    //     regcode += IR2asm::Reg(i).get_code();
+                    //     regcode += ", ";
+                    //     regcode += regbase->get_ofst_code(sp_extra_ofst);
+                    //     regcode += IR2asm::endl;
+                    // }
                 }
             }
             else{
@@ -712,12 +811,33 @@
                         to_push_regs.push_back(reg);
                         remained_off_reg_num--;
                     }else{
-                        memcode += IR2asm::space;
-                        memcode += "LDR ";
-                        memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
-                        memcode += ", ";
-                        memcode += IR2asm::Regbase(IR2asm::Reg(reg),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
-                        memcode += IR2asm::endl;
+                        memcode += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]),
+                                                     new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),caller_saved_pos[reg]),
+                                                     sp_extra_ofst, 
+                                                     long_func);
+                        // int offset = caller_saved_pos[reg] + sp_extra_ofst;
+                        // if(offset > 4095){
+                        //     memcode += IR2asm::space;
+                        //     memcode += "ldr lr, =";
+                        //     memcode += std::to_string(offset);
+                        //     memcode += IR2asm::endl;
+                        //     memcode += IR2asm::space;
+                        //     memcode += "add lr, lr, sp";
+                        //     memcode += IR2asm::endl;
+                        //     memcode += IR2asm::space;
+                        //     memcode += "LDR ";
+                        //     memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
+                        //     memcode += ", [lr]";
+                        //     memcode += IR2asm::endl;
+                        // }
+                        // else{
+                        //     memcode += IR2asm::space;
+                        //     memcode += "LDR ";
+                        //     memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
+                        //     memcode += ", ";
+                        //     memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
+                        //     memcode += IR2asm::endl;
+                        // }
                         to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                         remained_off_reg_num--;
                         //TODO:null ptr?segment fault?
@@ -736,12 +856,40 @@
                 }
                 else{
                     auto srcaddr = stack_map.find(arg)->second;
-                    memcode += IR2asm::space;
-                    memcode += "LDR ";
-                    memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
-                    memcode += ", ";
-                    memcode += srcaddr->get_ofst_code(sp_extra_ofst);
-                    memcode += IR2asm::endl;
+                    memcode += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]),
+                                                 srcaddr,
+                                                 sp_extra_ofst,
+                                                 long_func);
+                    // int offset;
+                    // if(srcaddr->get_reg().get_id() == IR2asm::sp){
+                    //     offset = srcaddr->get_offset() + sp_extra_ofst;
+                    // }
+                    // else{
+                    //     offset = srcaddr->get_offset();
+                    // }
+                    // if(offset > 4095){
+                    //     memcode += IR2asm::space;
+                    //     memcode += "ldr lr, =";
+                    //     memcode += std::to_string(offset);
+                    //     memcode += IR2asm::endl;
+                    //     memcode += IR2asm::space;
+                    //     memcode += "add lr, lr, ";
+                    //     memcode += srcaddr->get_reg().get_code();
+                    //     memcode += IR2asm::endl;
+                    //     memcode += IR2asm::space;
+                    //     memcode += "LDR ";
+                    //     memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
+                    //     memcode += ", [lr]";
+                    //     memcode += IR2asm::endl;
+                    // }
+                    // else{
+                    //     memcode += IR2asm::space;
+                    //     memcode += "LDR ";
+                    //     memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
+                    //     memcode += ", ";
+                    //     memcode += srcaddr->get_ofst_code(sp_extra_ofst);
+                    //     memcode += IR2asm::endl;
+                    // }
                     to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                     remained_off_reg_num--;
 //                    memcode += IR2asm::space;
@@ -792,6 +940,7 @@
                     // code += ", ";
                     // code += IR2asm::Reg(arg->get_arg_no()).get_code();
                     // code += IR2asm::endl;
+
                     code += IR2asm::space;
                     code += "Ldr ";
                     code += IR2asm::Reg(reg).get_code();
@@ -800,22 +949,74 @@
                     code += IR2asm::endl;
                 }
                 else{
-                    code += IR2asm::space;
-                    code += "str ";
-                    code += IR2asm::Reg(arg->get_arg_no()).get_code();
-                    code += ", ";
-                    code += stack_map[arg]->get_ofst_code(sp_extra_ofst);
-                    code += IR2asm::endl;
+                    code += IR2asm::safe_store(new IR2asm::Reg(arg->get_arg_no()),
+                                               stack_map[arg],
+                                               sp_extra_ofst,
+                                               long_func);
+                    // IR2asm::Regbase* regbase = stack_map[arg];
+                    // int offset;
+                    // if(regbase->get_reg().get_id() == IR2asm::sp){
+                    //     offset = regbase->get_offset() + sp_extra_ofst;
+                    // }
+                    // else{
+                    //     offset = regbase->get_offset();
+                    // }
+                    // if(offset > 4095){
+                    //     code += IR2asm::space;
+                    //     code += "ldr lr, =";
+                    //     code += offset;
+                    //     code += IR2asm::endl;
+                    //     code += IR2asm::space;
+                    //     code += "add lr, lr, ";
+                    //     code += regbase->get_reg().get_code();
+                    //     code += IR2asm::endl;
+                    //     code += IR2asm::space;
+                    //     code += "str ";
+                    //     code += IR2asm::Reg(arg->get_arg_no()).get_code();
+                    //     code += ", [lr]";
+                    //     code += IR2asm::endl;
+                    // }
+                    // else{
+                    //     code += IR2asm::space;
+                    //     code += "str ";
+                    //     code += IR2asm::Reg(arg->get_arg_no()).get_code();
+                    //     code += ", ";
+                    //     code += regbase->get_ofst_code(sp_extra_ofst);
+                    //     code += IR2asm::endl;
+                    // }
                 }
             }
             else{
                 if(reg < 0)continue;
-                code += IR2asm::space;
-                code += "ldr ";
-                code += IR2asm::Reg(reg).get_code();
-                code += ", ";
-                code += arg_on_stack[arg->get_arg_no() - 4]->get_code();
-                code += IR2asm::endl;
+                code += IR2asm::safe_load(new IR2asm::Reg(reg),
+                                          arg_on_stack[arg->get_arg_no() - 4],
+                                          sp_extra_ofst,
+                                          long_func);
+                // IR2asm::Regbase* regbase = arg_on_stack[arg->get_arg_no() - 4];
+                // int offset = regbase->get_offset() + ((regbase->get_reg().get_id() == IR2asm::sp)?sp_extra_ofst:0);
+                // if(offset > 4095){
+                //     code += IR2asm::space;
+                //     code += "ldr lr, =";
+                //     code += std::to_string(offset);
+                //     code += IR2asm::endl;
+                //     code += IR2asm::space;
+                //     code += "add lr, lr, ";
+                //     code += regbase->get_reg().get_code();
+                //     code += IR2asm::endl;
+                //     code += IR2asm::space;
+                //     code += "ldr ";
+                //     code += IR2asm::Reg(reg).get_code();
+                //     code += ", [lr]";
+                //     code += IR2asm::endl;
+                // }
+                // else{
+                //     code += IR2asm::space;
+                //     code += "ldr ";
+                //     code += IR2asm::Reg(reg).get_code();
+                //     code += ", ";
+                //     code += regbase->get_code();
+                //     code += IR2asm::endl;
+                // }
             }
         }
         return code;
@@ -824,6 +1025,7 @@
     std::string CodeGen::function_gen(Function* fun){
         std::string code;
         sp_extra_ofst = 0;
+        pool_number = 0;
         global_label_gen(fun);
         make_linear_bb(fun);
         func_call_check(fun);
@@ -875,6 +1077,22 @@
         return code;
     }
 
+    std::string CodeGen::make_lit_pool(bool have_br){
+        if(have_br){
+            return IR2asm::space + ".pool" + IR2asm::endl;
+        }
+        std::string code;
+        code += IR2asm::space;
+        IR2asm::label pool_label("litpool" + std::to_string(func_no) + "_" + std::to_string(pool_number), 0);
+        pool_number++;
+        code += IR2asm::space;
+        code += "b " + pool_label.get_code();
+        code += IR2asm::endl;
+        code += IR2asm::space + ".pool" + IR2asm::endl;
+        code += pool_label.get_code() + ":" + IR2asm::endl;
+        return code;
+    }
+
     std::string CodeGen::bb_gen(BasicBlock* bb){
         std::string code;
         if(bb_label[bb]->get_code() != ""){
@@ -882,16 +1100,23 @@
         }
         Instruction* br_inst = nullptr;
         for(auto inst : bb->get_instructions()){
+            std::string new_code;
             if(inst->isTerminator()){
                 br_inst = inst;
                 break;
             }
             if(dynamic_cast<CallInst*>(inst)){
                 auto call_inst = dynamic_cast<CallInst*>(inst);        
-                code += caller_reg_store(bb->get_parent(),call_inst);
-                code += arg_move(call_inst);
-                code += instr_gen(call_inst);
-                code += caller_reg_restore(bb->get_parent(),call_inst);
+                new_code += caller_reg_store(bb->get_parent(),call_inst);
+                new_code += arg_move(call_inst);
+                new_code += instr_gen(call_inst);
+                new_code += caller_reg_restore(bb->get_parent(),call_inst);
+                code += new_code;
+                accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
+                if(accumulate_line_num > 1000){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
+                }
             }else if(instr_may_need_push_stack(inst)){
                 std::vector<int> store_list = {};
                 std::set<Value*> to_store_set = {};
@@ -976,24 +1201,32 @@
 //                    code += IR2asm::Reg(store_list[lst_size]).get_code();
 //                    code += "}";
 //                    code += IR2asm::endl;
-                    code += push_regs(store_list);
+                    new_code += push_regs(store_list);
                 }
                 for(auto opr:to_ld_set){
-                    code += IR2asm::space;
-                    code += "ldr ";
-                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
-                            stack_map[opr]->get_ofst_code(sp_extra_ofst);
-                    code += IR2asm::endl;
+                    new_code += IR2asm::safe_load(new IR2asm::Reg(reg_map[opr]->reg_num),
+                                                  stack_map[opr],
+                                                  sp_extra_ofst,
+                                                  long_func);
+                    // new_code += IR2asm::space;
+                    // new_code += "ldr ";
+                    // new_code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
+                    //         stack_map[opr]->get_ofst_code(sp_extra_ofst);
+                    // new_code += IR2asm::endl;
                 }
 
-                code += instr_gen(inst);
+                new_code += instr_gen(inst);
 
                 for(auto opr:to_store_set){
-                    code += IR2asm::space;
-                    code += "str ";
-                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
-                            stack_map[opr]->get_ofst_code(sp_extra_ofst);
-                    code += IR2asm::endl;
+                    new_code += IR2asm::safe_store(new IR2asm::Reg(reg_map[opr]->reg_num),
+                                                   stack_map[opr],
+                                                   sp_extra_ofst,
+                                                   long_func);
+                    // new_code += IR2asm::space;
+                    // new_code += "str ";
+                    // new_code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
+                    //         stack_map[opr]->get_ofst_code(sp_extra_ofst);
+                    // new_code += IR2asm::endl;
                 }
 
                 if(!store_list.empty()){
@@ -1007,14 +1240,28 @@
 //                    code += IR2asm::Reg(store_list[lst_size]).get_code();
 //                    code += "}";
 //                    code += IR2asm::endl;
-                    code += pop_regs(store_list);
+                    new_code += pop_regs(store_list);
+                }
+
+                code += new_code;
+
+                accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
+                if(accumulate_line_num > 1000){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
                 }
 
                 for(auto inter:interval_set){
                     inter->reg_num = -1;
                 }
             }else{
-                code += instr_gen(inst);
+                new_code += instr_gen(inst);
+                code += new_code;
+                accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
+                if(accumulate_line_num > 1000){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
+                }
             }
         }
 
@@ -1082,7 +1329,13 @@
     std::string CodeGen::phi_union(BasicBlock* bb, Instruction* br_inst){
         //TODO:right?
         if(dynamic_cast<ReturnInst *>(br_inst)){
-            return instr_gen(br_inst);
+            std::string code;
+            accumulate_line_num += 1;
+            if(accumulate_line_num > 1000){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
+            }
+            return code + instr_gen(br_inst);
         }
         std::string cmp;
         std::string inst_cmpop;
@@ -1286,15 +1539,20 @@
                     IR2asm::Location* tar = phi_target[i];
                     IR2asm::Location* src = phi_src[i];
                     if(dynamic_cast<IR2asm::Regbase*>(tar)){
-                        *code += IR2asm::space;
-                        *code += "STR";
-                        *code += cmpop;
-                        *code += " ";
-                        *code += src->get_code();
-                        *code += ", ";
-                        auto tar_base = dynamic_cast<IR2asm::Regbase*>(tar);
-                        *code += tar_base->get_ofst_code(sp_extra_ofst);
-                        *code += IR2asm::endl;
+                        *code += IR2asm::safe_store(new IR2asm::Reg(dynamic_cast<IR2asm::RegLoc*>(src)->get_reg_id()),
+                                                    tar,
+                                                    sp_extra_ofst,
+                                                    long_func,
+                                                    cmpop);
+                        // *code += IR2asm::space;
+                        // *code += "STR";
+                        // *code += cmpop;
+                        // *code += " ";
+                        // *code += src->get_code();
+                        // *code += ", ";
+                        // auto tar_base = dynamic_cast<IR2asm::Regbase*>(tar);
+                        // *code += tar_base->get_ofst_code(sp_extra_ofst);
+                        // *code += IR2asm::endl;
                     }else{
                         *code += IR2asm::space;
                         *code += "MOV";
@@ -1321,14 +1579,19 @@
                 std::map<IR2asm::Regbase*,int> stack_offset = {};
                 int cur_offset = -4;
                 reg_offset[tmp_reg_id] = cur_offset;
-                *code += IR2asm::space;
-                *code += "STR";
-                *code += cmpop;
-                *code += " ";
-                *code += IR2asm::Reg(tmp_reg_id).get_code();
-                *code += ", ";
-                *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
-                *code += IR2asm::endl;
+                *code += IR2asm::safe_store(new IR2asm::Reg(tmp_reg_id),
+                                            new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),cur_offset),
+                                            0,
+                                            long_func,
+                                            cmpop);
+                // *code += IR2asm::space;
+                // *code += "STR";
+                // *code += cmpop;
+                // *code += " ";
+                // *code += IR2asm::Reg(tmp_reg_id).get_code();
+                // *code += ", ";
+                // *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
+                // *code += IR2asm::endl;
                 cur_offset -= 4;
                 int size = phi_src.size();
                 for(int i = 0;i < size;i++){
@@ -1340,14 +1603,19 @@
                             int reg_id = reg_src_ptr->get_reg_id();
                             if(reg_offset.find(reg_id)==reg_offset.end()){
                                 reg_offset[reg_id] = cur_offset;
-                                *code += IR2asm::space;
-                                *code += "STR";
-                                *code += cmpop;
-                                *code += " ";
-                                *code += IR2asm::Reg(reg_id).get_code();
-                                *code += ", ";
-                                *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
-                                *code += IR2asm::endl;
+                                *code += IR2asm::safe_store(new IR2asm::Reg(reg_id),
+                                                            new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),cur_offset),
+                                                            0,
+                                                            long_func,
+                                                            cmpop);
+                                // *code += IR2asm::space;
+                                // *code += "STR";
+                                // *code += cmpop;
+                                // *code += " ";
+                                // *code += IR2asm::Reg(reg_id).get_code();
+                                // *code += ", ";
+                                // *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
+                                // *code += IR2asm::endl;
                                 cur_offset -= 4;
                             }
                         }
@@ -1355,22 +1623,32 @@
                     else{
                         if(stack_offset.find(stack_src_ptr)==stack_offset.end()){
                             stack_offset[stack_src_ptr] = cur_offset;
-                            *code += IR2asm::space;
-                            *code += "LDR";
-                            *code += cmpop;
-                            *code += " ";
-                            *code += IR2asm::Reg(tmp_reg_id).get_code();
-                            *code += ", ";
-                            *code += stack_src_ptr->get_ofst_code(sp_extra_ofst);
-                            *code += IR2asm::endl;
-                            *code += IR2asm::space;
-                            *code += "STR";
-                            *code += cmpop;
-                            *code += " ";
-                            *code += IR2asm::Reg(tmp_reg_id).get_code();
-                            *code += ", ";
-                            *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
-                            *code += IR2asm::endl;
+                            *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                                                       stack_src_ptr,
+                                                       sp_extra_ofst,
+                                                       long_func,
+                                                       cmpop);
+                            // *code += IR2asm::space;
+                            // *code += "LDR";
+                            // *code += cmpop;
+                            // *code += " ";
+                            // *code += IR2asm::Reg(tmp_reg_id).get_code();
+                            // *code += ", ";
+                            // *code += stack_src_ptr->get_ofst_code(sp_extra_ofst);
+                            // *code += IR2asm::endl;
+                            *code += IR2asm::safe_store(new IR2asm::Reg(tmp_reg_id),
+                                                        new IR2asm::Regbase(IR2asm::Reg(13),cur_offset),
+                                                        0,
+                                                        long_func,
+                                                        cmpop);
+                            // *code += IR2asm::space;
+                            // *code += "STR";
+                            // *code += cmpop;
+                            // *code += " ";
+                            // *code += IR2asm::Reg(tmp_reg_id).get_code();
+                            // *code += ", ";
+                            // *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
+                            // *code += IR2asm::endl;
                             cur_offset -= 4;
                         }
                     }
@@ -1398,27 +1676,39 @@
                                 *code += IR2asm::endl;
                             }
                             else{
-                                *code += IR2asm::space;
-                                *code += "LDR";
-                                *code += cmpop;
-                                *code += " ";
-                                *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
-                                *code += ", ";
-                                *code += IR2asm::Regbase(IR2asm::Reg(13),
-                                                         reg_offset[reg_src_ptr->get_reg_id()]).get_ofst_code();
-                                *code += IR2asm::endl;
+                                *code += IR2asm::safe_load(new IR2asm::Reg(reg_tar_ptr->get_reg_id()),
+                                                           new IR2asm::Regbase(IR2asm::Reg(13),
+                                                                reg_offset[reg_src_ptr->get_reg_id()]),
+                                                            0,
+                                                            long_func,
+                                                            cmpop);
+                                // *code += IR2asm::space;
+                                // *code += "LDR";
+                                // *code += cmpop;
+                                // *code += " ";
+                                // *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
+                                // *code += ", ";
+                                // *code += IR2asm::Regbase(IR2asm::Reg(13),
+                                //                          reg_offset[reg_src_ptr->get_reg_id()]).get_ofst_code();
+                                // *code += IR2asm::endl;
                             }
                         }
                         else{
-                            *code += IR2asm::space;
-                            *code += "LDR";
-                            *code += cmpop;
-                            *code += " ";
-                            *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
-                            *code += ", ";
-                            *code += IR2asm::Regbase(IR2asm::Reg(13),
-                                                     stack_offset[stack_src_ptr]).get_ofst_code();
-                            *code += IR2asm::endl;
+                            *code += IR2asm::safe_load(new IR2asm::Reg(reg_tar_ptr->get_reg_id()),
+                                                       new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),
+                                                            stack_offset[stack_src_ptr]),
+                                                       0,
+                                                       long_func,
+                                                       cmpop);
+                            // *code += IR2asm::space;
+                            // *code += "LDR";
+                            // *code += cmpop;
+                            // *code += " ";
+                            // *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
+                            // *code += ", ";
+                            // *code += IR2asm::Regbase(IR2asm::Reg(13),
+                            //                          stack_offset[stack_src_ptr]).get_ofst_code();
+                            // *code += IR2asm::endl;
                         }
                     }else{
                         if(reg_src_ptr){
@@ -1433,46 +1723,68 @@
                                 *code += IR2asm::endl;
                             }
                             else{
-                                *code += IR2asm::space;
-                                *code += "LDR";
-                                *code += cmpop;
-                                *code += " ";
-                                *code += IR2asm::Reg(tmp_reg_id).get_code();
-                                *code += ", ";
-                                *code += IR2asm::Regbase(IR2asm::Reg(13),
-                                                         reg_offset[reg_src_ptr->get_reg_id()]).get_ofst_code();
-                                *code += IR2asm::endl;
+                                *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                                                           new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),
+                                                                reg_offset[reg_src_ptr->get_reg_id()]),
+                                                           0,
+                                                           long_func,
+                                                           cmpop);
+                                // *code += IR2asm::space;
+                                // *code += "LDR";
+                                // *code += cmpop;
+                                // *code += " ";
+                                // *code += IR2asm::Reg(tmp_reg_id).get_code();
+                                // *code += ", ";
+                                // *code += IR2asm::Regbase(IR2asm::Reg(13),
+                                //                          reg_offset[reg_src_ptr->get_reg_id()]).get_ofst_code();
+                                // *code += IR2asm::endl;
                             }
                         }else{
-                            *code += IR2asm::space;
-                            *code += "LDR";
-                            *code += cmpop;
-                            *code += " ";
-                            *code += IR2asm::Reg(tmp_reg_id).get_code();
-                            *code += ", ";
-                            *code += IR2asm::Regbase(IR2asm::Reg(13),
-                                                     stack_offset[stack_src_ptr]).get_ofst_code();
-                            *code += IR2asm::endl;
+                            *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                                                       new IR2asm::Regbase(IR2asm::Reg(13),
+                                                                stack_offset[stack_src_ptr]),
+                                                       0,
+                                                       long_func,
+                                                       cmpop);
+                            // *code += IR2asm::space;
+                            // *code += "LDR";
+                            // *code += cmpop;
+                            // *code += " ";
+                            // *code += IR2asm::Reg(tmp_reg_id).get_code();
+                            // *code += ", ";
+                            // *code += IR2asm::Regbase(IR2asm::Reg(13),
+                            //                          stack_offset[stack_src_ptr]).get_ofst_code();
+                            // *code += IR2asm::endl;
                         }
-                        *code += IR2asm::space;
-                        *code += "STR";
-                        *code += cmpop;
-                        *code += " ";
-                        *code += IR2asm::Reg(tmp_reg_id).get_code();
-                        *code += ", ";
-                        *code += stack_tar_ptr->get_ofst_code(sp_extra_ofst);
-                        *code += IR2asm::endl;
+                        *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                                                   stack_tar_ptr,
+                                                   sp_extra_ofst,
+                                                   long_func,
+                                                   cmpop);
+                        // *code += IR2asm::space;
+                        // *code += "STR";
+                        // *code += cmpop;
+                        // *code += " ";
+                        // *code += IR2asm::Reg(tmp_reg_id).get_code();
+                        // *code += ", ";
+                        // *code += stack_tar_ptr->get_ofst_code(sp_extra_ofst);
+                        // *code += IR2asm::endl;
                     }
                 }
                 if(need_to_save){
-                    *code += IR2asm::space;
-                    *code += "LDR";
-                    *code += cmpop;
-                    *code += " ";
-                    *code += IR2asm::Reg(tmp_reg_id).get_code();
-                    *code += ", ";
-                    *code += IR2asm::Regbase(IR2asm::Reg(13),reg_offset[tmp_reg_id]).get_ofst_code();
-                    *code += IR2asm::endl;
+                    *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                                               new IR2asm::Regbase(IR2asm::Reg(13),reg_offset[tmp_reg_id]),
+                                               0,
+                                               long_func,
+                                               cmpop);
+                    // *code += IR2asm::space;
+                    // *code += "LDR";
+                    // *code += cmpop;
+                    // *code += " ";
+                    // *code += IR2asm::Reg(tmp_reg_id).get_code();
+                    // *code += ", ";
+                    // *code += IR2asm::Regbase(IR2asm::Reg(13),reg_offset[tmp_reg_id]).get_ofst_code();
+                    // *code += IR2asm::endl;
                 }
             }
 //            for(auto opr:sux_bb_phi){
@@ -1563,7 +1875,18 @@
 //                }
 //            }
         }
-        return cmp + pop_code + succ_code + succ_br + fail_code + fail_br;
+        std::string ret_code = cmp + succ_code + succ_br + fail_code + fail_br;
+        accumulate_line_num += std::count(ret_code.begin(), ret_code.end(), IR2asm::endl[0]);
+        if(accumulate_line_num > 1000){
+            if(dynamic_cast<BranchInst *>(bb->get_terminator()) && bb->get_terminator()->get_num_operand() == 1){
+                ret_code += make_lit_pool(true);
+            }
+            else{
+                ret_code += make_lit_pool();
+            }
+            accumulate_line_num = 0;
+        }
+        return ret_code;
     }
 
     //TODO: return bb
@@ -1663,10 +1986,22 @@
                 case Instruction::load: {
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
                     if (global_addr) {
-                        code += IR2asm::load(get_asm_reg(inst), global_variable_table[global_addr]);
-                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), 0));
+                        code += IR2asm::safe_load(get_asm_reg(inst), 
+                                                    global_variable_table[global_addr], 
+                                                    sp_extra_ofst, 
+                                                    long_func);
+                        // code += IR2asm::load(get_asm_reg(inst), global_variable_table[global_addr]);
+                        code += IR2asm::safe_load(get_asm_reg(inst), 
+                                                    new IR2asm::Regbase(*get_asm_reg(inst), 0), 
+                                                    sp_extra_ofst, 
+                                                    long_func);
+                        // code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst), 0));
                     } else {
-                        code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst->get_operand(0)), 0));
+                        code += IR2asm::safe_load(get_asm_reg(inst), 
+                                                    new IR2asm::Regbase(*get_asm_reg(inst->get_operand(0)), 0), 
+                                                    sp_extra_ofst, 
+                                                    long_func);
+                        // code += IR2asm::load(get_asm_reg(inst), new IR2asm::Regbase(*get_asm_reg(inst->get_operand(0)), 0));
                     }
                 }
                 break;
@@ -1693,12 +2028,20 @@
                             tmp_reg.push_back(ld_reg_id);
                             code += push_regs(tmp_reg);
                         }
-                        code += IR2asm::load(new IR2asm::Reg(ld_reg_id),global_variable_table[global_addr]);
+                        code += IR2asm::safe_load(new IR2asm::Reg(ld_reg_id), 
+                                                    global_variable_table[global_addr], 
+                                                    sp_extra_ofst, 
+                                                    long_func);
+                        // code += IR2asm::load(new IR2asm::Reg(ld_reg_id),global_variable_table[global_addr]);
                     }else{
                         need_pop = false;
                         ld_reg_id = get_asm_reg(inst->get_operand(1))->get_id();
                     }
-                    code += IR2asm::store(get_asm_reg(inst->get_operand((0))), new IR2asm::Regbase(IR2asm::Reg(ld_reg_id), 0));
+                    code += IR2asm::safe_store(get_asm_reg(inst->get_operand((0))),
+                                                 new IR2asm::Regbase(IR2asm::Reg(ld_reg_id), 0),
+                                                 sp_extra_ofst,
+                                                 long_func);
+                    // code += IR2asm::store(get_asm_reg(inst->get_operand((0))), new IR2asm::Regbase(IR2asm::Reg(ld_reg_id), 0));
                     if(need_pop){
 //                        code += IR2asm::space;
 //                        code += "pop {";
