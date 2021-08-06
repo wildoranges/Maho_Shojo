@@ -707,11 +707,11 @@ void MHSJBuilder::visit(SyntaxTree::FuncCallStmt &node) {
 void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
   auto falseBB = BasicBlock::create(module.get(), "", cur_fun);
-  auto contBB = BasicBlock::create(module.get(), "", cur_fun);
+  auto nextBB = BasicBlock::create(module.get(), "", cur_fun);
   IF_While_Or_Cond_Stack.push_back({nullptr, nullptr});
   IF_While_Or_Cond_Stack.back().trueBB = trueBB;
   if (node.else_statement == nullptr) {
-    IF_While_Or_Cond_Stack.back().falseBB = contBB;
+    IF_While_Or_Cond_Stack.back().falseBB = nextBB;
   }
   else {
     IF_While_Or_Cond_Stack.back().falseBB = falseBB;
@@ -724,7 +724,7 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
     cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
   }
   if (node.else_statement == nullptr) {
-    builder->create_cond_br(cond_val, trueBB, contBB);
+    builder->create_cond_br(cond_val, trueBB, nextBB);
   }
   else {
     builder->create_cond_br(cond_val, trueBB, falseBB);
@@ -742,7 +742,7 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
   }
 
   if (builder->get_insert_block()->get_terminator() == nullptr) {
-    builder->create_br(contBB);
+    builder->create_br(nextBB);
   }
   cur_basic_block_list.pop_back();
 
@@ -761,26 +761,30 @@ void MHSJBuilder::visit(SyntaxTree::IfStmt &node) {
       scope.exit();
     }
     if (builder->get_insert_block()->get_terminator() == nullptr) {
-      builder->create_br(contBB);
+      builder->create_br(nextBB);
     }
     cur_basic_block_list.pop_back();
   }
 
-  builder->set_insert_point(contBB);
-  cur_basic_block_list.push_back(contBB);
+  builder->set_insert_point(nextBB);
+  cur_basic_block_list.push_back(nextBB);
+  if (nextBB->get_pre_basic_blocks().size()==0){
+    builder->set_insert_point(trueBB);
+    nextBB->erase_from_parent();
+  }
 }
 
 void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
   auto whileBB = BasicBlock::create(module.get(), "", cur_fun);
   auto trueBB = BasicBlock::create(module.get(), "", cur_fun);
-  auto contBB = BasicBlock::create(module.get(), "", cur_fun);
-  While_Stack.push_back({whileBB, contBB});
+  auto nextBB = BasicBlock::create(module.get(), "", cur_fun);
+  While_Stack.push_back({whileBB, nextBB});
   if (builder->get_insert_block()->get_terminator() == nullptr) {
     builder->create_br(whileBB);
   }
   cur_basic_block_list.pop_back();
   builder->set_insert_point(whileBB);
-  IF_While_Or_Cond_Stack.push_back({trueBB, contBB});
+  IF_While_Or_Cond_Stack.push_back({trueBB, nextBB});
   node.cond_exp->accept(*this);
   IF_While_Or_Cond_Stack.pop_back();
   auto ret_val = tmp_val;
@@ -788,7 +792,7 @@ void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
   if (cond_val == nullptr) {
     cond_val = builder->create_icmp_ne(tmp_val, CONST_INT(0));
   }
-  builder->create_cond_br(cond_val, trueBB, contBB);
+  builder->create_cond_br(cond_val, trueBB, nextBB);
   builder->set_insert_point(trueBB);
   cur_basic_block_list.push_back(trueBB);
   if (dynamic_cast<SyntaxTree::BlockStmt *>(node.statement.get())) {
@@ -803,8 +807,8 @@ void MHSJBuilder::visit(SyntaxTree::WhileStmt &node) {
     builder->create_br(whileBB);
   }
   cur_basic_block_list.pop_back();
-  builder->set_insert_point(contBB);
-  cur_basic_block_list.push_back(contBB);
+  builder->set_insert_point(nextBB);
+  cur_basic_block_list.push_back(nextBB);
   While_Stack.pop_back();
 }
 
