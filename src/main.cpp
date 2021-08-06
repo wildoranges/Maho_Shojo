@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         } else {
             PassMgr passmgr(m.get());
 
-            //passmgr.addPass<CFGSimplifier>();
+            passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DeadCodeElimination>();
 
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<CFGSimplifier>();
 
-            passmgr.addPass<LoopInvariant>();
+            //passmgr.addPass<LoopInvariant>();
             passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<AvailableExpr>();
@@ -139,6 +139,7 @@ int main(int argc, char *argv[])
             passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<LIR>();
             passmgr.addPass<DeadCodeElimination>();
+            passmgr.addPass<AvailableExpr>();
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
 
