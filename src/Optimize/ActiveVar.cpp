@@ -51,6 +51,7 @@ void ActiveVar::get_use_var() {
             }
         }
         for (auto var : def_var[bb]) {
+            if (dynamic_cast<PhiInst*>(var)) continue;
             if (use_var[bb].find(var) != use_var[bb].end()) {
                 use_var[bb].erase(var);
             }
