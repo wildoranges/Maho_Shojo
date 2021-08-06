@@ -1756,7 +1756,7 @@
                             //                          stack_offset[stack_src_ptr]).get_ofst_code();
                             // *code += IR2asm::endl;
                         }
-                        *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                        *code += IR2asm::safe_store(new IR2asm::Reg(tmp_reg_id),
                                                    stack_tar_ptr,
                                                    sp_extra_ofst,
                                                    long_func,
