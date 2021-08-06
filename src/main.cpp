@@ -22,8 +22,9 @@
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
-            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-nocheck] [-o <output-file>] [ -O0 ] [ -S ]"
-            << "<input-file>"
+            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-check] [-o <output-file> ] [ -O2 ] [ -S ]"
+            << " [-no-const-prop] [-no-ava-expr] [-no-cfg-simply] [-no-dead-code-eli] [-no-func-inline] [-no-loop-expand] [-no-loop-invar]"
+            << " <input-file>"
             << std::endl;
 }
 
@@ -37,11 +38,20 @@ int main(int argc, char *argv[])
 
     bool print_ast = false;
     bool print_IR = false;
-    bool check = true;
+    bool check = false;
     bool codegen=false;
-    bool no_optimize = false;
-    std::string out_file = "a.ll";
-    std::string filename = "test.sy";
+    bool optimize = false;
+    bool no_const_prop = false;
+    bool no_ava_expr = false;
+    bool no_cfg_simply = false;
+    bool no_dead_code_eli = false;
+    bool no_func_inline = false;
+    bool no_loop_expand = false;
+    bool no_loop_invar = false;
+    bool no_sccp = false;
+    std::string out_asm_file = "testcase.s";
+    std::string out_ll_file = "testcase.ll";
+    std::string filename = "testcase.sy";
     for (int i = 1; i < argc; ++i) {
         if (argv[i] == std::string("-h") || argv[i] == std::string("--help")) {
             print_help(argv[0]);
@@ -55,24 +65,45 @@ int main(int argc, char *argv[])
             print_IR = true;
         else if (argv[i] == std::string("-emit-ast"))
             print_ast = true;
-        else if (argv[i] == std::string("-nocheck"))
-            check = false;
-        else if (argv[i] == std::string("-o"))
-            out_file = argv[++i];
-        else if (argv[i] == std::string("-O0")) {
-            no_optimize = true;
+        else if (argv[i] == std::string("-check"))
+            check = true;
+        else if (argv[i] == std::string("-o")){
+            out_asm_file = argv[++i];
+            out_ll_file = out_asm_file;
+        }
+        else if (argv[i] == std::string("-O2")) {
+            optimize = true;
         }
         else if (argv[i] == std::string("-S")){
             codegen = true;
-            print_IR = true;
+            //print_IR = true;
+        }else if (argv[i] == std::string("-no-const-prop")){
+            no_const_prop = true;
+        }
+        else if (argv[i] == std::string("-no-ava-expr")){
+            no_ava_expr = true;
+        }
+        else if (argv[i] == std::string("-no-cfg-simply")){
+            no_cfg_simply = true;
+        }
+        else if (argv[i] == std::string("-no-dead-code-eli")){
+            no_dead_code_eli = true;
+        }
+        else if (argv[i] == std::string("-no-func-inline")){
+            no_func_inline = true;
+        }
+        else if (argv[i] == std::string("-no-loop-expand")){
+            no_loop_expand = true;
+        }
+        else if (argv[i] == std::string("-no-loop-invar")){
+            no_loop_invar = true;
         }
         else {
             filename = argv[i];
         }
     }
-
     auto root = driver.parse(filename);
-    if (print_ast)
+    if(print_ast)
         root->accept(printer);
     if(check){
         root->accept(checker);
@@ -82,98 +113,144 @@ int main(int argc, char *argv[])
             exit(-1);
         }
     }
-    if (print_IR) {
+    if (print_IR||codegen) {
         root->accept(builder);
         auto m = builder.getModule();
-        if (no_optimize) {
+        if(!optimize){
             PassMgr passmgr(m.get());
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
-            passmgr.execute();
-        } else {
-            PassMgr passmgr(m.get());
-
-            passmgr.addPass<CFGSimplifier>();
-
-            passmgr.addPass<DeadCodeElimination>();
-
-            passmgr.addPass<DeadCodeElimination>();
-            passmgr.addPass<CFGSimplifier>();
-
-            passmgr.addPass<DominateTree>();
-            passmgr.addPass<Mem2Reg>();
-            passmgr.addPass<DeadCodeElimination>();
-
-            passmgr.addPass<ConstPropagation>();
-            passmgr.addPass<DeadCodeElimination>();
-            passmgr.addPass<CFGSimplifier>();
-            passmgr.addPass<AvailableExpr>();
-
-            passmgr.addPass<DeadCodeElimination>();
-            passmgr.addPass<CFGSimplifier>();
-
-            passmgr.addPass<CFGSimplifier>();
-            passmgr.addPass<ConstPropagation>();
-            passmgr.addPass<DeadCodeElimination>();
-            passmgr.addPass<CFGSimplifier>();
-
-            passmgr.addPass<DeadCodeElimination>();
-            passmgr.addPass<CFGSimplifier>();
-
-            //passmgr.addPass<LoopInvariant>();
-            passmgr.addPass<CFGSimplifier>();
-
-            passmgr.addPass<AvailableExpr>();
-            passmgr.addPass<DeadCodeElimination>();
-            passmgr.addPass<CFGSimplifier>();
-
-            passmgr.addPass<FuncInline>();
-
-            passmgr.addPass<DeadCodeElimination>();
-            passmgr.addPass<CFGSimplifier>();
-
-            passmgr.addPass<DeadCodeElimination>();
-            //passmgr.addPass<LoopExpansion>();
-
-            passmgr.addPass<AvailableExpr>();
-            passmgr.addPass<DeadCodeElimination>();
             passmgr.addPass<LIR>();
-            passmgr.addPass<DeadCodeElimination>();
-            passmgr.addPass<AvailableExpr>();
+            passmgr.addPass<ActiveVar>();
+            passmgr.addPass<CFG_analyse>();
+            m->set_print_name();
+            passmgr.execute();
+        }else{
+            PassMgr passmgr(m.get());
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<DominateTree>();
+            passmgr.addPass<Mem2Reg>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_const_prop)
+                passmgr.addPass<ConstPropagation>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_ava_expr)
+                passmgr.addPass<AvailableExpr>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_const_prop)
+                passmgr.addPass<ConstPropagation>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_loop_invar)
+                passmgr.addPass<LoopInvariant>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_ava_expr)
+                passmgr.addPass<AvailableExpr>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_func_inline)
+                passmgr.addPass<FuncInline>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+
+            if(!no_loop_expand)
+                passmgr.addPass<LoopExpansion>();
+
+            if(!no_ava_expr)
+                passmgr.addPass<AvailableExpr>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            passmgr.addPass<LIR>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_ava_expr)
+                passmgr.addPass<AvailableExpr>();
+
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
 
             m->set_print_name();
             passmgr.execute();
         }
-
-#ifdef DEBUG
-        std::cout << "exec\n";
-#endif
         m->set_print_name();
-#ifdef DEBUG
-        std::cout << "setname\n";
-#endif
         auto IR = m->print();
-#ifdef DEBUG
-        std::cout << "prtm\n";
-#endif
         if(codegen){
             CodeGen coder = CodeGen();
             auto asmcode = coder.module_gen(m.get());
             std::ofstream output_stream;
-            output_stream.open(out_file, std::ios::out);
+            output_stream.open(out_asm_file, std::ios::out);
             output_stream << asmcode;
             output_stream.close();
         }
-        else if (print_IR) {
+        else if(print_IR){
             std::ofstream output_stream;
-            output_stream.open(out_file, std::ios::out);
+            output_stream.open(out_ll_file, std::ios::out);
             output_stream << IR;
             //std::cout << "outputir\n";
             output_stream.close();
         }
     }
-    
     return 0;
 }
