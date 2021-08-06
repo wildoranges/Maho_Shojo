@@ -1721,6 +1721,7 @@
                                 *code += " ,=";
                                 *code += std::to_string(reg_src_ptr->get_constant());
                                 *code += IR2asm::endl;
+
                             }
                             else{
                                 *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
