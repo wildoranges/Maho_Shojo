@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         } else {
             PassMgr passmgr(m.get());
 
-            //passmgr.addPass<CFGSimplifier>();
+            passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DeadCodeElimination>();
 

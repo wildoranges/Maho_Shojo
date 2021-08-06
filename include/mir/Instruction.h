@@ -55,8 +55,8 @@ public:
         smul_lo,
         smul_hi,
         smmul,
-        load_const_offset,
-        store_const_offset,
+        load_offset,
+        store_offset,
         mov_const,
 
     };
@@ -109,8 +109,8 @@ public:
             case smul_lo: return "smul_lo"; break;
             case smul_hi: return "smul_hi"; break;
             case smmul: return "smmul"; break;
-            case load_const_offset: return "load_const_offset"; break;
-            case store_const_offset: return "store_const_offset"; break;
+            case load_offset: return "load_offset"; break;
+            case store_offset: return "store_offset"; break;
             case mov_const: return "mov_const"; break;
         
         default: return ""; break;
@@ -119,7 +119,7 @@ public:
 
 
 
-    bool is_void() { return ((op_id_ == cmpbr) || (op_id_ == ret) || (op_id_ == br) || (op_id_ == store_const_offset) || (op_id_ == store) || (op_id_ == call && this->get_type()->is_void_type())); }
+    bool is_void() { return ((op_id_ == cmpbr) || (op_id_ == ret) || (op_id_ == br) || (op_id_ == store_offset) || (op_id_ == store) || (op_id_ == call && this->get_type()->is_void_type())); }
 
     bool is_phi() { return op_id_ == phi; }
     bool is_store() { return op_id_ == store; }
@@ -128,8 +128,8 @@ public:
     bool is_load() { return op_id_ == load; }
     bool is_br() { return op_id_ == br; }
 
-    bool is_load_const_offset() { return op_id_ == load_const_offset; }
-    bool is_store_const_offset() { return op_id_ == store_const_offset; }
+    bool is_load_offset() { return op_id_ == load_offset; }
+    bool is_store_offset() { return op_id_ == store_offset; }
     bool is_mov_const() { return op_id_ == mov_const; }
 
     bool is_add() { return op_id_ == add; }
@@ -482,23 +482,23 @@ public:
 
 };
 
-class StoreConstOffsetInst : public Instruction
+class StoreOffsetInst : public Instruction
 {
 private:
-    StoreConstOffsetInst(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb);
-    StoreConstOffsetInst(Value *val, Value *ptr, BasicBlock *bb);
+    StoreOffsetInst(Value *val, Value *ptr, Value *offset, BasicBlock *bb);
+    StoreOffsetInst(Value *val, Value *ptr, BasicBlock *bb);
 
 public:
-    static StoreConstOffsetInst *create_store_const_offset(Value *val, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+    static StoreOffsetInst *create_store_offset(Value *val, Value *ptr, Value *offset, BasicBlock *bb);
 
     Value *get_rval() { return this->get_operand(0); }
     Value *get_lval() { return this->get_operand(1); }
-    ConstantInt *get_offset() { return dynamic_cast<ConstantInt*>(this->get_operand(2)); }
+    Value *get_offset() { return this->get_operand(2); }
 
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        auto new_inst = new StoreConstOffsetInst(get_operand(0), get_operand(1), BB);
+        auto new_inst = new StoreOffsetInst(get_operand(0), get_operand(1), BB);
         new_inst->set_operand(2, get_operand(2));
         return new_inst;
     }
@@ -524,23 +524,23 @@ public:
 
 };
 
-class LoadConstOffsetInst : public Instruction
+class LoadOffsetInst : public Instruction
 {
 private:
-    LoadConstOffsetInst(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb);
-    LoadConstOffsetInst(Type *ty, Value *ptr, BasicBlock *bb);
+    LoadOffsetInst(Type *ty, Value *ptr, Value *offset, BasicBlock *bb);
+    LoadOffsetInst(Type *ty, Value *ptr, BasicBlock *bb);
 
 public:
-    static LoadConstOffsetInst *create_load_const_offset(Type *ty, Value *ptr, ConstantInt *offset, BasicBlock *bb);
+    static LoadOffsetInst *create_load_offset(Type *ty, Value *ptr, Value *offset, BasicBlock *bb);
     Value *get_lval() { return this->get_operand(0); }
-    ConstantInt *get_offset() { return dynamic_cast<ConstantInt*>(this->get_operand(1)); }
+    Value *get_offset() { return this->get_operand(1); }
 
     Type *get_load_type() const;
 
     virtual std::string print() override;
 
     Instruction *copy_inst(BasicBlock *BB) override final{
-        auto new_inst = new LoadConstOffsetInst(get_type(), get_operand(0), BB);
+        auto new_inst = new LoadOffsetInst(get_type(), get_operand(0), BB);
         new_inst->set_operand(1, get_operand(1));
         return new_inst;
     }

@@ -47,22 +47,37 @@ namespace IR2asm {
         std::string get_code(){ return reg_name[id]; }
     };
 
-    
-
+enum ShiftOp{
+    ASR,
+    LSL,
+    LSR,
+    NOSHIFT
+};
     class Regbase: public Location{
         private:
             Reg reg_;
-            int offset;
+            int offset = 0;
+            Reg offset_reg_ = IR2asm::Reg(-1);
+            ShiftOp shift_op_ = NOSHIFT;
 
         public:
             Regbase(Reg reg, int offset): reg_(reg), offset(offset){}
+            Regbase(Reg reg, Reg offset_reg): reg_(reg), offset_reg_(offset_reg){}
+            Regbase(Reg reg, int offset, ShiftOp shift_op): reg_(reg), offset(offset), shift_op_(shift_op){}
+            Regbase(Reg reg, Reg offset_reg, ShiftOp shift_op): reg_(reg), offset_reg_(offset_reg), shift_op_(shift_op){}
             Reg &get_reg(){return reg_;}
             int get_offset(){return offset;}
             void set_offset(int x){offset = x;}
             std::string get_code(){
-                if(!offset)return "[" + reg_.get_code() + "]";
-                else {
+                if (offset_reg_.get_id() >= 0) {
+                    return "[" + reg_.get_code() + ", " + offset_reg_.get_code() + ", lsl #2" + "]";
+                } else if(!offset)return "[" + reg_.get_code() + "]";
+                else if (shift_op_ == LSL) {
+                    return "[" + reg_.get_code() + ", #" + std::to_string(offset*4) + "]";
+                } else if (shift_op_ == NOSHIFT) {
                     return "[" + reg_.get_code() + ", #" + std::to_string(offset) + "]";
+                } else {
+                    return "";
                 }
             }
             std::string get_ofst_code(int extra_ofst = 0){
@@ -142,13 +157,6 @@ namespace IR2asm {
         bool is_const = false;
         int const_value;
     };
-
-enum ShiftOp{
-    ASR,
-    LSL,
-    LSR,
-    NOSHIFT
-};
 
 enum Operand2Type{
     RegTy,

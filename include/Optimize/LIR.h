@@ -17,8 +17,8 @@ public:
     void merge_cmp_br(BasicBlock* bb);
     void merge_mul_add(BasicBlock* bb);
     void merge_mul_sub(BasicBlock* bb);
-    void load_const_offset(BasicBlock *bb);
-    void store_const_offset(BasicBlock *bb);
+    void load_offset(BasicBlock *bb);
+    void store_offset(BasicBlock *bb);
     void mov_const(BasicBlock *bb);
     void split_gep(BasicBlock* bb);
     void split_srem(BasicBlock* bb);
