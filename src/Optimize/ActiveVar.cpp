@@ -92,7 +92,7 @@ void ActiveVar::get_live_in_live_out() {
                         }
                     }
                 }
-                for (auto var : def_var[bb]) {
+                for (auto var : def_var[succBB]) {
                     if (active_val.find(var) != active_val.end()) {
                         active_val.erase(var);
                     }
