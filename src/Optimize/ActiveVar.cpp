@@ -74,7 +74,7 @@ void ActiveVar::get_live_in_live_out() {
             std::set<Value *> tmp_live_out = {};
             for (auto succBB : bb->get_succ_basic_blocks()) {
                 auto succ_tmp_live_in = live_in[succBB];
-                std::set<Value *> active_phi_val = {};
+                /*std::set<Value *> active_phi_val = {};
                 std::set<Value *> active_val = {};
                 for (auto instr : succBB->get_instructions()) {
                     if (instr->is_phi()) {
@@ -111,7 +111,7 @@ void ActiveVar::get_live_in_live_out() {
                             }
                         }
                     }
-                }
+                }*/
                 std::set_union(tmp_live_out.begin(), tmp_live_out.end(), succ_tmp_live_in.begin(), succ_tmp_live_in.end(), std::inserter(tmp_live_out, tmp_live_out.begin()));
             }
             // 迭代后的in和out必不可能小于迭代前的in和out(归纳法可证)
