@@ -42,7 +42,13 @@ void ActiveVar::get_def_var() {
 void ActiveVar::get_use_var() {
     for (auto bb : func_->get_basic_blocks()) {
         use_var.insert({bb, {}});
+        phi_use_before_def.insert({bb, {}});
         for (auto instr : bb->get_instructions()) {
+            if (instr->is_phi()){
+                for (auto i = 0; i < instr->get_num_operand(); i+=2){
+                    phi_use_before_def[bb].insert(instr->get_operand(i));
+                }
+            }
             for (auto op: instr->get_operands()) {
                 if (dynamic_cast<ConstantInt*>(op)) continue;
                 if (dynamic_cast<BasicBlock*>(op)) continue;
@@ -72,55 +78,64 @@ void ActiveVar::get_live_in_live_out() {
         for (auto bb : func_->get_basic_blocks()) {
             std::set<Value *> tmp_live_out = {};
             for (auto succBB : bb->get_succ_basic_blocks()) {
-                auto succ_tmp_live_in = live_in[succBB];
-                std::set<Value *> active_val = {};
-                for (auto instr : succBB->get_instructions()) {
-                    if (instr->is_phi()) {
-                        for (int i = 1; i < instr->get_num_operand(); i+=2) {
-                            if (instr->get_operand(i) == bb) {
-                                if (active_val.find(instr->get_operand(i - 1)) == active_val.end()) {
-                                    active_val.insert(instr->get_operand(i - 1));
-                                }
-                            }
-                        }
-                    } else {
-                        for (auto op: instr->get_operands()) {
-                            if (dynamic_cast<ConstantInt*>(op)) continue;
-                            if (dynamic_cast<BasicBlock*>(op)) continue;
-                            if (dynamic_cast<Function*>(op)) continue;
-                            active_val.insert(op);
-                        }
-                        for (auto var : def_var[succBB]) {
-                            if (active_val.find(var) != active_val.end()) {
-                                active_val.erase(var);
+                auto succ_phi_use = phi_use_before_def[succBB];
+                std::set<Value *> other_phi;
+                for (auto inst : succBB->get_instructions()){
+                    if (inst->is_phi()){
+                        for (auto i = 0; i < inst->get_num_operand(); i+=2){
+                            if (inst->get_operand(i+1) != bb){
+                                //tocheck
+                                other_phi.insert(inst->get_operand(i));
                             }
                         }
                     }
-                }
-                for (auto instr : succBB->get_instructions()) {
-                    if (instr->is_phi()) {
-                        for (int i = 1; i < instr->get_num_operand(); i+=2) {
-                            if (instr->get_operand(i) != bb) {
-                                if (succ_tmp_live_in.find(instr->get_operand(i - 1)) != succ_tmp_live_in.end()) {
-                                    succ_tmp_live_in.erase(instr->get_operand(i - 1));
-                                }
-                            }
-                        }
+                    else{
+                        break;
                     }
                 }
-                std::set_union(succ_tmp_live_in.begin(), succ_tmp_live_in.end(), active_val.begin(), active_val.end(), std::inserter(succ_tmp_live_in, succ_tmp_live_in.begin()));
-                std::set_union(tmp_live_out.begin(), tmp_live_out.end(), succ_tmp_live_in.begin(), succ_tmp_live_in.end(), std::inserter(tmp_live_out, tmp_live_out.begin()));
-            }
+                std::set<Value *> to_delete;
+                for (auto to_check : other_phi){
+                    auto need_delete = true;
+                    for (auto pair : to_check->get_use_list()){
+                        auto use_inst = dynamic_cast<Instruction *>(pair.val_);
+                        auto use_no = pair.arg_no_;
+                        if (use_inst->get_parent() != succBB){
+                            continue;
+                        }
+                        if (use_inst->is_phi()){
+                            auto from_BB = use_inst->get_operand(use_no+1);
+                            if (from_BB == bb){
+                                need_delete = false;
+                                break;
+                            }
+                        }
+                        else{
+                            need_delete = false;
+                            break;
+                        }
+                    }
+                    if (need_delete == false){
+                        to_delete.insert(to_check);
+                    }
+                }
+                for (auto wait : to_delete){
+                    other_phi.erase(wait);
+                }
+                auto succ_live_in = live_in[succBB];
+                std::set<Value *> succ_live_in_without_other_phi;
+                std::set_difference(succ_live_in.begin(),succ_live_in.end(), other_phi.begin(),other_phi.end(), std::inserter(succ_live_in_without_other_phi, succ_live_in_without_other_phi.begin()));
+                std::set<Value *> tmp;
+                std::set_union(tmp_live_out.begin(), tmp_live_out.end(), succ_live_in_without_other_phi.begin(), succ_live_in_without_other_phi.end(), std::inserter(tmp, tmp.begin()));
+                tmp_live_out = tmp;
             // 迭代后的in和out必不可能小于迭代前的in和out(归纳法可证)
-            std::set_union(live_out[bb].begin(), live_out[bb].end(), tmp_live_out.begin(), tmp_live_out.end(), std::inserter(live_out[bb], live_out[bb].begin()));
+            live_out[bb] = tmp_live_out;
             auto tmp_live_in = tmp_live_out;
-            std::set<Value *> tmp;
-            std::set_difference(tmp_live_in.begin(), tmp_live_in.end(), def_var[bb].begin(), def_var[bb].end(), std::inserter(tmp, tmp.begin()));
-            tmp_live_in = tmp;
-            std::set_union(tmp_live_in.begin(), tmp_live_in.end(), use_var[bb].begin(), use_var[bb].end(), std::inserter(tmp_live_in, tmp_live_in.begin()));
-            auto old_live_in_size = live_in[bb].size();
-            std::set_union(live_in[bb].begin(), live_in[bb].end(), tmp_live_in.begin(), tmp_live_in.end(), std::inserter(live_in[bb], live_in[bb].begin()));
-            if (live_in[bb].size() > old_live_in_size) {
+            std::set<Value *> tmp1,tmp2,tmp3;
+            std::set_difference(tmp_live_in.begin(), tmp_live_in.end(), def_var[bb].begin(), def_var[bb].end(), std::inserter(tmp1, tmp1.begin()));
+            std::set_union(tmp1.begin(), tmp1.end(), use_var[bb].begin(), use_var[bb].end(), std::inserter(tmp2, tmp2.begin()));
+            std::set_union(tmp2.begin(), tmp2.end(), phi_use_before_def[bb].begin(), phi_use_before_def[bb].end(), std::inserter(tmp3, tmp3.begin()));
+            if (tmp3.size() > live_in[bb].size()){
+                live_in[bb] = tmp3;
                 repeat = true;
             }
         }
