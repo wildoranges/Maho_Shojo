@@ -121,7 +121,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
   }
   fun_type = FunctionType::get(ret_type, param_types);
   auto fun = Function::create(fun_type, node.name, module.get());
-  scope.push(node.name, fun);
+  scope.push_func(node.name, fun);
   cur_fun = fun;
   auto funBB = BasicBlock::create(module.get(), "entry", fun);
   builder->set_insert_point(funBB);
@@ -272,9 +272,6 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         if (tmp_terminator != nullptr) {
           cur_fun_entry_block->add_instruction(tmp_terminator);
         }
-        scope.push(node.name, var);
-        scope.push_size(node.name, array_sizes);
-        scope.push_const(node.name, initializer);
         for (int i = 0; i < array_sizes[0]; i++) {
           if (initval[i]) {
             builder->create_store(initval[i], builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
@@ -283,6 +280,9 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
             builder->create_store(CONST_INT(0), builder->create_gep(var, {CONST_INT(0), CONST_INT(i)}));
           }
         }
+        scope.push(node.name, var);
+        scope.push_size(node.name, array_sizes);
+        scope.push_const(node.name, initializer);
       }
     }
   }
@@ -314,11 +314,11 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         if (tmp_terminator != nullptr) {
           cur_fun_entry_block->add_instruction(tmp_terminator);
         }
-        scope.push(node.name, var);
         if (node.is_inited) {
           node.initializers->accept(*this);
           builder->create_store(tmp_val, var);
         }
+        scope.push(node.name, var);
       }
     }
     else {
@@ -371,8 +371,6 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
         if (tmp_terminator != nullptr) {
           cur_fun_entry_block->add_instruction(tmp_terminator);
         }
-        scope.push(node.name, var);
-        scope.push_size(node.name, array_sizes);
         if (node.is_inited) {
           cur_pos = 0;
           cur_depth = 0;
@@ -388,6 +386,8 @@ void MHSJBuilder::visit(SyntaxTree::VarDef &node) {
             }
           }
         }
+        scope.push(node.name, var);
+        scope.push_size(node.name, array_sizes);
       }//if of global check
     }
   }
@@ -687,7 +687,7 @@ void MHSJBuilder::visit(SyntaxTree::UnaryExpr &node) {
 }
 
 void MHSJBuilder::visit(SyntaxTree::FuncCallStmt &node) {
-  auto fun = static_cast<Function *>(scope.find(node.name));//FIXME:STATIC OR DYNAMIC?
+  auto fun = static_cast<Function *>(scope.find_func(node.name));//FIXME:STATIC OR DYNAMIC?
   std::vector<Value *> params;
   int i = 0;
   for (auto &param : node.params) {
