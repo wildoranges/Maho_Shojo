@@ -218,7 +218,7 @@
 
     std::string CodeGen::callee_reg_store(Function* fun){
         std::string code;
-        if(!used_reg.second.size())return "";
+        if(!used_reg.second.size())return IR2asm::space + "push {lr}" + IR2asm::endl;
         code += IR2asm::space;
         code += "push {";
         for(auto reg: used_reg.second){
@@ -242,7 +242,7 @@
 
     std::string CodeGen::callee_reg_restore(Function* fun){
         std::string code;
-        if(!used_reg.second.size())return "";
+        if(!used_reg.second.size())return IR2asm::space + "pop {lr}" + IR2asm::endl;
         code += IR2asm::space;
         code += "pop {";
         for(auto reg: used_reg.second){
@@ -276,15 +276,28 @@
             code += IR2asm::endl;
             code += IR2asm::space;
         }
-        while(remain_stack_size > 2000){
-            code += "sub sp, sp, #2000";
+        if(remain_stack_size <= 127 && remain_stack_size > -128){
+            code += "sub sp, sp, #";
+            code += std::to_string(remain_stack_size);
+            code += IR2asm::endl;
+        }
+        else{
+            code += "ldr lr, =";
+            code += std::to_string(remain_stack_size);
             code += IR2asm::endl;
             code += IR2asm::space;
-            remain_stack_size -= 2000;
+            code += "sub sp, sp, lr";
+            code += IR2asm::endl;
         }
-        code += "sub sp, sp, #";
-        code += std::to_string(remain_stack_size);
-        code += IR2asm::endl;
+        // while(remain_stack_size > 2000){
+        //     code += "sub sp, sp, #2000";
+        //     code += IR2asm::endl;
+        //     code += IR2asm::space;
+        //     remain_stack_size -= 2000;
+        // }
+        // code += "sub sp, sp, #";
+        // code += std::to_string(remain_stack_size);
+        // code += IR2asm::endl;
         return code;
     }
 
@@ -299,17 +312,30 @@
             return code;
         }
         int remain_stack_size = stack_size;
-        while(remain_stack_size > 2000){
-            code += "add sp, sp, #2000";
+        if(remain_stack_size <= 127 && remain_stack_size > -128){
+            code += "add sp, sp, #";
+            code += std::to_string(remain_stack_size);
+            code += IR2asm::endl;
+        }
+        else{
+            code += "ldr lr, =";
+            code += std::to_string(remain_stack_size);
             code += IR2asm::endl;
             code += IR2asm::space;
-            remain_stack_size -= 2000;
+            code += "add sp, sp, lr";
+            code += IR2asm::endl;
         }
-        code += "add sp, sp, #";
-        // code += IR2asm::frame_ptr.get_code();
-        // code += ", #";
-        code += std::to_string(remain_stack_size);
-        code += IR2asm::endl;
+        // while(remain_stack_size > 2000){
+        //     code += "add sp, sp, #2000";
+        //     code += IR2asm::endl;
+        //     code += IR2asm::space;
+        //     remain_stack_size -= 2000;
+        // }
+        // code += "add sp, sp, #";
+        // // code += IR2asm::frame_ptr.get_code();
+        // // code += ", #";
+        // code += std::to_string(remain_stack_size);
+        // code += IR2asm::endl;
         return code;
     }
 
@@ -1090,7 +1116,6 @@
             return IR2asm::space + ".pool" + IR2asm::endl;
         }
         std::string code;
-        code += IR2asm::space;
         IR2asm::label pool_label("litpool" + std::to_string(func_no) + "_" + std::to_string(pool_number), 0);
         pool_number++;
         code += IR2asm::space;
