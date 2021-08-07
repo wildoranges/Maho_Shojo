@@ -1080,6 +1080,7 @@
         if(stack_size)code += callee_stack_operation_out(fun, stack_size);
         code += callee_reg_restore(fun);
         code += IR2asm::space + "bx lr" + IR2asm::endl;
+        code += make_lit_pool(true);
         code += print_global_table();
         // std::cout << code << IR2asm::endl;
         return code;
@@ -1368,7 +1369,7 @@
                 code += make_lit_pool();
                 accumulate_line_num = 0;
             }
-            return code + instr_gen(br_inst) + make_lit_pool(true);
+            return code + instr_gen(br_inst);
         }
         std::string cmp;
         std::string inst_cmpop;
