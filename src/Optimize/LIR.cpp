@@ -100,9 +100,7 @@ void LIR::mov_const(BasicBlock *bb) {
                 auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
                 instructions.pop_back();
                 bb->add_instruction(iter, mov_const_instr);
-                mov_const_instr->remove_use(op1);
-                op1->replace_all_use_with(mov_const_instr);
-                mov_const_instr->set_operand(0, op1);
+                instr->set_operand(0, mov_const_instr);
             }
         }
         if (instr->is_add() || instr->is_sub()) {
@@ -114,9 +112,7 @@ void LIR::mov_const(BasicBlock *bb) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
-                    mov_const_instr->remove_use(op2);
-                    op2->replace_all_use_with(mov_const_instr);
-                    mov_const_instr->set_operand(0, op2);
+                    instr->set_operand(1, mov_const_instr);
                 }
             }
         }
@@ -129,16 +125,12 @@ void LIR::mov_const(BasicBlock *bb) {
                 auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
                 instructions.pop_back();
                 bb->add_instruction(iter, mov_const_instr);
-                mov_const_instr->remove_use(op1);
-                op1->replace_all_use_with(mov_const_instr);
-                mov_const_instr->set_operand(0, op1);
+                instr->set_operand(0, mov_const_instr);
             } else if (const_op2) {
                 auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
                 instructions.pop_back();
                 bb->add_instruction(iter, mov_const_instr);
-                mov_const_instr->remove_use(op2);
-                op2->replace_all_use_with(mov_const_instr);
-                mov_const_instr->set_operand(0, op2);
+                instr->set_operand(1, mov_const_instr);
             }
         }
     }
