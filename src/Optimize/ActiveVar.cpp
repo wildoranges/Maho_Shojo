@@ -127,6 +127,7 @@ void ActiveVar::get_live_in_live_out() {
                 std::set<Value *> tmp;
                 std::set_union(tmp_live_out.begin(), tmp_live_out.end(), succ_live_in_without_other_phi.begin(), succ_live_in_without_other_phi.end(), std::inserter(tmp, tmp.begin()));
                 tmp_live_out = tmp;
+            }
             // 迭代后的in和out必不可能小于迭代前的in和out(归纳法可证)
             live_out[bb] = tmp_live_out;
             auto tmp_live_in = tmp_live_out;
