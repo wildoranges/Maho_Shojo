@@ -121,7 +121,7 @@ void MHSJBuilder::visit(SyntaxTree::FuncDef &node) {
   }
   fun_type = FunctionType::get(ret_type, param_types);
   auto fun = Function::create(fun_type, node.name, module.get());
-  scope.push(node.name, fun);
+  scope.push_func(node.name, fun);
   cur_fun = fun;
   auto funBB = BasicBlock::create(module.get(), "entry", fun);
   builder->set_insert_point(funBB);
@@ -687,7 +687,7 @@ void MHSJBuilder::visit(SyntaxTree::UnaryExpr &node) {
 }
 
 void MHSJBuilder::visit(SyntaxTree::FuncCallStmt &node) {
-  auto fun = static_cast<Function *>(scope.find(node.name));//FIXME:STATIC OR DYNAMIC?
+  auto fun = static_cast<Function *>(scope.find_func(node.name));//FIXME:STATIC OR DYNAMIC?
   std::vector<Value *> params;
   int i = 0;
   for (auto &param : node.params) {
