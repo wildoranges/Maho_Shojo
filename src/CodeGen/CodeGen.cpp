@@ -1146,7 +1146,7 @@
                 new_code += caller_reg_restore(bb->get_parent(),call_inst);
                 code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 1000){
+                if(accumulate_line_num > 950){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -1279,7 +1279,7 @@
                 code += new_code;
 
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 1000){
+                if(accumulate_line_num > 950){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -1291,7 +1291,7 @@
                 new_code += instr_gen(inst);
                 code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 1000){
+                if(accumulate_line_num > 950){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -1364,11 +1364,11 @@
         if(dynamic_cast<ReturnInst *>(br_inst)){
             std::string code;
             accumulate_line_num += 1;
-            if(accumulate_line_num > 1000){
+            if(accumulate_line_num > 950){
                 code += make_lit_pool();
                 accumulate_line_num = 0;
             }
-            return code + instr_gen(br_inst);
+            return code + instr_gen(br_inst) + make_lit_pool(true);
         }
         std::string cmp;
         std::string inst_cmpop;
@@ -1911,7 +1911,7 @@
         }
         std::string ret_code = cmp + pop_code + succ_code + succ_br + fail_code + fail_br;
         accumulate_line_num += std::count(ret_code.begin(), ret_code.end(), IR2asm::endl[0]);
-        if(accumulate_line_num > 1000){
+        if(accumulate_line_num > 950){
             if(dynamic_cast<BranchInst *>(bb->get_terminator()) && bb->get_terminator()->get_num_operand() == 1){
                 ret_code += make_lit_pool(true);
             }
