@@ -353,6 +353,7 @@ bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
             unused_reg_id.erase(current->reg_num);
             for(auto val:reg2ActInter[current->reg_num]){
                 active.erase(val);
+                val->reg_num = -1;
                 std::cerr << "spill "<< val->val->get_name() <<" to stack" << std::endl;
             }
             reg2ActInter[current->reg_num].clear();
