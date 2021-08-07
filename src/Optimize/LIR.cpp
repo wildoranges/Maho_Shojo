@@ -21,10 +21,6 @@ void LIR::execute() {
                 remove_unused_op(bb);
             }
             for (auto bb : func->get_basic_blocks()){
-                ConstPropagation const_propagation(module);
-                const_propagation.execute();
-            }
-            for (auto bb : func->get_basic_blocks()){
                 remove_unused_op(bb);
             }
             for (auto bb : func->get_basic_blocks()){

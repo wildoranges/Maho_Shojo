@@ -176,6 +176,11 @@ void ConstPropagation::const_propagation() {
                 wait_delete.push_back(instr);
             }
         }
+        else if (instr->is_call()) {
+            // TODO: 需要调整策略
+            const_array.clear();
+            const_global_var.clear();
+        }
         else if (instr->is_load()) {
             auto value1 = get_global_const_val(dynamic_cast<LoadInst *>(instr)->get_lval());
             if (value1) {
