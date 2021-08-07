@@ -9,7 +9,7 @@
 // namespace CodeGen{
 
     std::string CodeGen::global(std::string name){
-        return IR2asm::space + ".globl " + name + IR2asm::endl;
+        return IR2asm::space + ".globl " + ".." + name + IR2asm::endl;
     }
 
     bool CodeGen::iszeroinit(Constant * init){
@@ -37,7 +37,7 @@
             bool isarray = (dynamic_cast<ConstantArray *>(initializer) != nullptr);
             int size = var->get_type()->get_size();
             code += IR2asm::space;
-            code += ".type " + name + ", %object" + IR2asm::endl;
+            code += ".type .." + name + ", %object" + IR2asm::endl;
             code += IR2asm::space;
             if(isinitialized){  //initialized global var
                 bool iszeroinit_ = iszeroinit(initializer);
@@ -55,7 +55,7 @@
                 code += global(name);
                 code += IR2asm::space;
                 code += ".p2align " + std::to_string(int_p2align) + IR2asm::endl;
-                code += name + ":" + IR2asm::endl;
+                code += ".." + name + ":" + IR2asm::endl;
                 code += IR2asm::space;
                 if(!isarray){
                     code += ".long ";
@@ -83,12 +83,12 @@
                     }
                 }
                 code += ".size ";
-                code += name + ", ";
+                code += ".." + name + ", ";
                 code += std::to_string(size);
                 code += IR2asm::endl;
             }
             else{   //uninitialized global var
-                code += ".comm ";
+                code += ".comm ..";
                 code += name;
                 code += ", ";
                 code += std::to_string(size);
@@ -517,7 +517,7 @@
             code += label.get_code();
             code += ":" + IR2asm::endl;
             code += IR2asm::space;
-            code += ".long ";
+            code += ".long ..";
             code += var->get_name();
             code += IR2asm::endl;
         }
