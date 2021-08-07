@@ -121,7 +121,7 @@ void ConstPropagation::reduce_redundant_cond_br() {
                                             if (instr->get_operand(i) == bb) {
                                                 instr->remove_operands(i - 1, i);
                                             }
-                                            if (instr->get_num_operand() == 2) {
+                                            if (instr->get_num_operand() == 2 && succBB->get_pre_basic_blocks().size() == 1) {
                                                 instr->replace_all_use_with(instr->get_operand(0));
                                                 wait_delete_instr.push_back(instr);
                                             }
