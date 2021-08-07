@@ -400,24 +400,32 @@
 
             if(caller_saved_pos.find(0)!=caller_saved_pos.end()){
                 init_id = 1;
+                if((pop_size - init_id)> 0){
+                    code += IR2asm::space;
+                    code += "LDMIB SP, {";
+                    for(int i=init_id;i<pop_size-1;i++){
+                        code += IR2asm::Reg(to_save_reg[i]).get_code();
+                        code += ", ";
+                    }
+                    code += IR2asm::Reg(to_save_reg[pop_size-1]).get_code();
+                    code += "}";
+                    code += IR2asm::endl;
+                }
             }
 
-            if((pop_size - init_id)> 0){
-                code += IR2asm::space;
-                code += "LDMIB SP, {";
-                for(int i=init_id;i<pop_size-1;i++){
-                    code += IR2asm::Reg(to_save_reg[i]).get_code();
-                    code += ", ";
+            else{
+                if(!to_save_reg.empty()){
+                    code += IR2asm::space;
+                    code += "LDM SP, {";
+                    for(int i=0;i<pop_size-1;i++){
+                        code += IR2asm::Reg(to_save_reg[i]).get_code();
+                        code += ", ";
+                    }
+                    code += IR2asm::Reg(to_save_reg[pop_size-1]).get_code();
+                    code += "}";
+                    code += IR2asm::endl;
                 }
-                code += IR2asm::Reg(to_save_reg[pop_size-1]).get_code();
-                code += "}";
-                code += IR2asm::endl;
             }
-//            code += IR2asm::space;
-//            code += "ADD SP, SP,#";
-//            code += std::to_string(caller_saved_pos.size()*4);
-//            code += IR2asm::endl;
-//            sp_extra_ofst -= to_save_reg.size() * 4;
             if(ret_id!=0){
                 if(ret_id > 0){
                     code += IR2asm::space;
