@@ -258,6 +258,14 @@ int main(int argc, char *argv[])
             if(!no_ava_expr)
                 passmgr.addPass<AvailableExpr>();
 
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<ActiveVar>();
+            passmgr.addPass<CFG_analyse>();
 
             m->set_print_name();
             passmgr.execute();
