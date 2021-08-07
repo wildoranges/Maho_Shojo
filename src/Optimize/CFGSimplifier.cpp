@@ -27,11 +27,12 @@ bool CFGSimplifier::delete_redundant_phi() {
         std::vector<Instruction*> wait_delete_instr;
         for (auto instr : bb->get_instructions()) {
             if (instr->is_phi()) {
-                if (instr->get_num_operand() == 2) {
+                if (instr->get_num_operand() == 2 && bb->get_pre_basic_blocks().size() == 1) {
                     instr->replace_all_use_with(instr->get_operand(0));
                     wait_delete_instr.push_back(instr);
                     changed = true;
                 } else {
+                    if (instr->get_num_operand()/2 < bb->get_pre_basic_blocks().size()) continue;
                     auto val = instr->get_operand(0);
                     auto const_val = dynamic_cast<ConstantInt*>(val);
                     bool can_replace = true;
@@ -91,6 +92,7 @@ bool CFGSimplifier::delete_unreachable_bb() {
     }
     for (auto unreachable_bb : unreachable_bb_list) {
         for (auto bb : func_->get_basic_blocks()) {
+            std::vector<Instruction*> wait_delete_instr_list;
             for (auto instr : bb->get_instructions()) {
                 if (instr->is_phi()) {
                     for (int i = 1; i < instr->get_num_operand(); i+=2) {
@@ -98,7 +100,13 @@ bool CFGSimplifier::delete_unreachable_bb() {
                             instr->remove_operands(i - 1, i);
                         }
                     }
+                    if (instr->get_num_operand() == 0) {
+                        wait_delete_instr_list.push_back(instr);
+                    }
                 }
+            }
+            for (auto delete_instr : wait_delete_instr_list) {
+                bb->delete_instr(delete_instr);
             }
         }
         func_->remove(unreachable_bb);
@@ -178,7 +186,7 @@ void CFGSimplifier::replace_phi(BasicBlock *victim_bb, std::list<BasicBlock*> pr
                             dynamic_cast<PhiInst*>(instr)->add_phi_pair_operand(val, pre_bb);
                         }
                     }
-                    if (instr->get_num_operand() == 2) {
+                    if (instr->get_num_operand() == 2  && instr->get_parent()->get_pre_basic_blocks().size() == 1) {
                         instr->replace_all_use_with(instr->get_operand(0));
                         wait_delete_instr.push_back(instr);
                     }
@@ -214,14 +222,16 @@ void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
         if (instr->is_phi()) {
             for (int i = 1; i < instr->get_num_operand(); i+=2) {
                 if (instr->get_operand(i) == bb) {
-                    if (instr->get_num_operand() == 2) {
+                    if (instr->get_num_operand() == 2  && succ_bb->get_pre_basic_blocks().size() == 0) {
                         instr->replace_all_use_with(instr->get_operand(0));
                         wait_delete_instr.push_back(instr);
                     } else {
                         instr->remove_operands(i - 1, i);
                         i -= 2;
-                        if (instr->get_num_operand() == 2) {
+                        if (instr->get_num_operand() == 2  && succ_bb->get_pre_basic_blocks().size() == 0) {
                             instr->replace_all_use_with(instr->get_operand(0));
+                            wait_delete_instr.push_back(instr);
+                        } else if (instr->get_num_operand() == 0) {
                             wait_delete_instr.push_back(instr);
                         }
                     }

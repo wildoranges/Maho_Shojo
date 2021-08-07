@@ -400,24 +400,32 @@
 
             if(caller_saved_pos.find(0)!=caller_saved_pos.end()){
                 init_id = 1;
+                if((pop_size - init_id)> 0){
+                    code += IR2asm::space;
+                    code += "LDMIB SP, {";
+                    for(int i=init_id;i<pop_size-1;i++){
+                        code += IR2asm::Reg(to_save_reg[i]).get_code();
+                        code += ", ";
+                    }
+                    code += IR2asm::Reg(to_save_reg[pop_size-1]).get_code();
+                    code += "}";
+                    code += IR2asm::endl;
+                }
             }
 
-            if((pop_size - init_id)> 0){
-                code += IR2asm::space;
-                code += "LDMIB SP, {";
-                for(int i=init_id;i<pop_size-1;i++){
-                    code += IR2asm::Reg(to_save_reg[i]).get_code();
-                    code += ", ";
+            else{
+                if(!to_save_reg.empty()){
+                    code += IR2asm::space;
+                    code += "LDM SP, {";
+                    for(int i=0;i<pop_size-1;i++){
+                        code += IR2asm::Reg(to_save_reg[i]).get_code();
+                        code += ", ";
+                    }
+                    code += IR2asm::Reg(to_save_reg[pop_size-1]).get_code();
+                    code += "}";
+                    code += IR2asm::endl;
                 }
-                code += IR2asm::Reg(to_save_reg[pop_size-1]).get_code();
-                code += "}";
-                code += IR2asm::endl;
             }
-//            code += IR2asm::space;
-//            code += "ADD SP, SP,#";
-//            code += std::to_string(caller_saved_pos.size()*4);
-//            code += IR2asm::endl;
-//            sp_extra_ofst -= to_save_reg.size() * 4;
             if(ret_id!=0){
                 if(ret_id > 0){
                     code += IR2asm::space;
@@ -1721,6 +1729,7 @@
                                 *code += " ,=";
                                 *code += std::to_string(reg_src_ptr->get_constant());
                                 *code += IR2asm::endl;
+
                             }
                             else{
                                 *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
@@ -1756,7 +1765,7 @@
                             //                          stack_offset[stack_src_ptr]).get_ofst_code();
                             // *code += IR2asm::endl;
                         }
-                        *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                        *code += IR2asm::safe_store(new IR2asm::Reg(tmp_reg_id),
                                                    stack_tar_ptr,
                                                    sp_extra_ofst,
                                                    long_func,
@@ -2007,49 +2016,32 @@
                 break;
                 case Instruction::store: {
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(1));
-                    int ld_reg_id = 0;
-                    bool need_pop = true;
-                    std::vector<int> tmp_reg;
-                    if (global_addr) {
-                        auto unused_reg = inst->get_parent()->get_parent()->get_unused_reg_num();
-                        if(!unused_reg.empty()){
-                            int reg_id = *unused_reg.begin();
-                            ld_reg_id = reg_id;
-                            if(reg_id<=3&&reg_id>=0){
-                                need_pop = false;
-                            }
+                    std::vector<int> tmp_reg = {};
+                    int ld_reg_id = 11;
+                    // OPERAND1 MUST BE GLOBAL IN LIR
+                    auto opr0 = inst->get_operand(0);
+                    int opr0_reg_id = reg_map[opr0]->reg_num; //must have a reg,alloc in bb_gen
+                    for(int i = 0;i <= 12;i++){
+                        if(i==11){
+                            continue;
                         }
-                        if(need_pop){
-//                            code += IR2asm::space;
-//                            code += "push {";
-//                            code += IR2asm::Reg(ld_reg_id).get_code();
-//                            code += "}";
-//                            code += IR2asm::endl;
-                            tmp_reg.push_back(ld_reg_id);
-                            code += push_regs(tmp_reg);
+                        if(i!=opr0_reg_id){
+                            ld_reg_id = i;
+                            tmp_reg.push_back(i);
+                            break;
                         }
-                        code += IR2asm::safe_load(new IR2asm::Reg(ld_reg_id), 
-                                                    global_variable_table[global_addr], 
-                                                    sp_extra_ofst, 
-                                                    long_func);
-                        // code += IR2asm::load(new IR2asm::Reg(ld_reg_id),global_variable_table[global_addr]);
-                    }else{
-                        need_pop = false;
-                        ld_reg_id = get_asm_reg(inst->get_operand(1))->get_id();
                     }
+                    code += push_regs(tmp_reg);
+                    code += IR2asm::safe_load(new IR2asm::Reg(ld_reg_id),
+                                              global_variable_table[global_addr],
+                                              sp_extra_ofst,
+                                              long_func);
+
                     code += IR2asm::safe_store(get_asm_reg(inst->get_operand((0))),
                                                  new IR2asm::Regbase(IR2asm::Reg(ld_reg_id), 0),
                                                  sp_extra_ofst,
                                                  long_func);
-                    // code += IR2asm::store(get_asm_reg(inst->get_operand((0))), new IR2asm::Regbase(IR2asm::Reg(ld_reg_id), 0));
-                    if(need_pop){
-//                        code += IR2asm::space;
-//                        code += "pop {";
-//                        code += IR2asm::Reg(ld_reg_id).get_code();
-//                        code += "}";
-//                        code += IR2asm::endl;
-                        code += pop_regs(tmp_reg);
-                    }
+                    code += pop_regs(tmp_reg);
                 }
                 break;
                 case Instruction::cmp: // DONE in cmpbr

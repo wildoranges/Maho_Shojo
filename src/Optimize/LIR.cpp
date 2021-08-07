@@ -21,10 +21,6 @@ void LIR::execute() {
                 remove_unused_op(bb);
             }
             for (auto bb : func->get_basic_blocks()){
-                ConstPropagation const_propagation(module);
-                const_propagation.execute();
-            }
-            for (auto bb : func->get_basic_blocks()){
                 remove_unused_op(bb);
             }
             for (auto bb : func->get_basic_blocks()){
@@ -249,7 +245,8 @@ void LIR::split_gep(BasicBlock* bb) {
             }
             auto size = ConstantInt::get(inst_gep->get_type()->get_pointer_element_type()->get_size(), module);
             auto offset = inst_gep->get_operand(offset_op_num);
-            inst_gep->set_operand(offset_op_num, ConstantInt::get(0, module));
+            inst_gep->remove_operands(offset_op_num, offset_op_num);
+            inst_gep->add_operand(ConstantInt::get(0, module));
         }
     }
 }

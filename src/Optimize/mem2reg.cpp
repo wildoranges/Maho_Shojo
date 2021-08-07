@@ -297,7 +297,7 @@ void Mem2Reg::phiStatistic(){
         for(auto inst: bb->get_instructions()){
             if(!inst->is_phi())continue;
             auto phi_value = dynamic_cast<Value *>(inst);
-#ifndef DEBUG
+#ifdef DEBUG
             std::cout << "phi find: " << phi_value->print() << "\n";
 #endif
             Value * reduced_value;
@@ -314,7 +314,7 @@ void Mem2Reg::phiStatistic(){
                 if(value_map.find(opr) != value_map.end()){
                     auto opr_reduced_value = value_map.find(opr)->second;
                     if(opr_reduced_value != reduced_value){
-#ifndef DEBUG
+#ifdef DEBUG
                         std::cout << "conflict! " << opr->get_name() << " -> " << opr_reduced_value->get_name();
                         std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
 #endif
@@ -324,7 +324,7 @@ void Mem2Reg::phiStatistic(){
                     if(lvalue_connection.find(opr)!=lvalue_connection.end()){
                         auto bounded_lval = lvalue_connection.find(opr)->second;
                         if(bounded_lval != reduced_value){
-#ifndef DEBUG
+#ifdef DEBUG
                             std::cout << "conflict! " << opr->get_name() << " -> " << bounded_lval->get_name();
                             std::cout << " " << phi_value->get_name() << " -> " << reduced_value->get_name() << "\n";
 #endif

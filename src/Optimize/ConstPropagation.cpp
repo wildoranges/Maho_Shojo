@@ -105,12 +105,15 @@ void ConstPropagation::reduce_redundant_cond_br() {
                     auto trueBB = br->get_operand(1);
                     auto falseBB = br->get_operand(2);
                     BasicBlock *surviveBB = nullptr;
+                    BasicBlock *victimBB = nullptr;
                     if (cond) {
                         if (cond->get_value() == 1) {
                             surviveBB = dynamic_cast<BasicBlock *>(trueBB);
+                            victimBB = dynamic_cast<BasicBlock *>(falseBB);
                         }
                         else {
                             surviveBB = dynamic_cast<BasicBlock *>(falseBB);
+                            victimBB = dynamic_cast<BasicBlock *>(trueBB);
                         }
                         for (auto succBB : bb->get_succ_basic_blocks()) {
                             succBB->remove_pre_basic_block(bb);
@@ -121,7 +124,7 @@ void ConstPropagation::reduce_redundant_cond_br() {
                                             if (instr->get_operand(i) == bb) {
                                                 instr->remove_operands(i - 1, i);
                                             }
-                                            if (instr->get_num_operand() == 2) {
+                                            if (instr->get_num_operand() == 2 && succBB->get_pre_basic_blocks().size() == 1) {
                                                 instr->replace_all_use_with(instr->get_operand(0));
                                                 wait_delete_instr.push_back(instr);
                                             }
@@ -136,8 +139,7 @@ void ConstPropagation::reduce_redundant_cond_br() {
                         }
                         bb->delete_instr(br);
                         builder->create_br(surviveBB);
-                        bb->get_succ_basic_blocks().clear();
-                        bb->add_succ_basic_block(surviveBB);
+                        bb->remove_succ_basic_block(victimBB);
                     }
                 }
             }
@@ -175,6 +177,11 @@ void ConstPropagation::const_propagation() {
                 instr->replace_all_use_with(folder_const);
                 wait_delete.push_back(instr);
             }
+        }
+        else if (instr->is_call()) {
+            // TODO: 需要调整策略
+            const_array.clear();
+            const_global_var.clear();
         }
         else if (instr->is_load()) {
             auto value1 = get_global_const_val(dynamic_cast<LoadInst *>(instr)->get_lval());
