@@ -1016,7 +1016,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
           switch (yyn)
             {
   case 2: // Begin: CompUnit END
-#line 110 "../grammar/MHSJParser.yy"
+#line 107 "../grammar/MHSJParser.yy"
                     {
     yystack_[1].value.as < SyntaxTree::Assembly* > ()->loc = yylhs.location;
     driver.root = yystack_[1].value.as < SyntaxTree::Assembly* > ();
@@ -1026,7 +1026,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 3: // CompUnit: CompUnit GlobalDecl
-#line 117 "../grammar/MHSJParser.yy"
+#line 114 "../grammar/MHSJParser.yy"
                             {
 		yystack_[1].value.as < SyntaxTree::Assembly* > ()->global_defs.insert(yystack_[1].value.as < SyntaxTree::Assembly* > ()->global_defs.end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().end());
 		yylhs.value.as < SyntaxTree::Assembly* > ()=yystack_[1].value.as < SyntaxTree::Assembly* > ();
@@ -1035,7 +1035,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 4: // CompUnit: GlobalDecl
-#line 121 "../grammar/MHSJParser.yy"
+#line 118 "../grammar/MHSJParser.yy"
                     {
 		yylhs.value.as < SyntaxTree::Assembly* > ()=new SyntaxTree::Assembly();
 		yylhs.value.as < SyntaxTree::Assembly* > ()->global_defs.insert(yylhs.value.as < SyntaxTree::Assembly* > ()->global_defs.end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().end());
@@ -1044,7 +1044,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 5: // GlobalDecl: ConstDecl
-#line 127 "../grammar/MHSJParser.yy"
+#line 124 "../grammar/MHSJParser.yy"
                     {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ()=SyntaxTree::PtrList<SyntaxTree::GlobalDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().insert(yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().end());
@@ -1053,7 +1053,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 6: // GlobalDecl: VarDecl
-#line 131 "../grammar/MHSJParser.yy"
+#line 128 "../grammar/MHSJParser.yy"
                  {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ()=SyntaxTree::PtrList<SyntaxTree::GlobalDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().insert(yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().end());
@@ -1062,7 +1062,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 7: // GlobalDecl: FuncDef
-#line 135 "../grammar/MHSJParser.yy"
+#line 132 "../grammar/MHSJParser.yy"
            {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ()=SyntaxTree::PtrList<SyntaxTree::GlobalDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::GlobalDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::GlobalDef>(yystack_[0].value.as < SyntaxTree::FuncDef* > ()));
@@ -1071,7 +1071,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 8: // ConstDecl: CONST BType ConstDefList SEMICOLON
-#line 141 "../grammar/MHSJParser.yy"
+#line 138 "../grammar/MHSJParser.yy"
                                             {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ();
     for (auto &node : yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()) {
@@ -1082,7 +1082,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 9: // ConstDefList: ConstDefList COMMA ConstDef
-#line 148 "../grammar/MHSJParser.yy"
+#line 145 "../grammar/MHSJParser.yy"
                                         {
     yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>(yystack_[0].value.as < SyntaxTree::VarDef* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ();
@@ -1091,7 +1091,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 10: // ConstDefList: ConstDef
-#line 152 "../grammar/MHSJParser.yy"
+#line 149 "../grammar/MHSJParser.yy"
                   {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=SyntaxTree::PtrList<SyntaxTree::VarDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>(yystack_[0].value.as < SyntaxTree::VarDef* > ()));
@@ -1100,7 +1100,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 11: // BType: INT
-#line 158 "../grammar/MHSJParser.yy"
+#line 155 "../grammar/MHSJParser.yy"
          {
   yylhs.value.as < SyntaxTree::Type > ()=SyntaxTree::Type::INT;
 }
@@ -1108,7 +1108,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 12: // ConstDef: IDENTIFIER ArrayExpList ASSIGN InitVal
-#line 164 "../grammar/MHSJParser.yy"
+#line 161 "../grammar/MHSJParser.yy"
                                                {//TODO:ADD ARRAY SUPPORT
     yylhs.value.as < SyntaxTree::VarDef* > ()=new SyntaxTree::VarDef();
     yylhs.value.as < SyntaxTree::VarDef* > ()->is_constant = true;
@@ -1122,7 +1122,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 13: // VarDecl: BType VarDefList SEMICOLON
-#line 175 "../grammar/MHSJParser.yy"
+#line 172 "../grammar/MHSJParser.yy"
                                   {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ();
     for (auto &node : yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()) {
@@ -1133,7 +1133,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 14: // VarDefList: VarDefList COMMA VarDef
-#line 183 "../grammar/MHSJParser.yy"
+#line 180 "../grammar/MHSJParser.yy"
                                   {
     yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>(yystack_[0].value.as < SyntaxTree::VarDef* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ();
@@ -1142,7 +1142,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 15: // VarDefList: VarDef
-#line 187 "../grammar/MHSJParser.yy"
+#line 184 "../grammar/MHSJParser.yy"
                 {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ()=SyntaxTree::PtrList<SyntaxTree::VarDef>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().push_back(SyntaxTree::Ptr<SyntaxTree::VarDef>(yystack_[0].value.as < SyntaxTree::VarDef* > ()));
@@ -1151,7 +1151,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 16: // VarDef: IDENTIFIER ArrayExpList
-#line 193 "../grammar/MHSJParser.yy"
+#line 190 "../grammar/MHSJParser.yy"
                               {
     yylhs.value.as < SyntaxTree::VarDef* > ()=new SyntaxTree::VarDef();
     yylhs.value.as < SyntaxTree::VarDef* > ()->name=yystack_[1].value.as < std::string > ();
@@ -1163,7 +1163,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 17: // VarDef: IDENTIFIER ArrayExpList ASSIGN InitVal
-#line 200 "../grammar/MHSJParser.yy"
+#line 197 "../grammar/MHSJParser.yy"
                                                 {
     yylhs.value.as < SyntaxTree::VarDef* > () = new SyntaxTree::VarDef();
     yylhs.value.as < SyntaxTree::VarDef* > ()->name = yystack_[3].value.as < std::string > ();
@@ -1176,7 +1176,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 18: // ArrayExpList: ArrayExpList LBRACKET Exp RBRACKET
-#line 210 "../grammar/MHSJParser.yy"
+#line 207 "../grammar/MHSJParser.yy"
                                                {
     yystack_[3].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().push_back(SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[1].value.as < SyntaxTree::Expr* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ()=yystack_[3].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
@@ -1185,7 +1185,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 19: // ArrayExpList: %empty
-#line 214 "../grammar/MHSJParser.yy"
+#line 211 "../grammar/MHSJParser.yy"
                 {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ()=SyntaxTree::PtrList<SyntaxTree::Expr>();
   }
@@ -1193,7 +1193,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 20: // InitVal: Exp
-#line 219 "../grammar/MHSJParser.yy"
+#line 216 "../grammar/MHSJParser.yy"
             {//TODO:CHECK?
     //TODO:Initializer cheking for scalar to array
     yylhs.value.as < SyntaxTree::InitVal* > () = new SyntaxTree::InitVal();
@@ -1207,7 +1207,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 21: // InitVal: LBRACE InitValList RBRACE
-#line 228 "../grammar/MHSJParser.yy"
+#line 225 "../grammar/MHSJParser.yy"
                              {
     yylhs.value.as < SyntaxTree::InitVal* > () = yystack_[1].value.as < SyntaxTree::InitVal* > ();
   }
@@ -1215,7 +1215,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 22: // InitValList: CommaInitValList InitVal
-#line 233 "../grammar/MHSJParser.yy"
+#line 230 "../grammar/MHSJParser.yy"
                                      {
     yystack_[1].value.as < SyntaxTree::InitVal* > ()->elementList.push_back(SyntaxTree::Ptr<SyntaxTree::InitVal>(yystack_[0].value.as < SyntaxTree::InitVal* > ()));
     yylhs.value.as < SyntaxTree::InitVal* > () = yystack_[1].value.as < SyntaxTree::InitVal* > ();
@@ -1224,7 +1224,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 23: // InitValList: %empty
-#line 237 "../grammar/MHSJParser.yy"
+#line 234 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::InitVal* > () = new SyntaxTree::InitVal();
     yylhs.value.as < SyntaxTree::InitVal* > ()->isExp = false;
@@ -1237,7 +1237,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 24: // CommaInitValList: CommaInitValList InitVal COMMA
-#line 247 "../grammar/MHSJParser.yy"
+#line 244 "../grammar/MHSJParser.yy"
                                                 {
     yystack_[2].value.as < SyntaxTree::InitVal* > ()->elementList.push_back(SyntaxTree::Ptr<SyntaxTree::InitVal>(yystack_[1].value.as < SyntaxTree::InitVal* > ()));
     yylhs.value.as < SyntaxTree::InitVal* > () = yystack_[2].value.as < SyntaxTree::InitVal* > ();
@@ -1246,7 +1246,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 25: // CommaInitValList: %empty
-#line 251 "../grammar/MHSJParser.yy"
+#line 248 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::InitVal* > () = new SyntaxTree::InitVal();
     yylhs.value.as < SyntaxTree::InitVal* > ()->isExp = false;
@@ -1259,7 +1259,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 26: // ExpList: CommaExpList Exp
-#line 261 "../grammar/MHSJParser.yy"
+#line 258 "../grammar/MHSJParser.yy"
                         {
     yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().push_back(SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[0].value.as < SyntaxTree::Expr* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
@@ -1268,7 +1268,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 27: // ExpList: %empty
-#line 265 "../grammar/MHSJParser.yy"
+#line 262 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = SyntaxTree::PtrList<SyntaxTree::Expr>();
   }
@@ -1276,7 +1276,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 28: // CommaExpList: CommaExpList Exp COMMA
-#line 270 "../grammar/MHSJParser.yy"
+#line 267 "../grammar/MHSJParser.yy"
                                    {
     yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ().push_back(SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[1].value.as < SyntaxTree::Expr* > ()));
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > ();
@@ -1285,7 +1285,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 29: // CommaExpList: %empty
-#line 274 "../grammar/MHSJParser.yy"
+#line 271 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Expr> > () = SyntaxTree::PtrList<SyntaxTree::Expr>();
   }
@@ -1293,7 +1293,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 30: // FuncFParam: BType IDENTIFIER ArrayExpList
-#line 294 "../grammar/MHSJParser.yy"
+#line 277 "../grammar/MHSJParser.yy"
                                         {
   yylhs.value.as < SyntaxTree::FuncParam* > () = new SyntaxTree::FuncParam();
   yylhs.value.as < SyntaxTree::FuncParam* > ()->param_type = yystack_[2].value.as < SyntaxTree::Type > ();
@@ -1305,7 +1305,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 31: // FuncFParam: BType IDENTIFIER LRBRACKET ArrayExpList
-#line 301 "../grammar/MHSJParser.yy"
+#line 284 "../grammar/MHSJParser.yy"
                                          {
    yylhs.value.as < SyntaxTree::FuncParam* > () = new SyntaxTree::FuncParam();
    yylhs.value.as < SyntaxTree::FuncParam* > ()->param_type = yystack_[3].value.as < SyntaxTree::Type > ();
@@ -1318,7 +1318,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 32: // FParamList: CommaFParamList FuncFParam
-#line 312 "../grammar/MHSJParser.yy"
+#line 294 "../grammar/MHSJParser.yy"
                                       {
   yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > ().push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>(yystack_[0].value.as < SyntaxTree::FuncParam* > ()));
   yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > () = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > ();
@@ -1327,7 +1327,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 33: // FParamList: %empty
-#line 316 "../grammar/MHSJParser.yy"
+#line 298 "../grammar/MHSJParser.yy"
         {
   yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > () = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
 }
@@ -1335,7 +1335,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 34: // CommaFParamList: CommaFParamList FuncFParam COMMA
-#line 321 "../grammar/MHSJParser.yy"
+#line 303 "../grammar/MHSJParser.yy"
                                                 {
   yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > ().push_back(SyntaxTree::Ptr<SyntaxTree::FuncParam>(yystack_[1].value.as < SyntaxTree::FuncParam* > ()));
   yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > () = yystack_[2].value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > ();
@@ -1344,7 +1344,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 35: // CommaFParamList: %empty
-#line 325 "../grammar/MHSJParser.yy"
+#line 307 "../grammar/MHSJParser.yy"
         {
   yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::FuncParam> > () = SyntaxTree::PtrList<SyntaxTree::FuncParam>();
 }
@@ -1352,7 +1352,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 36: // FuncDef: BType IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block
-#line 329 "../grammar/MHSJParser.yy"
+#line 311 "../grammar/MHSJParser.yy"
                                                                  {
     yylhs.value.as < SyntaxTree::FuncDef* > () = new SyntaxTree::FuncDef();
     yylhs.value.as < SyntaxTree::FuncDef* > ()->ret_type = yystack_[5].value.as < SyntaxTree::Type > ();
@@ -1367,7 +1367,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 37: // FuncDef: VOID IDENTIFIER LPARENTHESE FParamList RPARENTHESE Block
-#line 339 "../grammar/MHSJParser.yy"
+#line 321 "../grammar/MHSJParser.yy"
                                                             {
     yylhs.value.as < SyntaxTree::FuncDef* > () = new SyntaxTree::FuncDef();
     yylhs.value.as < SyntaxTree::FuncDef* > ()->ret_type = SyntaxTree::Type::VOID;
@@ -1382,7 +1382,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 38: // Block: LBRACE BlockItemList RBRACE
-#line 351 "../grammar/MHSJParser.yy"
+#line 333 "../grammar/MHSJParser.yy"
                                  {
     yylhs.value.as < SyntaxTree::BlockStmt* > () = new SyntaxTree::BlockStmt();
     yylhs.value.as < SyntaxTree::BlockStmt* > ()->body = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ();
@@ -1392,7 +1392,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 39: // BlockItemList: BlockItemList BlockItem
-#line 358 "../grammar/MHSJParser.yy"
+#line 340 "../grammar/MHSJParser.yy"
                                      {
     yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().insert(yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().end());
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = yystack_[1].value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ();
@@ -1401,7 +1401,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 40: // BlockItemList: %empty
-#line 362 "../grammar/MHSJParser.yy"
+#line 344 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = SyntaxTree::PtrList<SyntaxTree::Stmt>();
   }
@@ -1409,7 +1409,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 41: // BlockItem: VarDecl
-#line 367 "../grammar/MHSJParser.yy"
+#line 349 "../grammar/MHSJParser.yy"
                  {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = SyntaxTree::PtrList<SyntaxTree::Stmt>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().insert(yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().end());
@@ -1418,7 +1418,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 42: // BlockItem: ConstDecl
-#line 371 "../grammar/MHSJParser.yy"
+#line 353 "../grammar/MHSJParser.yy"
              {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = SyntaxTree::PtrList<SyntaxTree::Stmt>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().insert(yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().end(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().begin(), yystack_[0].value.as < SyntaxTree::PtrList<SyntaxTree::VarDef> > ().end());
@@ -1427,7 +1427,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 43: // BlockItem: Stmt
-#line 375 "../grammar/MHSJParser.yy"
+#line 357 "../grammar/MHSJParser.yy"
         {
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > () = SyntaxTree::PtrList<SyntaxTree::Stmt>();
     yylhs.value.as < SyntaxTree::PtrList<SyntaxTree::Stmt> > ().push_back(SyntaxTree::Ptr<SyntaxTree::Stmt>(yystack_[0].value.as < SyntaxTree::Stmt* > ()));
@@ -1436,7 +1436,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 44: // Stmt: LVal ASSIGN Exp SEMICOLON
-#line 381 "../grammar/MHSJParser.yy"
+#line 363 "../grammar/MHSJParser.yy"
                               {
     auto temp = new SyntaxTree::AssignStmt();
     temp->target = SyntaxTree::Ptr<SyntaxTree::LVal>(yystack_[3].value.as < SyntaxTree::LVal* > ());
@@ -1448,7 +1448,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 45: // Stmt: Exp SEMICOLON
-#line 388 "../grammar/MHSJParser.yy"
+#line 370 "../grammar/MHSJParser.yy"
                  {
     auto temp = new SyntaxTree::ExprStmt();
     temp->exp = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[1].value.as < SyntaxTree::Expr* > ());
@@ -1459,7 +1459,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 46: // Stmt: RETURN OptionRet SEMICOLON
-#line 394 "../grammar/MHSJParser.yy"
+#line 376 "../grammar/MHSJParser.yy"
                               {
     auto temp = new SyntaxTree::ReturnStmt();
     temp->ret = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[1].value.as < SyntaxTree::Expr* > ());
@@ -1470,7 +1470,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 47: // Stmt: Block
-#line 400 "../grammar/MHSJParser.yy"
+#line 382 "../grammar/MHSJParser.yy"
          {
     yylhs.value.as < SyntaxTree::Stmt* > () = yystack_[0].value.as < SyntaxTree::BlockStmt* > ();
   }
@@ -1478,7 +1478,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 48: // Stmt: WHILE LPARENTHESE CondExp RPARENTHESE Stmt
-#line 403 "../grammar/MHSJParser.yy"
+#line 385 "../grammar/MHSJParser.yy"
                                               {
     auto temp = new SyntaxTree::WhileStmt();
     temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[2].value.as < SyntaxTree::Expr* > ());
@@ -1490,7 +1490,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 49: // Stmt: IfStmt
-#line 410 "../grammar/MHSJParser.yy"
+#line 392 "../grammar/MHSJParser.yy"
            {
     yylhs.value.as < SyntaxTree::Stmt* > () = yystack_[0].value.as < SyntaxTree::Stmt* > ();
   }
@@ -1498,7 +1498,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 50: // Stmt: BREAK SEMICOLON
-#line 413 "../grammar/MHSJParser.yy"
+#line 395 "../grammar/MHSJParser.yy"
                     {
     yylhs.value.as < SyntaxTree::Stmt* > () = new SyntaxTree::BreakStmt();
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
@@ -1507,7 +1507,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 51: // Stmt: CONTINUE SEMICOLON
-#line 417 "../grammar/MHSJParser.yy"
+#line 399 "../grammar/MHSJParser.yy"
                        {
     yylhs.value.as < SyntaxTree::Stmt* > () = new SyntaxTree::ContinueStmt();
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
@@ -1516,7 +1516,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 52: // Stmt: SEMICOLON
-#line 421 "../grammar/MHSJParser.yy"
+#line 403 "../grammar/MHSJParser.yy"
              {
     yylhs.value.as < SyntaxTree::Stmt* > () = new SyntaxTree::EmptyStmt();
     yylhs.value.as < SyntaxTree::Stmt* > ()->loc = yylhs.location;
@@ -1525,7 +1525,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 53: // IfStmt: IF LPARENTHESE CondExp RPARENTHESE Stmt
-#line 427 "../grammar/MHSJParser.yy"
+#line 409 "../grammar/MHSJParser.yy"
                                                {
     auto temp = new SyntaxTree::IfStmt();
     temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[2].value.as < SyntaxTree::Expr* > ());
@@ -1538,7 +1538,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 54: // IfStmt: IF LPARENTHESE CondExp RPARENTHESE Stmt ELSE Stmt
-#line 435 "../grammar/MHSJParser.yy"
+#line 417 "../grammar/MHSJParser.yy"
                                                       {
     auto temp = new SyntaxTree::IfStmt();
     temp->cond_exp = SyntaxTree::Ptr<SyntaxTree::Expr>(yystack_[4].value.as < SyntaxTree::Expr* > ());
@@ -1551,7 +1551,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 55: // OptionRet: Exp
-#line 445 "../grammar/MHSJParser.yy"
+#line 427 "../grammar/MHSJParser.yy"
              {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
@@ -1559,7 +1559,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 56: // OptionRet: %empty
-#line 448 "../grammar/MHSJParser.yy"
+#line 430 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::Expr* > () = nullptr;
   }
@@ -1567,7 +1567,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 57: // LVal: IDENTIFIER ArrayExpList
-#line 453 "../grammar/MHSJParser.yy"
+#line 435 "../grammar/MHSJParser.yy"
                             {
     yylhs.value.as < SyntaxTree::LVal* > () = new SyntaxTree::LVal();
     yylhs.value.as < SyntaxTree::LVal* > ()->name = yystack_[1].value.as < std::string > ();
@@ -1578,7 +1578,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 58: // Exp: PLUS Exp
-#line 465 "../grammar/MHSJParser.yy"
+#line 447 "../grammar/MHSJParser.yy"
                         {
     auto temp = new SyntaxTree::UnaryExpr();
     temp->op = SyntaxTree::UnaryOp::PLUS;
@@ -1590,7 +1590,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 59: // Exp: MINUS Exp
-#line 472 "../grammar/MHSJParser.yy"
+#line 454 "../grammar/MHSJParser.yy"
                           {
     auto temp = new SyntaxTree::UnaryExpr();
     temp->op = SyntaxTree::UnaryOp::MINUS;
@@ -1602,7 +1602,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 60: // Exp: NOT Exp
-#line 479 "../grammar/MHSJParser.yy"
+#line 461 "../grammar/MHSJParser.yy"
                       {
     auto temp = new SyntaxTree::UnaryCondExpr();
     temp->op = SyntaxTree::UnaryCondOp::NOT;
@@ -1614,7 +1614,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 61: // Exp: Exp PLUS Exp
-#line 486 "../grammar/MHSJParser.yy"
+#line 468 "../grammar/MHSJParser.yy"
                 {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::PLUS;
@@ -1627,7 +1627,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 62: // Exp: Exp MINUS Exp
-#line 494 "../grammar/MHSJParser.yy"
+#line 476 "../grammar/MHSJParser.yy"
                  {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::MINUS;
@@ -1640,7 +1640,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 63: // Exp: Exp MULTIPLY Exp
-#line 502 "../grammar/MHSJParser.yy"
+#line 484 "../grammar/MHSJParser.yy"
                     {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::MULTIPLY;
@@ -1653,7 +1653,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 64: // Exp: Exp DIVIDE Exp
-#line 510 "../grammar/MHSJParser.yy"
+#line 492 "../grammar/MHSJParser.yy"
                   {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::DIVIDE;
@@ -1666,7 +1666,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 65: // Exp: Exp MODULO Exp
-#line 518 "../grammar/MHSJParser.yy"
+#line 500 "../grammar/MHSJParser.yy"
                   {
     auto temp = new SyntaxTree::BinaryExpr();
     temp->op = SyntaxTree::BinOp::MODULO;
@@ -1679,7 +1679,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 66: // Exp: LPARENTHESE Exp RPARENTHESE
-#line 526 "../grammar/MHSJParser.yy"
+#line 508 "../grammar/MHSJParser.yy"
                                {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[1].value.as < SyntaxTree::Expr* > ();
   }
@@ -1687,7 +1687,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 67: // Exp: IDENTIFIER LPARENTHESE ExpList RPARENTHESE
-#line 529 "../grammar/MHSJParser.yy"
+#line 511 "../grammar/MHSJParser.yy"
                                                {
     auto temp = new SyntaxTree::FuncCallStmt();
     temp->name = yystack_[3].value.as < std::string > ();
@@ -1699,7 +1699,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 68: // Exp: LVal
-#line 536 "../grammar/MHSJParser.yy"
+#line 518 "../grammar/MHSJParser.yy"
         {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::LVal* > ();
   }
@@ -1707,7 +1707,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 69: // Exp: Number
-#line 539 "../grammar/MHSJParser.yy"
+#line 521 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Literal* > ();
   }
@@ -1715,7 +1715,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 70: // Exp: String
-#line 542 "../grammar/MHSJParser.yy"
+#line 524 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Literal* > ();
   }
@@ -1723,7 +1723,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 71: // RelExp: RelExp LT Exp
-#line 547 "../grammar/MHSJParser.yy"
+#line 529 "../grammar/MHSJParser.yy"
                     {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LT;
@@ -1736,7 +1736,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 72: // RelExp: RelExp LTE Exp
-#line 555 "../grammar/MHSJParser.yy"
+#line 537 "../grammar/MHSJParser.yy"
                  {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LTE;
@@ -1749,7 +1749,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 73: // RelExp: RelExp GT Exp
-#line 563 "../grammar/MHSJParser.yy"
+#line 545 "../grammar/MHSJParser.yy"
                 {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::GT;
@@ -1762,7 +1762,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 74: // RelExp: RelExp GTE Exp
-#line 571 "../grammar/MHSJParser.yy"
+#line 553 "../grammar/MHSJParser.yy"
                  {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::GTE;
@@ -1775,7 +1775,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 75: // RelExp: Exp
-#line 579 "../grammar/MHSJParser.yy"
+#line 561 "../grammar/MHSJParser.yy"
        {//FIXME:type transfer
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
@@ -1783,7 +1783,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 76: // EqExp: EqExp EQ RelExp
-#line 584 "../grammar/MHSJParser.yy"
+#line 566 "../grammar/MHSJParser.yy"
                      {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::EQ;
@@ -1796,7 +1796,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 77: // EqExp: EqExp NEQ RelExp
-#line 592 "../grammar/MHSJParser.yy"
+#line 574 "../grammar/MHSJParser.yy"
                    {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::NEQ;
@@ -1809,7 +1809,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 78: // EqExp: RelExp
-#line 600 "../grammar/MHSJParser.yy"
+#line 582 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
@@ -1817,7 +1817,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 79: // LAndExp: LAndExp LOGICAND EqExp
-#line 605 "../grammar/MHSJParser.yy"
+#line 587 "../grammar/MHSJParser.yy"
                                {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LAND;
@@ -1830,7 +1830,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 80: // LAndExp: EqExp
-#line 613 "../grammar/MHSJParser.yy"
+#line 595 "../grammar/MHSJParser.yy"
         {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
@@ -1838,7 +1838,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 81: // LOrExp: LOrExp LOGICOR LAndExp
-#line 618 "../grammar/MHSJParser.yy"
+#line 600 "../grammar/MHSJParser.yy"
                               {
     auto temp = new SyntaxTree::BinaryCondExpr();
     temp->op = SyntaxTree::BinaryCondOp::LOR;
@@ -1851,7 +1851,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 82: // LOrExp: LAndExp
-#line 626 "../grammar/MHSJParser.yy"
+#line 608 "../grammar/MHSJParser.yy"
           {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
@@ -1859,7 +1859,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 83: // CondExp: LOrExp
-#line 631 "../grammar/MHSJParser.yy"
+#line 613 "../grammar/MHSJParser.yy"
               {
     yylhs.value.as < SyntaxTree::Expr* > () = yystack_[0].value.as < SyntaxTree::Expr* > ();
   }
@@ -1867,7 +1867,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 84: // Number: INTCONST
-#line 636 "../grammar/MHSJParser.yy"
+#line 618 "../grammar/MHSJParser.yy"
                  {
     yylhs.value.as < SyntaxTree::Literal* > () = new SyntaxTree::Literal();
     yylhs.value.as < SyntaxTree::Literal* > ()->is_int = true;
@@ -1878,7 +1878,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
     break;
 
   case 85: // String: STRINGCONST
-#line 644 "../grammar/MHSJParser.yy"
+#line 626 "../grammar/MHSJParser.yy"
                     {
   yylhs.value.as < SyntaxTree::Literal* > () = new SyntaxTree::Literal();
   yylhs.value.as < SyntaxTree::Literal* > ()->is_int = false;
@@ -2430,15 +2430,15 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
   const short
   MHSJParser::yyrline_[] =
   {
-       0,   110,   110,   117,   121,   127,   131,   135,   141,   148,
-     152,   158,   164,   175,   183,   187,   193,   200,   210,   214,
-     219,   228,   233,   237,   247,   251,   261,   265,   270,   274,
-     294,   301,   312,   316,   321,   325,   329,   339,   351,   358,
-     362,   367,   371,   375,   381,   388,   394,   400,   403,   410,
-     413,   417,   421,   427,   435,   445,   448,   453,   465,   472,
-     479,   486,   494,   502,   510,   518,   526,   529,   536,   539,
-     542,   547,   555,   563,   571,   579,   584,   592,   600,   605,
-     613,   618,   626,   631,   636,   644
+       0,   107,   107,   114,   118,   124,   128,   132,   138,   145,
+     149,   155,   161,   172,   180,   184,   190,   197,   207,   211,
+     216,   225,   230,   234,   244,   248,   258,   262,   267,   271,
+     277,   284,   294,   298,   303,   307,   311,   321,   333,   340,
+     344,   349,   353,   357,   363,   370,   376,   382,   385,   392,
+     395,   399,   403,   409,   417,   427,   430,   435,   447,   454,
+     461,   468,   476,   484,   492,   500,   508,   511,   518,   521,
+     524,   529,   537,   545,   553,   561,   566,   574,   582,   587,
+     595,   600,   608,   613,   618,   626
   };
 
   void
@@ -2472,7 +2472,7 @@ yyla.location.begin.filename = yyla.location.end.filename = &driver.file;
 } // yy
 #line 2474 "MHSJParser.cpp"
 
-#line 652 "../grammar/MHSJParser.yy"
+#line 634 "../grammar/MHSJParser.yy"
 
 
 // Register errors to the driver:

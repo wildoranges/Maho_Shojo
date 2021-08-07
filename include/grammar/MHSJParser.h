@@ -32,7 +32,7 @@
 
 
 /**
- ** \file MHSJParser.h
+ ** \file ./MHSJParser.h
  ** Define the yy::parser class.
  */
 
@@ -51,7 +51,7 @@
 #include "SyntaxTree.h"
 class MHSJDriver;
 
-#line 55 "MHSJParser.h"
+#line 55 "./MHSJParser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -185,7 +185,7 @@ class MHSJDriver;
 #endif
 
 namespace yy {
-#line 189 "MHSJParser.h"
+#line 189 "./MHSJParser.h"
 
 
 
@@ -2879,7 +2879,7 @@ switch (yykind)
   }
 
 } // yy
-#line 2883 "MHSJParser.h"
+#line 2883 "./MHSJParser.h"
 
 
 

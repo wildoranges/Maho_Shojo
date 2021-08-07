@@ -86,7 +86,9 @@
 MultilineComment		"/*"([^\*]|(\*)*[^\*/])*(\*)*"*/"				
 SingleLineComment		"//".*$									
 Identifier		      [_a-zA-Z][a-zA-Z0-9_]*
-IntConst            (("0"[0-7]*)|([1-9][0-9]*)|("0"[xX][0-9a-fA-F]+))
+OctConst            ("0"[0-7]*)
+DecConst            ([1-9][0-9]*)
+HexConst            ("0"[xX][0-9a-fA-F]+)
 Blank               [ \t\r]
 NewLine             [\n]
 STRING              \"([^\"]*(\\\")?)*\"
@@ -135,8 +137,24 @@ else        {return yy::MHSJParser::make_ELSE(loc);}
 {MultilineComment}				{std::string s = yytext;
                           size_t n = std::count(s.begin(), s.end(), '\n');
                           for (size_t i = 0; i < n; i++) loc.lines(1);}
-{SingleLineComment}				/* ignore */
-{IntConst} 							  {return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);}
+{SingleLineComment}				/* ignore */{}
+{DecConst} 							  {return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);}
+{HexConst}                {std::string s = yytext;
+                          if(s.size() <= 9)return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);
+                          std::string head = "0x" + s.substr(s.size() - 8, 1);
+                          std::string tail = "0x" + s.substr(s.size() - 7);
+                          int msb = std::stoi(head,0,0);
+                          int lsb = std::stoi(tail,0,0);
+                          int val = (msb << 7 * 4) + lsb;
+                          return yy::MHSJParser::make_INTCONST(val, loc);}
+{OctConst}                {std::string s = yytext;
+                          if(s.size() <= 11)return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);
+                          std::string head = "0" + s.substr(s.size() - 11, 1);
+                          std::string tail = "0" + s.substr(s.size() - 10);
+                          int msb = std::stoi(head,0,0);
+                          int lsb = std::stoi(tail,0,0);
+                          int val = (msb << 10 * 3) + lsb;
+                          return yy::MHSJParser::make_INTCONST(val, loc);}
 {Identifier} 					    {return yy::MHSJParser::make_IDENTIFIER(yytext, loc);}
 {STRING}                  {return yy::MHSJParser::make_STRINGCONST(yytext,loc);}
 <<EOF>>                   {return yy::MHSJParser::make_END(loc);}
