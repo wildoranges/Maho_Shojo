@@ -103,9 +103,59 @@ void LIR::mov_const(BasicBlock *bb) {
                 instr->set_operand(0, mov_const_instr);
             }
         }
-        if (instr->is_add() || instr->is_sub()) {
+        if (instr->is_store_offset()) {
+            auto offset = instr->get_operand(2);
+            auto const_offset = dynamic_cast<ConstantInt*>(offset);
+            if (const_offset) {
+                auto const_offset_val = const_offset->get_value();
+                if (const_offset_val >= (1<<8) || const_offset_val < -(1<<8)) {
+                    auto mov_const_instr = MovConstInst::create_mov_const(const_offset, bb);
+                    instructions.pop_back();
+                    bb->add_instruction(iter, mov_const_instr);
+                    instr->set_operand(2, mov_const_instr);
+                }
+            }
+        }
+        if (instr->is_load_offset()) {
+            auto offset = instr->get_operand(1);
+            auto const_offset = dynamic_cast<ConstantInt*>(offset);
+            if (const_offset) {
+                auto const_offset_val = const_offset->get_value();
+                if (const_offset_val >= (1<<8) || const_offset_val < -(1<<8)) {
+                    auto mov_const_instr = MovConstInst::create_mov_const(const_offset, bb);
+                    instructions.pop_back();
+                    bb->add_instruction(iter, mov_const_instr);
+                    instr->set_operand(1, mov_const_instr);
+                }
+            }
+        }
+        if (instr->is_add()) {
             auto op2 = instr->get_operand(1);
             auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op2) {
+                auto const_op2_val = const_op2->get_value();
+                if (const_op2_val >= (1<<12) || const_op2_val < -(1<<12)) {
+                    auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+                    instructions.pop_back();
+                    bb->add_instruction(iter, mov_const_instr);
+                    instr->set_operand(1, mov_const_instr);
+                }
+            }
+        }
+        if (instr->is_sub()) {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (const_op1) {
+                auto const_op1_val = const_op1->get_value();
+                if (const_op1_val >= (1<<8) || const_op1_val < -(1<<8)) {
+                    auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+                    instructions.pop_back();
+                    bb->add_instruction(iter, mov_const_instr);
+                    instr->set_operand(0, mov_const_instr);
+                }
+            }
             if (const_op2) {
                 auto const_op2_val = const_op2->get_value();
                 if (const_op2_val >= (1<<12) || const_op2_val < -(1<<12)) {
