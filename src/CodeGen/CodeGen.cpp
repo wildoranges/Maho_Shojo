@@ -2079,15 +2079,16 @@
                 break;
                 case Instruction::getelementptr: {
                     auto base_addr = inst->get_operand(0);
-                    IR2asm::Location *addr;
                     if (dynamic_cast<GlobalVariable*>(base_addr)) {
-                        addr = global_variable_table[dynamic_cast<GlobalVariable*>(base_addr)];
+                        auto addr = global_variable_table[dynamic_cast<GlobalVariable*>(base_addr)];
+                        code += IR2asm::safe_load(get_asm_reg(inst), addr, sp_extra_ofst, long_func);
                     } else if (dynamic_cast<AllocaInst*>(base_addr)) {
-                        addr = stack_map[base_addr];
+                        auto addr = stack_map[base_addr];
+                        code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                     } else {
-                        addr = new IR2asm::Regbase(*get_asm_reg(base_addr), 0);
+                        auto addr = new IR2asm::Regbase(*get_asm_reg(base_addr), 0);
+                        code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                     }
-                    code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                 }
                 break;
                 case Instruction::land: {

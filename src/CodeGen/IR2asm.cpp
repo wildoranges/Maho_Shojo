@@ -105,7 +105,12 @@ std::string getelementptr(Reg* rd, Location * ptr){
     std::string asmstr;
     auto regbase = dynamic_cast<Regbase *>(ptr);
     if(regbase){
-        asmstr += add(rd, &regbase->get_reg(), new Operand2(regbase->get_offset()));
+        if (regbase->get_offset() >= (1<<11) || regbase->get_offset() < -(1<<11)) {
+            asmstr += ldr_const(rd, new IR2asm::constant(regbase->get_offset()));
+            asmstr += add(rd, &regbase->get_reg(), new Operand2(*rd));
+        } else {
+            asmstr += add(rd, &regbase->get_reg(), new Operand2(regbase->get_offset()));
+        }
     }
     else{
         asmstr += space;
