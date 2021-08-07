@@ -140,9 +140,6 @@ void ConstPropagation::reduce_redundant_cond_br() {
                         bb->delete_instr(br);
                         builder->create_br(surviveBB);
                         bb->remove_succ_basic_block(victimBB);
-                        if (victimBB->get_pre_basic_blocks().size() == 0) {
-                            func->remove(victimBB);
-                        }
                     }
                 }
             }
