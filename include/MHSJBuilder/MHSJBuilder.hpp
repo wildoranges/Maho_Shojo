@@ -200,14 +200,14 @@ public:
         auto start_time =
             Function::create(
                     time_type,
-                    "starttime",
+                    "_sysy_starttime",
                     module.get());
 
         time_type = FunctionType::get(TyVoid, {});
         auto stop_time =
             Function::create(
                     time_type,
-                    "stoptime",
+                    "_sysy_stoptime",
                     module.get());
 
         scope.enter();
@@ -217,8 +217,8 @@ public:
         scope.push_func("putint", put_int);
         scope.push_func("putch", put_char);
         scope.push_func("putarray", put_array);
-        scope.push_func("starttime", start_time);
-        scope.push_func("stoptime", stop_time);
+        scope.push_func("_sysy_starttime", start_time);
+        scope.push_func("_sysy_stoptime", stop_time);
     }
     std::unique_ptr<Module> getModule() {
         return std::move(module);
