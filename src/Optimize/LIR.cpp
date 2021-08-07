@@ -108,7 +108,7 @@ void LIR::mov_const(BasicBlock *bb) {
             auto const_offset = dynamic_cast<ConstantInt*>(offset);
             if (const_offset) {
                 auto const_offset_val = const_offset->get_value();
-                if (const_offset_val >= (1<<8) || const_offset_val < -(1<<8)) {
+                if (const_offset_val >= (1<<7) || const_offset_val < -(1<<7)) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_offset, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
@@ -121,7 +121,7 @@ void LIR::mov_const(BasicBlock *bb) {
             auto const_offset = dynamic_cast<ConstantInt*>(offset);
             if (const_offset) {
                 auto const_offset_val = const_offset->get_value();
-                if (const_offset_val >= (1<<8) || const_offset_val < -(1<<8)) {
+                if (const_offset_val >= (1<<7) || const_offset_val < -(1<<7)) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_offset, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
@@ -134,7 +134,7 @@ void LIR::mov_const(BasicBlock *bb) {
             auto const_op2 = dynamic_cast<ConstantInt*>(op2);
             if (const_op2) {
                 auto const_op2_val = const_op2->get_value();
-                if (const_op2_val >= (1<<12) || const_op2_val < -(1<<12)) {
+                if (const_op2_val >= (1<<11) || const_op2_val < -(1<<11)) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
@@ -149,7 +149,7 @@ void LIR::mov_const(BasicBlock *bb) {
             auto const_op2 = dynamic_cast<ConstantInt*>(op2);
             if (const_op1) {
                 auto const_op1_val = const_op1->get_value();
-                if (const_op1_val >= (1<<8) || const_op1_val < -(1<<8)) {
+                if (const_op1_val >= (1<<7) || const_op1_val < -(1<<7)) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
@@ -158,7 +158,7 @@ void LIR::mov_const(BasicBlock *bb) {
             }
             if (const_op2) {
                 auto const_op2_val = const_op2->get_value();
-                if (const_op2_val >= (1<<12) || const_op2_val < -(1<<12)) {
+                if (const_op2_val >= (1<<11) || const_op2_val < -(1<<11)) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
