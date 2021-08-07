@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
-            if(!print_mir){
+            if(!print_LIR){
                 passmgr.addPass<LIR>();
             }
 
