@@ -351,6 +351,7 @@ bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
             current->reg_num = spill_val->reg_num;
             spill_val->reg_num = -1;
             unused_reg_id.erase(current->reg_num);
+            active.erase(spill_val);
             for(auto val:reg2ActInter[current->reg_num]){
                 active.erase(val);
                 val->reg_num = -1;
