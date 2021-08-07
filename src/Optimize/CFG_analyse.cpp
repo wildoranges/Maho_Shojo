@@ -15,6 +15,7 @@ void CFG_analyse::execute(){
 }
 
 void CFG_analyse::incoming_find(Function* func){
+    color.clear();
     auto BB = func->get_entry_block();
     color[BB] = 1;
     incoming_DFS(BB);
@@ -25,7 +26,7 @@ void CFG_analyse::incoming_DFS(BasicBlock* BB){
     for (auto succ_BB : succs){
         if (color[succ_BB] == 0){
             succ_BB->incoming_add();
-            color[BB] = 1;
+            color[succ_BB] = 1;
             incoming_DFS(succ_BB);
         }
         else if (color[succ_BB] == 2){

@@ -166,7 +166,7 @@ void LIR::mov_const(BasicBlock *bb) {
                 }
             }
         }
-        if (instr->is_cmp() || instr->is_cmpbr() || instr->is_mul() || instr->is_div() || instr->is_rem() || instr->is_smmul() || instr->is_smul_lo() || instr->is_smul_hi()) {
+        if (instr->is_and() || instr->is_or() || instr->is_xor() || instr->is_cmp() || instr->is_cmpbr() || instr->is_mul() || instr->is_div() || instr->is_rem() || instr->is_smmul() || instr->is_smul_lo() || instr->is_smul_hi()) {
             auto op1 = instr->get_operand(0);
             auto op2 = instr->get_operand(1);
             auto const_op1 = dynamic_cast<ConstantInt*>(op1);
@@ -176,7 +176,8 @@ void LIR::mov_const(BasicBlock *bb) {
                 instructions.pop_back();
                 bb->add_instruction(iter, mov_const_instr);
                 instr->set_operand(0, mov_const_instr);
-            } else if (const_op2) {
+            }
+            if (const_op2) {
                 auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
                 instructions.pop_back();
                 bb->add_instruction(iter, mov_const_instr);
