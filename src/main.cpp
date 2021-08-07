@@ -22,7 +22,7 @@
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
-            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-ast ] [-check] [-o <output-file> ] [ -O2 ] [ -S ]"
+            << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-lir ] [ -emit-ast ] [-check] [-o <output-file> ] [ -O2 ] [ -S ]"
             << " [-no-const-prop] [-no-ava-expr] [-no-cfg-simply] [-no-dead-code-eli] [-no-func-inline] [-no-loop-expand] [-no-loop-invar]"
             << " <input-file>"
             << std::endl;
@@ -36,8 +36,9 @@ int main(int argc, char *argv[])
     ErrorReporter reporter(std::cerr);
     SyntaxTreeChecker checker(reporter);
 
+    bool print_mir = false;
     bool print_ast = false;
-    bool print_IR = false;
+    bool print_LIR = false;
     bool check = false;
     bool codegen=false;
     bool optimize = false;
@@ -62,7 +63,9 @@ int main(int argc, char *argv[])
         else if (argv[i] == std::string("-s") || argv[i] == std::string("--trace_scanning"))
             driver.trace_scanning = true;
         else if (argv[i] == std::string("-emit-mir"))
-            print_IR = true;
+            print_mir = true;
+        else if (argv[i] == std::string("-emit-lir"))
+            print_LIR = true;
         else if (argv[i] == std::string("-emit-ast"))
             print_ast = true;
         else if (argv[i] == std::string("-check"))
@@ -77,7 +80,8 @@ int main(int argc, char *argv[])
         else if (argv[i] == std::string("-S")){
             codegen = true;
             //print_IR = true;
-        }else if (argv[i] == std::string("-no-const-prop")){
+        }
+        else if (argv[i] == std::string("-no-const-prop")){
             no_const_prop = true;
         }
         else if (argv[i] == std::string("-no-ava-expr")){
@@ -109,23 +113,29 @@ int main(int argc, char *argv[])
         root->accept(checker);
         if(checker.is_err())
         {
-            std::cout<<"The file has semantic errors\n";
+            std::cerr<<"The file has semantic errors\n";
             exit(-1);
         }
     }
-    if (print_IR||codegen) {
+    if (print_LIR||codegen||print_mir) {
         root->accept(builder);
         auto m = builder.getModule();
         if(!optimize){
             PassMgr passmgr(m.get());
+            //passmgr.addPass<CFGSimplifier>();
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
-            passmgr.addPass<LIR>();
-            passmgr.addPass<ActiveVar>();
-            passmgr.addPass<CFG_analyse>();
+            if(!print_mir){
+                passmgr.addPass<ConstPropagation>();
+                passmgr.addPass<LIR>();
+                passmgr.addPass<CFGSimplifier>();
+                passmgr.addPass<ActiveVar>();
+                passmgr.addPass<CFG_analyse>();
+            }
             m->set_print_name();
             passmgr.execute();
-        }else{
+        }
+        else{
             PassMgr passmgr(m.get());
 
             if(!no_cfg_simply)
@@ -220,7 +230,9 @@ int main(int argc, char *argv[])
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
-            passmgr.addPass<LIR>();
+            if(!print_mir){
+                passmgr.addPass<LIR>();
+            }
 
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
@@ -228,15 +240,17 @@ int main(int argc, char *argv[])
             if(!no_ava_expr)
                 passmgr.addPass<AvailableExpr>();
 
-            passmgr.addPass<ActiveVar>();
-            passmgr.addPass<CFG_analyse>();
+            if(!print_mir){
+                passmgr.addPass<ActiveVar>();
+                passmgr.addPass<CFG_analyse>();
+            }
 
             m->set_print_name();
             passmgr.execute();
         }
         m->set_print_name();
         auto IR = m->print();
-        if(codegen){
+        if(codegen&&!(print_LIR||print_mir)){
             CodeGen coder = CodeGen();
             auto asmcode = coder.module_gen(m.get());
             std::ofstream output_stream;
@@ -244,7 +258,7 @@ int main(int argc, char *argv[])
             output_stream << asmcode;
             output_stream.close();
         }
-        else if(print_IR){
+        else if(print_LIR||print_mir){
             std::ofstream output_stream;
             output_stream.open(out_ll_file, std::ios::out);
             output_stream << IR;
