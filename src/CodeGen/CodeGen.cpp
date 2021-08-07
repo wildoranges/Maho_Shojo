@@ -9,7 +9,7 @@
 // namespace CodeGen{
 
     std::string CodeGen::global(std::string name){
-        return IR2asm::space + ".globl " + name + IR2asm::endl;
+        return IR2asm::space + ".globl " + ".." + name + IR2asm::endl;
     }
 
     bool CodeGen::iszeroinit(Constant * init){
@@ -37,7 +37,7 @@
             bool isarray = (dynamic_cast<ConstantArray *>(initializer) != nullptr);
             int size = var->get_type()->get_size();
             code += IR2asm::space;
-            code += ".type " + name + ", %object" + IR2asm::endl;
+            code += ".type .." + name + ", %object" + IR2asm::endl;
             code += IR2asm::space;
             if(isinitialized){  //initialized global var
                 bool iszeroinit_ = iszeroinit(initializer);
@@ -55,7 +55,7 @@
                 code += global(name);
                 code += IR2asm::space;
                 code += ".p2align " + std::to_string(int_p2align) + IR2asm::endl;
-                code += name + ":" + IR2asm::endl;
+                code += ".." + name + ":" + IR2asm::endl;
                 code += IR2asm::space;
                 if(!isarray){
                     code += ".long ";
@@ -83,12 +83,12 @@
                     }
                 }
                 code += ".size ";
-                code += name + ", ";
+                code += ".." + name + ", ";
                 code += std::to_string(size);
                 code += IR2asm::endl;
             }
             else{   //uninitialized global var
-                code += ".comm ";
+                code += ".comm ..";
                 code += name;
                 code += ", ";
                 code += std::to_string(size);
@@ -517,7 +517,7 @@
             code += label.get_code();
             code += ":" + IR2asm::endl;
             code += IR2asm::space;
-            code += ".long ";
+            code += ".long ..";
             code += var->get_name();
             code += IR2asm::endl;
         }
@@ -1146,7 +1146,7 @@
                 new_code += caller_reg_restore(bb->get_parent(),call_inst);
                 code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 1000){
+                if(accumulate_line_num > 950){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -1279,7 +1279,7 @@
                 code += new_code;
 
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 1000){
+                if(accumulate_line_num > 950){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -1291,7 +1291,7 @@
                 new_code += instr_gen(inst);
                 code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 1000){
+                if(accumulate_line_num > 950){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -1364,11 +1364,11 @@
         if(dynamic_cast<ReturnInst *>(br_inst)){
             std::string code;
             accumulate_line_num += 1;
-            if(accumulate_line_num > 1000){
+            if(accumulate_line_num > 950){
                 code += make_lit_pool();
                 accumulate_line_num = 0;
             }
-            return code + instr_gen(br_inst);
+            return code + instr_gen(br_inst) + make_lit_pool(true);
         }
         std::string cmp;
         std::string inst_cmpop;
@@ -1911,7 +1911,7 @@
         }
         std::string ret_code = cmp + pop_code + succ_code + succ_br + fail_code + fail_br;
         accumulate_line_num += std::count(ret_code.begin(), ret_code.end(), IR2asm::endl[0]);
-        if(accumulate_line_num > 1000){
+        if(accumulate_line_num > 950){
             if(dynamic_cast<BranchInst *>(bb->get_terminator()) && bb->get_terminator()->get_num_operand() == 1){
                 ret_code += make_lit_pool(true);
             }
