@@ -105,12 +105,15 @@ void ConstPropagation::reduce_redundant_cond_br() {
                     auto trueBB = br->get_operand(1);
                     auto falseBB = br->get_operand(2);
                     BasicBlock *surviveBB = nullptr;
+                    BasicBlock *victimBB = nullptr;
                     if (cond) {
                         if (cond->get_value() == 1) {
                             surviveBB = dynamic_cast<BasicBlock *>(trueBB);
+                            victimBB = dynamic_cast<BasicBlock *>(falseBB);
                         }
                         else {
                             surviveBB = dynamic_cast<BasicBlock *>(falseBB);
+                            victimBB = dynamic_cast<BasicBlock *>(trueBB);
                         }
                         for (auto succBB : bb->get_succ_basic_blocks()) {
                             succBB->remove_pre_basic_block(bb);
@@ -136,8 +139,7 @@ void ConstPropagation::reduce_redundant_cond_br() {
                         }
                         bb->delete_instr(br);
                         builder->create_br(surviveBB);
-                        bb->get_succ_basic_blocks().clear();
-                        bb->add_succ_basic_block(surviveBB);
+                        bb->remove_succ_basic_block(victimBB);
                     }
                 }
             }
