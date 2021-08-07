@@ -23,8 +23,9 @@ void DeadCodeElimination::execute() {
 bool DeadCodeElimination::is_critical(Instruction *instr) {
     if (instr->is_ret()) return true;
     else if (instr->is_call()) return true;
-    else if (instr->is_store() || instr->is_store_offset()) {
-        auto addr = instr->get_operand(1);
+    else if (instr->is_store() || instr->is_store_offset() || instr->is_load() || instr->is_load_offset()) {
+        // TODO: 需要修改策略
+        /*auto addr = instr->get_operand(1);
         auto alloca_addr = dynamic_cast<AllocaInst*>(addr);
         auto global_addr = dynamic_cast<GlobalVariable*>(addr);
         auto arg_addr = dynamic_cast<Argument*>(addr);
@@ -38,7 +39,7 @@ bool DeadCodeElimination::is_critical(Instruction *instr) {
                 }
             }
             return false;
-        }
+        }*/
         return true;
     }
     else return false;

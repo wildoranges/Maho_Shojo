@@ -200,14 +200,14 @@ public:
         auto start_time =
             Function::create(
                     time_type,
-                    "starttime",
+                    "_sysy_starttime",
                     module.get());
 
         time_type = FunctionType::get(TyVoid, {});
         auto stop_time =
             Function::create(
                     time_type,
-                    "stoptime",
+                    "_sysy_stoptime",
                     module.get());
 
         scope.enter();

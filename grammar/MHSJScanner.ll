@@ -138,7 +138,15 @@ else        {return yy::MHSJParser::make_ELSE(loc);}
                           size_t n = std::count(s.begin(), s.end(), '\n');
                           for (size_t i = 0; i < n; i++) loc.lines(1);}
 {SingleLineComment}				/* ignore */{}
-{DecConst} 							  {return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);}
+{DecConst} 							  {std::string s = yytext;
+                          int i = 0;
+                          int val = 0;
+                          for(;i < s.size();i++){
+                            val = val * 10;
+                            val = val + (s[i] - '0');
+                          }
+                          val = val % (1 << 31);
+                          return yy::MHSJParser::make_INTCONST(val,loc);}
 {HexConst}                {std::string s = yytext;
                           if(s.size() <= 9)return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);
                           std::string head = "0x" + s.substr(s.size() - 8, 1);
