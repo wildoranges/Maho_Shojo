@@ -159,6 +159,9 @@ int main(int argc, char *argv[])
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
 
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
@@ -179,6 +182,9 @@ int main(int argc, char *argv[])
 
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
 
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
@@ -224,13 +230,25 @@ int main(int argc, char *argv[])
             if(!no_loop_expand)
                 passmgr.addPass<LoopExpansion>();
 
+            if(!no_const_prop)
+                passmgr.addPass<ConstPropagation>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
             if(!no_ava_expr)
                 passmgr.addPass<AvailableExpr>();
 
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
-            if(!print_mir){
+            if(!print_LIR){
                 passmgr.addPass<LIR>();
             }
 
@@ -240,10 +258,14 @@ int main(int argc, char *argv[])
             if(!no_ava_expr)
                 passmgr.addPass<AvailableExpr>();
 
-            if(!print_mir){
-                passmgr.addPass<ActiveVar>();
-                passmgr.addPass<CFG_analyse>();
-            }
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<ActiveVar>();
+            passmgr.addPass<CFG_analyse>();
 
             m->set_print_name();
             passmgr.execute();

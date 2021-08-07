@@ -12,6 +12,9 @@ void DeadCodeElimination::execute() {
         RDominateTree r_dom_tree(module);
         r_dom_tree.execute();
         mark();
+        remove_unmarked_bb();
+        RDominateTree r_dom_tree_new(module);
+        r_dom_tree_new.execute();
         sweep();
     }
     return ;
@@ -67,6 +70,26 @@ BasicBlock *DeadCodeElimination::get_nearest_marked_postdominator(Instruction *i
         visit_bb.pop_front();
     }
     return nullptr;
+}
+
+void DeadCodeElimination::remove_unmarked_bb() {
+    std::vector<BasicBlock*> wait_delete_bb;
+    for (auto bb : func_->get_basic_blocks()) {
+        if (bb == func_->get_entry_block()) continue;
+        bool marked = false;
+        for (auto instr : bb->get_instructions()) {
+            if (instr_mark[instr] == true) {
+                marked = true;
+                break;
+            }
+        }
+        if (marked == false) {
+            wait_delete_bb.push_back(bb);
+        }
+    }
+    for (auto delete_bb : wait_delete_bb) {
+        func_->remove(delete_bb);
+    }
 }
 
 void DeadCodeElimination::mark() {
