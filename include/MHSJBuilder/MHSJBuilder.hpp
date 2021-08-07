@@ -15,6 +15,7 @@ public:
     // enter a new scope
     void enter() {
         inner.push_back({});
+        inner_func.push_back({});
         inner_array_size.push_back({});
         inner_array_const.push_back({});
     }
@@ -22,6 +23,7 @@ public:
     // exit a scope
     void exit() {
         inner.pop_back();
+        inner_func.pop_back();
         inner_array_size.pop_back();
         inner_array_const.pop_back();
     }
@@ -40,6 +42,22 @@ public:
 
     Value* find(std::string name) {
         for (auto s = inner.rbegin(); s!= inner.rend();s++) {
+            auto iter = s->find(name);
+            if (iter != s->end()) {
+                return iter->second;
+            }
+        }
+
+        return nullptr;
+    }
+
+    bool push_func(std::string name, Value *val) {
+        auto result = inner_func[inner_func.size() - 1].insert({name, val});
+        return result.second;
+    }
+
+    Value* find_func(std::string name) {
+        for (auto s = inner_func.rbegin(); s!= inner_func.rend();s++) {
             auto iter = s->find(name);
             if (iter != s->end()) {
                 return iter->second;
@@ -83,6 +101,7 @@ public:
 
 private:
     std::vector<std::map<std::string, Value *>> inner;
+    std::vector<std::map<std::string, Value *>> inner_func;
     std::vector<std::map<std::string, std::vector<int>>> inner_array_size;
     std::vector<std::map<std::string, ConstantArray *>> inner_array_const;
 };
@@ -192,14 +211,14 @@ public:
                     module.get());
 
         scope.enter();
-        scope.push("getint", get_int);
-        scope.push("getch", get_char);
-        scope.push("getarray", get_array);
-        scope.push("putint", put_int);
-        scope.push("putch", put_char);
-        scope.push("putarray", put_array);
-        scope.push("starttime", start_time);
-        scope.push("stoptime", stop_time);
+        scope.push_func("getint", get_int);
+        scope.push_func("getch", get_char);
+        scope.push_func("getarray", get_array);
+        scope.push_func("putint", put_int);
+        scope.push_func("putch", put_char);
+        scope.push_func("putarray", put_array);
+        scope.push_func("starttime", start_time);
+        scope.push_func("stoptime", stop_time);
     }
     std::unique_ptr<Module> getModule() {
         return std::move(module);

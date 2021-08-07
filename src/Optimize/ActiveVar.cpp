@@ -93,9 +93,17 @@ void ActiveVar::get_live_in_live_out() {
                         break;
                     }
                 }
-                std::set<Value *> to_delete;
+                std::set<Value *> not_in_other_phi = {};
                 for (auto to_check : other_phi){
-                    auto need_delete = true;
+                    auto succ_out = live_out[succBB];
+                    auto succ_def = def_var[succBB];
+                    std::set<Value *> from_succ_child = {};
+                    std::set_difference(succ_out.begin(), succ_out.end(), succ_def.begin(), succ_def.end(), std::inserter(from_succ_child, from_succ_child.begin()));
+                    if (from_succ_child.find(to_check) != from_succ_child.end()){
+                        not_in_other_phi.insert(to_check);
+                        continue;
+                    }
+                    auto in_other_phi = true;
                     for (auto pair : to_check->get_use_list()){
                         auto use_inst = dynamic_cast<Instruction *>(pair.val_);
                         auto use_no = pair.arg_no_;
@@ -105,21 +113,21 @@ void ActiveVar::get_live_in_live_out() {
                         if (use_inst->is_phi()){
                             auto from_BB = use_inst->get_operand(use_no+1);
                             if (from_BB == bb){
-                                need_delete = false;
+                                in_other_phi = false;
                                 break;
                             }
                         }
                         else{
-                            need_delete = false;
+                            in_other_phi = false;
                             break;
                         }
                     }
-                    if (need_delete == false){
-                        to_delete.insert(to_check);
+                    if (in_other_phi == false){
+                        not_in_other_phi.insert(to_check);
                     }
                 }
-                for (auto wait : to_delete){
-                    other_phi.erase(wait);
+                for (auto to_delete : not_in_other_phi){
+                    other_phi.erase(to_delete);
                 }
                 auto succ_live_in = live_in[succBB];
                 std::set<Value *> succ_live_in_without_other_phi;
