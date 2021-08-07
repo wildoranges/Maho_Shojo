@@ -417,7 +417,6 @@ std::string safe_load(Reg* rd, Location* addr, int sp_extra_ofst, bool long_func
             asmstr += "ldr lr, =";
             asmstr += labl->get_code();
             asmstr += endl;
-            asmstr += space;
             asmstr += load(rd, new Regbase(Reg(lr), 0), cmpop);
         }
         else{
@@ -474,7 +473,6 @@ std::string safe_store(Reg* rd, Location* addr, int sp_extra_ofst, bool long_fun
             asmstr += "ldr lr, =";
             asmstr += labl->get_code();
             asmstr += endl;
-            asmstr += space;
             asmstr += store(rd, new Regbase(Reg(lr), 0), cmpop);
         }
         else{
