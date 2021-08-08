@@ -52,6 +52,8 @@ bool CFGSimplifier::delete_redundant_phi() {
                             }
                         }
                     } else {
+                        can_replace = false;
+                        break;
                         for (int i = 2; i < instr->get_num_operand(); i+=2) {
                             auto cur_val = instr->get_operand(i);
                             if (dynamic_cast<ConstantInt*>(cur_val)) {
@@ -66,6 +68,7 @@ bool CFGSimplifier::delete_redundant_phi() {
                         }
                     }
                     if (can_replace == true) {
+                        //have bug, use is phi in the same bb
                         instr->replace_all_use_with(instr->get_operand(0));
                         wait_delete_instr.push_back(instr);
                         changed = true;
@@ -166,6 +169,7 @@ bool CFGSimplifier::bb_can_delete(BasicBlock *bb) {
 }
 
 bool CFGSimplifier::is_self_loop(BasicBlock *bb) {
+    //no use
     return (bb->get_pre_basic_blocks().size() == 1 && bb == bb->get_pre_basic_blocks().front());
 }
 
@@ -220,6 +224,8 @@ void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
     }
     for (auto instr : succ_bb->get_instructions()) {
         if (instr->is_phi()) {
+            //succ_bb have phi???
+            //not check
             for (int i = 1; i < instr->get_num_operand(); i+=2) {
                 if (instr->get_operand(i) == bb) {
                     if (instr->get_num_operand() == 2  && succ_bb->get_pre_basic_blocks().size() == 0) {
@@ -263,8 +269,9 @@ bool CFGSimplifier::one_pass() {
                 auto true_bb = dynamic_cast<BasicBlock*>(terminator->get_operand(1));
                 auto false_bb = dynamic_cast<BasicBlock*>(terminator->get_operand(2));
                 if (true_bb != nullptr && false_bb != nullptr && true_bb == false_bb) {
-                    terminator->remove_use_of_ops();
-                    terminator->set_operand(0, true_bb);
+                    //??? num_operand == 3 ???
+                    terminator->remove_operands(0,2);
+                    terminator->add_operand(true_bb);
                     changed = true;
                 }
             }
@@ -294,7 +301,7 @@ bool CFGSimplifier::one_pass() {
                 wait_delete_bb.push_back(succ_bb);
                 changed = true;
             }
-            if (succ_bb->get_num_of_instr() == 1 && succ_bb_terminator->is_br() && succ_bb_terminator->get_num_operand() > 1) {
+            if (succ_bb->get_num_of_instr() == 1 && succ_bb_terminator->is_br() && succ_bb_terminator->is_cmpbr() && succ_bb_terminator->get_num_operand() > 1) {
                 bb->delete_instr(terminator);
                 bb->add_instruction(succ_bb_terminator);
                 for (auto succ_succ_bb : succ_bb->get_succ_basic_blocks()) {
