@@ -1225,7 +1225,19 @@
                             store_list.push_back(reg_inter->reg_num);
                         } else {
                             if (can_use_inst_reg) {
-                                can_use_inst_reg = false;
+                                if (reg_it == inst_reg_num_set.end()) {
+                                    can_use_inst_reg = false;
+                                } else {
+                                    for (int i = 0; i <= 12; i++) {
+                                        if (i == 11) continue;
+                                        if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() && 
+                                            inst_reg_num_set.find(i) == inst_reg_num_set.end()) {
+                                            reg_inter->reg_num = i;
+                                            store_list.push_back(reg_inter->reg_num);
+                                            break;
+                                        }
+                                    }
+                                }
                             } else {
                                 for (int i = 0; i <= 12; i++) {
                                     if (i == 11) continue;
