@@ -1977,6 +1977,7 @@
                             code += IR2asm::ret(get_asm_const(const_ret_val));
                         } else {
                             if (get_asm_reg(ret_val)->get_id() < 0) {
+                                //FIXME: offset too large
                                 code += IR2asm::ret(stack_map[ret_val]);
                             } else {
                                 code += IR2asm::ret(get_asm_reg(ret_val));
@@ -1987,6 +1988,7 @@
                 break;
             case Instruction::br:
                 if (inst->get_num_operand() == 1) {
+                    //FIXME: too far ???
                     code += IR2asm::b(bb_label[dynamic_cast<BasicBlock*>(inst->get_operand(0))]);
                 }
                 break;
@@ -2011,7 +2013,7 @@
                     code += IR2asm::add(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
-                case Instruction::sub: {
+            case Instruction::sub: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     auto const_op1 = dynamic_cast<ConstantInt*>(op1);
@@ -2033,23 +2035,23 @@
                     }
                 }
                 break;
-                case Instruction::mul: {
+            case Instruction::mul: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     code += IR2asm::mul(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2));
                 }
                 break;
-                case Instruction::sdiv: { // divide consant can be optimized
+            case Instruction::sdiv: { // divide constant can be optimized
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     code += IR2asm::sdiv(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2));
                 }
                 break;
-                case Instruction::srem: // srem -> sdiv and msub
+            case Instruction::srem: // srem -> sdiv and msub
                 break;
-                case Instruction::alloca:   // has done before
+            case Instruction::alloca:   // no instruction in .s
                 break;
-                case Instruction::load: {
+            case Instruction::load: {
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(0));
                     if (global_addr) {
                         code += IR2asm::safe_load(get_asm_reg(inst), 
@@ -2071,7 +2073,7 @@
                     }
                 }
                 break;
-                case Instruction::store: {
+            case Instruction::store: {
                     auto global_addr = dynamic_cast<GlobalVariable*>(inst->get_operand(1));
                     std::vector<int> tmp_reg = {};
                     int ld_reg_id = 11;
@@ -2101,7 +2103,7 @@
                     code += pop_regs(tmp_reg);
                 }
                 break;
-                case Instruction::cmp: {
+            case Instruction::cmp: {
                     auto cmp_inst = dynamic_cast<CmpInst*>(inst);
                     auto cond1 = inst->get_operand(0);
                     auto cond2 = inst->get_operand(1);
@@ -2235,12 +2237,12 @@
                     }
                 }
                 break;
-                case Instruction::phi:  // has done before
+            case Instruction::phi:  // has done before
                 break;
-                case Instruction::call:
+            case Instruction::call:
                     code += IR2asm::call(new IR2asm::label(inst->get_operand(0)->get_name()));
                 break;
-                case Instruction::getelementptr: {
+            case Instruction::getelementptr: {
                     auto base_addr = inst->get_operand(0);
                     if (dynamic_cast<GlobalVariable*>(base_addr)) {
                         auto addr = global_variable_table[dynamic_cast<GlobalVariable*>(base_addr)];
@@ -2254,7 +2256,7 @@
                     }
                 }
                 break;
-                case Instruction::land: {
+            case Instruction::land: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     auto const_op1 = dynamic_cast<ConstantInt*>(op1);
@@ -2275,7 +2277,7 @@
                     code += IR2asm::land(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
-                case Instruction::lor: {
+            case Instruction::lor: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     auto const_op1 = dynamic_cast<ConstantInt*>(op1);
@@ -2296,7 +2298,7 @@
                     code += IR2asm::lor(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
-                case Instruction::lxor: {
+            case Instruction::lxor: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     auto const_op1 = dynamic_cast<ConstantInt*>(op1);
@@ -2317,9 +2319,9 @@
                     code += IR2asm::lxor(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
-                case Instruction::zext:
+            case Instruction::zext:
                 break;
-                case Instruction::asr: {
+            case Instruction::asr: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     auto const_op2 = dynamic_cast<ConstantInt*>(op2);
@@ -2333,7 +2335,7 @@
                     code += IR2asm::asr(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
-                case Instruction::lsl: {
+            case Instruction::lsl: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     auto const_op2 = dynamic_cast<ConstantInt*>(op2);
@@ -2347,7 +2349,7 @@
                     code += IR2asm::lsl(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
-                case Instruction::lsr: {
+            case Instruction::lsr: {
                     auto op1 = inst->get_operand(0);
                     auto op2 = inst->get_operand(1);
                     auto const_op2 = dynamic_cast<ConstantInt*>(op2);
@@ -2361,7 +2363,7 @@
                     code += IR2asm::lsr(get_asm_reg(inst), get_asm_reg(operand1), operand2);
                 }
                 break;
-                case Instruction::cmpbr: {
+            case Instruction::cmpbr: {
                     auto cmpbr_inst = dynamic_cast<CmpBrInst*>(inst);
                     auto cond1 = inst->get_operand(0);
                     auto cond2 = inst->get_operand(1);
@@ -2497,33 +2499,33 @@
                     }
                 }
                 break;
-                case Instruction::muladd:
-                    break;
-                case Instruction::mulsub:
-                    break;
-                case Instruction::asradd:
-                    break;
-                case Instruction::lsladd:
-                    break;
-                case Instruction::lsradd:
-                    break;
-                case Instruction::asrsub:
-                    break;
-                case Instruction::lslsub:
-                    break;
-                case Instruction::lsrsub:
-                    break;
-                case Instruction::smul_lo:
-                    break;
-                case Instruction::smul_hi:
-                    break;
-                case Instruction::smmul: {
-                        auto op1 = inst->get_operand(0);
-                        auto op2 = inst->get_operand(1);
-                        code += IR2asm::smmul(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2));
-                    }
-                    break;
-                case Instruction::load_offset: {
+            case Instruction::muladd:
+                break;
+            case Instruction::mulsub:
+                break;
+            case Instruction::asradd:
+                break;
+            case Instruction::lsladd:
+                break;
+            case Instruction::lsradd:
+                break;
+            case Instruction::asrsub:
+                break;
+            case Instruction::lslsub:
+                break;
+            case Instruction::lsrsub:
+                break;
+            case Instruction::smul_lo:
+                break;
+            case Instruction::smul_hi:
+                break;
+            case Instruction::smmul: {
+                    auto op1 = inst->get_operand(0);
+                    auto op2 = inst->get_operand(1);
+                    code += IR2asm::smmul(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2));
+                }
+                break;
+            case Instruction::load_offset: {
                     auto load_offset_inst = dynamic_cast<LoadOffsetInst*>(inst);
                     auto offset = load_offset_inst->get_offset();
                     auto const_offset = dynamic_cast<ConstantInt*>(offset);
@@ -2534,7 +2536,7 @@
                     }
                 }
                 break;
-                case Instruction::store_offset: {
+            case Instruction::store_offset: {
                     auto store_offset_inst = dynamic_cast<StoreOffsetInst*>(inst);
                     auto offset = store_offset_inst->get_offset();
                     auto const_offset = dynamic_cast<ConstantInt*>(offset);
@@ -2545,7 +2547,7 @@
                     }
                 }
                 break;
-                case Instruction::mov_const: {
+            case Instruction::mov_const: {
                     auto mov_inst = dynamic_cast<MovConstInst*>(inst);
                     auto const_val = mov_inst->get_const()->get_value();
                     code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(const_val));
