@@ -2089,7 +2089,139 @@
                     code += pop_regs(tmp_reg);
                 }
                 break;
-                case Instruction::cmp: // DONE in cmpbr
+                case Instruction::cmp: {
+                    auto cmp_inst = dynamic_cast<CmpInst*>(inst);
+                    auto cond1 = inst->get_operand(0);
+                    auto cond2 = inst->get_operand(1);
+                    auto cmp_op = cmp_inst->get_cmp_op();
+                    auto const_cond1 = dynamic_cast<ConstantInt*>(cond1);
+                    auto const_cond2 = dynamic_cast<ConstantInt*>(cond2);
+                    IR2asm::Reg *operand1;
+                    IR2asm::Operand2 *operand2;
+                    switch (cmp_op)
+                    {
+                        case CmpInst::CmpOp::EQ: {
+                            if (const_cond1) {
+                                operand1 = get_asm_reg(cond2);
+                                operand2 = new IR2asm::Operand2(const_cond1->get_value());
+                            } else {
+                                operand1 = get_asm_reg(cond1);
+                                if (const_cond2) {
+                                    operand2 = new IR2asm::Operand2(const_cond2->get_value());
+                                } else {
+                                    operand2 = new IR2asm::Operand2(*get_asm_reg(cond2));
+                                }
+                            }
+                            code += IR2asm::cmp(operand1, operand2);
+                            code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(0));
+                            code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "eq");
+                        }
+                        break;
+                        case CmpInst::CmpOp::NE: {
+                            if (const_cond1) {
+                                operand1 = get_asm_reg(cond2);
+                                operand2 = new IR2asm::Operand2(const_cond1->get_value());
+                            } else {
+                                operand1 = get_asm_reg(cond1);
+                                if (const_cond2) {
+                                    operand2 = new IR2asm::Operand2(const_cond2->get_value());
+                                } else {
+                                    operand2 = new IR2asm::Operand2(*get_asm_reg(cond2));
+                                }
+                            }
+                            code += IR2asm::cmp(operand1, operand2);
+                            code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(0));
+                            code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "ne");
+                        }
+                        break;
+                        case CmpInst::CmpOp::GT: {
+                            if (const_cond1) {
+                                operand1 = get_asm_reg(cond2);
+                                operand2 = new IR2asm::Operand2(const_cond1->get_value());
+                            } else {
+                                operand1 = get_asm_reg(cond1);
+                                if (const_cond2) {
+                                    operand2 = new IR2asm::Operand2(const_cond2->get_value());
+                                } else {
+                                    operand2 = new IR2asm::Operand2(*get_asm_reg(cond2));
+                                }
+                            }
+                            code += IR2asm::cmp(operand1, operand2);
+                            code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(0));
+                            if (const_cond1) {
+                                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "le");
+                            } else {
+                                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "gt");
+                            }
+                        }
+                        break;
+                        case CmpInst::CmpOp::GE: {
+                            if (const_cond1) {
+                                operand1 = get_asm_reg(cond2);
+                                operand2 = new IR2asm::Operand2(const_cond1->get_value());
+                            } else {
+                                operand1 = get_asm_reg(cond1);
+                                if (const_cond2) {
+                                    operand2 = new IR2asm::Operand2(const_cond2->get_value());
+                                } else {
+                                    operand2 = new IR2asm::Operand2(*get_asm_reg(cond2));
+                                }
+                            }
+                            code += IR2asm::cmp(operand1, operand2);
+                            code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(0));
+                            if (const_cond1) {
+                                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "lt");
+                            } else {
+                                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "ge");
+                            }
+                        }
+                        break;
+                        case CmpInst::CmpOp::LT: {
+                            if (const_cond1) {
+                                operand1 = get_asm_reg(cond2);
+                                operand2 = new IR2asm::Operand2(const_cond1->get_value());
+                            } else {
+                                operand1 = get_asm_reg(cond1);
+                                if (const_cond2) {
+                                    operand2 = new IR2asm::Operand2(const_cond2->get_value());
+                                } else {
+                                    operand2 = new IR2asm::Operand2(*get_asm_reg(cond2));
+                                }
+                            }
+                            code += IR2asm::cmp(operand1, operand2);
+                            code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(0));
+                            if (const_cond1) {
+                                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "ge");
+                            } else {
+                                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "lt");
+                            }
+                        }
+                        break;
+                        case CmpInst::CmpOp::LE: {
+                            if (const_cond1) {
+                                operand1 = get_asm_reg(cond2);
+                                operand2 = new IR2asm::Operand2(const_cond1->get_value());
+                            } else {
+                                operand1 = get_asm_reg(cond1);
+                                if (const_cond2) {
+                                    operand2 = new IR2asm::Operand2(const_cond2->get_value());
+                                } else {
+                                    operand2 = new IR2asm::Operand2(*get_asm_reg(cond2));
+                                }
+                            }
+                            code += IR2asm::cmp(operand1, operand2);
+                            code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(0));
+                            if (const_cond1) {
+                                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "gt");
+                            } else {
+                                code += IR2asm::ldr_const(get_asm_reg(inst), new IR2asm::constant(1), "le");
+                            }
+                        }
+                        break;
+                        default:
+                        break;
+                    }
+                }
                 break;
                 case Instruction::phi:  // has done before
                 break;

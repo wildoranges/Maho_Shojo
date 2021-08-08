@@ -27,7 +27,7 @@ namespace IR2asm{
     NOP
     };
 
-    std::string ldr_const(Reg* rd, constant *val);
+    std::string ldr_const(Reg* rd, constant *val, std::string cmpop = "");
     std::string mov(Reg* rd, Operand2 *opr2);
     std::string getelementptr(Reg* rd, Location * ptr);
     std::string cond(CmpOp & cop);

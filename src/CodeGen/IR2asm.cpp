@@ -25,10 +25,10 @@ namespace IR2asm{
 
 //TODO:zext
 
-std::string ldr_const(Reg* rd, constant *val) {
+std::string ldr_const(Reg* rd, constant *val, std::string cmpop) {
     std::string asmstr;
     asmstr += space;
-    asmstr += "ldr ";
+    asmstr += "ldr" + cmpop + " ";
     asmstr += rd->get_code();
     asmstr += ", =";
     asmstr += val->get_num();
