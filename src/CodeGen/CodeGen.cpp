@@ -606,7 +606,26 @@
         int inst_count = 0;
         for(auto bb: fun->get_basic_blocks()){
             for(auto inst: bb->get_instructions()){
-                inst_count++;
+                //TODO: instruction cost
+                switch(inst->get_instr_type()){
+                    case Instruction::OpID::call :{
+                        inst_count += dynamic_cast<CallInst *>(inst)->get_num_operand() + 4;
+                        break;
+                    }
+                    case Instruction::OpID::cmpbr :{
+                        inst_count += 3;
+                        break;
+                    }
+                    case Instruction::OpID::getelementptr :{
+                        inst_count += 2;
+                        break;
+                    }
+                    case Instruction::OpID::phi :{
+                        inst_count += (dynamic_cast<PhiInst *>(inst)->get_num_operand() / 2) * bb->get_pre_basic_blocks().size();
+                        break;
+                    }
+                    default: inst_count++;
+                }
                 auto call = dynamic_cast<CallInst*>(inst);
                 if(!call)continue;
                 int arg_size = 0;
