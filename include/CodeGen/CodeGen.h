@@ -65,7 +65,11 @@ public:
     std::string bb_gen(BasicBlock* bb);
     std::string instr_gen(Instruction * inst);
     std::string phi_union(BasicBlock* bb, Instruction* br_inst);
-    IR2asm::Reg *get_asm_reg(Value *val){if ((reg_map).find(val) != reg_map.end()) return new IR2asm::Reg((reg_map).find(val)->second->reg_num); else exit(7);}
+    IR2asm::Reg *get_asm_reg(Value *val){
+        if ((reg_map).find(val) != reg_map.end())
+            return new IR2asm::Reg((reg_map).find(val)->second->reg_num);
+        else exit(7);
+    }
     IR2asm::constant *get_asm_const(Constant *val){if (dynamic_cast<ConstantZero*>(val)) return new IR2asm::constant(0);
                                                     else {
                                                         auto const_val = dynamic_cast<ConstantInt*>(val);
