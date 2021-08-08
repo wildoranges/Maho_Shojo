@@ -606,7 +606,26 @@
         int inst_count = 0;
         for(auto bb: fun->get_basic_blocks()){
             for(auto inst: bb->get_instructions()){
-                inst_count++;
+                //TODO: instruction cost
+                switch(inst->get_instr_type()){
+                    case Instruction::OpID::call :{
+                        inst_count += dynamic_cast<CallInst *>(inst)->get_num_operand() + 4;
+                        break;
+                    }
+                    case Instruction::OpID::cmpbr :{
+                        inst_count += 3;
+                        break;
+                    }
+                    case Instruction::OpID::getelementptr :{
+                        inst_count += 2;
+                        break;
+                    }
+                    case Instruction::OpID::phi :{
+                        inst_count += (dynamic_cast<PhiInst *>(inst)->get_num_operand() / 2) * bb->get_pre_basic_blocks().size();
+                        break;
+                    }
+                    default: inst_count++;
+                }
                 auto call = dynamic_cast<CallInst*>(inst);
                 if(!call)continue;
                 int arg_size = 0;
@@ -2079,15 +2098,16 @@
                 break;
                 case Instruction::getelementptr: {
                     auto base_addr = inst->get_operand(0);
-                    IR2asm::Location *addr;
                     if (dynamic_cast<GlobalVariable*>(base_addr)) {
-                        addr = global_variable_table[dynamic_cast<GlobalVariable*>(base_addr)];
+                        auto addr = global_variable_table[dynamic_cast<GlobalVariable*>(base_addr)];
+                        code += IR2asm::safe_load(get_asm_reg(inst), addr, sp_extra_ofst, long_func);
                     } else if (dynamic_cast<AllocaInst*>(base_addr)) {
-                        addr = stack_map[base_addr];
+                        auto addr = stack_map[base_addr];
+                        code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                     } else {
-                        addr = new IR2asm::Regbase(*get_asm_reg(base_addr), 0);
+                        auto addr = new IR2asm::Regbase(*get_asm_reg(base_addr), 0);
+                        code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                     }
-                    code += IR2asm::getelementptr(get_asm_reg(inst), addr);
                 }
                 break;
                 case Instruction::land: {

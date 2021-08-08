@@ -105,7 +105,12 @@ std::string getelementptr(Reg* rd, Location * ptr){
     std::string asmstr;
     auto regbase = dynamic_cast<Regbase *>(ptr);
     if(regbase){
-        asmstr += add(rd, &regbase->get_reg(), new Operand2(regbase->get_offset()));
+        if (regbase->get_offset() >= (1<<11) || regbase->get_offset() < -(1<<11)) {
+            asmstr += ldr_const(rd, new IR2asm::constant(regbase->get_offset()));
+            asmstr += add(rd, &regbase->get_reg(), new Operand2(*rd));
+        } else {
+            asmstr += add(rd, &regbase->get_reg(), new Operand2(regbase->get_offset()));
+        }
     }
     else{
         asmstr += space;
@@ -412,7 +417,6 @@ std::string safe_load(Reg* rd, Location* addr, int sp_extra_ofst, bool long_func
             asmstr += "ldr lr, =";
             asmstr += labl->get_code();
             asmstr += endl;
-            asmstr += space;
             asmstr += load(rd, new Regbase(Reg(lr), 0), cmpop);
         }
         else{
@@ -469,7 +473,6 @@ std::string safe_store(Reg* rd, Location* addr, int sp_extra_ofst, bool long_fun
             asmstr += "ldr lr, =";
             asmstr += labl->get_code();
             asmstr += endl;
-            asmstr += space;
             asmstr += store(rd, new Regbase(Reg(lr), 0), cmpop);
         }
         else{
