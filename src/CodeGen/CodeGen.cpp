@@ -1977,8 +1977,7 @@
                             code += IR2asm::ret(get_asm_const(const_ret_val));
                         } else {
                             if (get_asm_reg(ret_val)->get_id() < 0) {
-                                //FIXME: offset too large
-                                code += IR2asm::ret(stack_map[ret_val]);
+                                code += IR2asm::safe_load(new IR2asm::Reg(0), stack_map[ret_val], sp_extra_ofst, long_func);
                             } else {
                                 code += IR2asm::ret(get_asm_reg(ret_val));
                             }
