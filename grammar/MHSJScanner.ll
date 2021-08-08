@@ -108,16 +108,16 @@ std::map<char,int> ch2int = {
 
  /* Regex abbreviations: */
 
-MultilineComment		"/*"([^\*]|(\*)*[^\*/])*(\*)*"*/"				
-SingleLineComment		"//".*$									
+MultilineComment		"/*"([^\*]|(\*)*[^\*/])*(\*)*"*/"
 Identifier		      [_a-zA-Z][a-zA-Z0-9_]*
 OctConst            ("0"[0-7]*)
 DecConst            ([1-9][0-9]*)
 HexConst            ("0"[xX][0-9a-fA-F]+)
 Blank               [ \t]
 NewLine             [\n\r]
+SingleLineComment	"//"[^\n\r]*[\n\r]
 STRING              \"([^\"]*(\\\")?)*\"
-LRBRACKET          \[[ \t\r]*\]
+LRBRACKET          \[([ \r\t\n]|{MultilineComment}|{SingleLineComment})*\]
 
 %%
  /* keyword */
@@ -162,7 +162,7 @@ else        {return yy::MHSJParser::make_ELSE(loc);}
 {MultilineComment}				{std::string s = yytext;
                           size_t n = std::count(s.begin(), s.end(), '\n');
                           for (size_t i = 0; i < n; i++) loc.lines(1);}
-{SingleLineComment}				/* ignore */{}
+{SingleLineComment}				/* ignore */
 {DecConst} 				  {std::string dec = yytext;
                            unsigned sum = 0;
                            int len = dec.size();
