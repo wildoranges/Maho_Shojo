@@ -6,8 +6,33 @@
 # include <string>
 # include <algorithm>
 # include <iostream>
+# include <map>
 # include "MHSJDriver.h"
 # include "MHSJParser.h"
+std::map<char,int> ch2int = {
+    {'0',0},
+    {'1',1},
+    {'2',2},
+    {'3',3},
+    {'4',4},
+    {'5',5},
+    {'6',6},
+    {'7',7},
+    {'8',8},
+    {'9',9},
+    {'a',10},
+    {'b',11},
+    {'c',12},
+    {'d',13},
+    {'e',14},
+    {'f',15},
+    {'A',10},
+    {'B',11},
+    {'C',12},
+    {'D',13},
+    {'E',14},
+    {'F',15}
+};
 %}
 
 %{
@@ -138,32 +163,31 @@ else        {return yy::MHSJParser::make_ELSE(loc);}
                           size_t n = std::count(s.begin(), s.end(), '\n');
                           for (size_t i = 0; i < n; i++) loc.lines(1);}
 {SingleLineComment}				/* ignore */{}
-{DecConst} 							  {std::string s = yytext;
-                          int i = 0;
-                          int val = 0;
-                          for(;i < s.size();i++){
-                            val = val * 10;
-                            val = val + (s[i] - '0');
-                          }
-                          val = val % (1 << 31);
-                          return yy::MHSJParser::make_INTCONST(val,loc);}
-{HexConst}                {std::string s = yytext;
-                          if(s.size() <= 9)return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);
-                          std::string head = "0x" + s.substr(s.size() - 8, 1);
-                          std::string tail = "0x" + s.substr(s.size() - 7);
-                          int msb = std::stoi(head,0,0);
-                          int lsb = std::stoi(tail,0,0);
-                          int val = (msb << 7 * 4) + lsb;
-                          return yy::MHSJParser::make_INTCONST(val, loc);}
-{OctConst}                {std::string s = yytext;
-                          if(s.size() <= 11)return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);
-                          std::string head = "0" + s.substr(s.size() - 11, 1);
-                          std::string tail = "0" + s.substr(s.size() - 10);
-                          int msb = std::stoi(head,0,0);
-                          int lsb = std::stoi(tail,0,0);
-                          int val = (msb << 10 * 3) + lsb;
-                          return yy::MHSJParser::make_INTCONST(val, loc);}
-{Identifier} 					    {return yy::MHSJParser::make_IDENTIFIER(yytext, loc);}
+{DecConst} 				  {std::string dec = yytext;
+                           unsigned sum = 0;
+                           int len = dec.size();
+                           for(int i = 0;i < len;i++){
+                               auto a = dec[i];
+                               sum = sum * 10 + a - 48;
+                           }
+                          return yy::MHSJParser::make_INTCONST(int(sum),loc);}
+{HexConst}                {std::string hex = yytext;
+                           unsigned sum = 0;
+                           int len = hex.size();
+                           for(int i = 2;i < len;i++){
+                               auto a = hex[i];
+                               sum  = sum * 16 + ch2int[a];
+                           }
+                           return yy::MHSJParser::make_INTCONST(int(sum),loc);}
+{OctConst}                {std::string oct = yytext;
+                           unsigned sum = 0;
+                           int len = oct.size();
+                           for(int i = 1;i < len;i++){
+                               auto a = oct[i];
+                               sum  = sum * 8 + ch2int[a];
+                           }
+                           return yy::MHSJParser::make_INTCONST(int(sum),loc);}
+{Identifier} 			  {return yy::MHSJParser::make_IDENTIFIER(yytext, loc);}
 {STRING}                  {return yy::MHSJParser::make_STRINGCONST(yytext,loc);}
 <<EOF>>                   {return yy::MHSJParser::make_END(loc);}
 .			                    {std::cout << "Error in scanner!" << '\n'; exit(1);}

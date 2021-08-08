@@ -533,11 +533,11 @@ static const flex_int16_t yy_chk[190] =
 
 static const flex_int16_t yy_rule_linenum[44] =
     {   0,
-      100,  101,  102,  103,  104,  105,  106,  107,  108,  110,
-      111,  112,  113,  114,  115,  116,  117,  118,  119,  120,
-      121,  122,  123,  124,  125,  126,  127,  128,  129,  130,
-      131,  132,  135,  136,  137,  138,  141,  142,  151,  159,
-      167,  168,  170
+      125,  126,  127,  128,  129,  130,  131,  132,  133,  135,
+      136,  137,  138,  139,  140,  141,  142,  143,  144,  145,
+      146,  147,  148,  149,  150,  151,  152,  153,  154,  155,
+      156,  157,  160,  161,  162,  163,  166,  167,  175,  183,
+      191,  192,  194
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -556,10 +556,35 @@ static const flex_int16_t yy_rule_linenum[44] =
 # include <string>
 # include <algorithm>
 # include <iostream>
+# include <map>
 # include "MHSJDriver.h"
 # include "MHSJParser.h"
-#line 561 "MHSJScanner.cpp"
-#line 14 "../grammar/MHSJScanner.ll"
+std::map<char,int> ch2int = {
+    {'0',0},
+    {'1',1},
+    {'2',2},
+    {'3',3},
+    {'4',4},
+    {'5',5},
+    {'6',6},
+    {'7',7},
+    {'8',8},
+    {'9',9},
+    {'a',10},
+    {'b',11},
+    {'c',12},
+    {'d',13},
+    {'e',14},
+    {'f',15},
+    {'A',10},
+    {'B',11},
+    {'C',12},
+    {'D',13},
+    {'E',14},
+    {'F',15}
+};
+#line 586 "MHSJScanner.cpp"
+#line 39 "../grammar/MHSJScanner.ll"
 #if defined __clang__
 # define CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
 #endif
@@ -620,16 +645,16 @@ static const flex_int16_t yy_rule_linenum[44] =
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 # endif
 #endif
-#line 623 "MHSJScanner.cpp"
+#line 648 "MHSJScanner.cpp"
 #define YY_NO_INPUT 1
-#line 79 "../grammar/MHSJScanner.ll"
+#line 104 "../grammar/MHSJScanner.ll"
  /**/
   // Code run each time a pattern is matched.
   # define YY_USER_ACTION  loc.columns(yyleng);
-#line 629 "MHSJScanner.cpp"
-#line 85 "../grammar/MHSJScanner.ll"
+#line 654 "MHSJScanner.cpp"
+#line 110 "../grammar/MHSJScanner.ll"
  /* Regex abbreviations: */
-#line 632 "MHSJScanner.cpp"
+#line 657 "MHSJScanner.cpp"
 
 #define INITIAL 0
 
@@ -821,10 +846,10 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 98 "../grammar/MHSJScanner.ll"
+#line 123 "../grammar/MHSJScanner.ll"
 
  /* keyword */
-#line 827 "MHSJScanner.cpp"
+#line 852 "MHSJScanner.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -901,184 +926,184 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 100 "../grammar/MHSJScanner.ll"
+#line 125 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_INT(loc);}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 101 "../grammar/MHSJScanner.ll"
+#line 126 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_RETURN(loc);}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 102 "../grammar/MHSJScanner.ll"
+#line 127 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_VOID(loc);}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 103 "../grammar/MHSJScanner.ll"
+#line 128 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_CONST(loc);}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 104 "../grammar/MHSJScanner.ll"
+#line 129 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_BREAK(loc);}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 105 "../grammar/MHSJScanner.ll"
+#line 130 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_CONTINUE(loc);}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 106 "../grammar/MHSJScanner.ll"
+#line 131 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_WHILE(loc);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 107 "../grammar/MHSJScanner.ll"
+#line 132 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_IF(loc);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 108 "../grammar/MHSJScanner.ll"
+#line 133 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_ELSE(loc);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 110 "../grammar/MHSJScanner.ll"
+#line 135 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LT(loc);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 111 "../grammar/MHSJScanner.ll"
+#line 136 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LTE(loc);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 112 "../grammar/MHSJScanner.ll"
+#line 137 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_GT(loc);}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 113 "../grammar/MHSJScanner.ll"
+#line 138 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_GTE(loc);}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 114 "../grammar/MHSJScanner.ll"
+#line 139 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_EQ(loc);}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 115 "../grammar/MHSJScanner.ll"
+#line 140 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_NEQ(loc);}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 116 "../grammar/MHSJScanner.ll"
+#line 141 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_NOT(loc);}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 117 "../grammar/MHSJScanner.ll"
+#line 142 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LOGICAND(loc);}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 118 "../grammar/MHSJScanner.ll"
+#line 143 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LOGICOR(loc);}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 119 "../grammar/MHSJScanner.ll"
+#line 144 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_PLUS(loc);}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 120 "../grammar/MHSJScanner.ll"
+#line 145 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_MINUS(loc);}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 121 "../grammar/MHSJScanner.ll"
+#line 146 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_MULTIPLY(loc);}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 122 "../grammar/MHSJScanner.ll"
+#line 147 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_DIVIDE(loc);}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 123 "../grammar/MHSJScanner.ll"
+#line 148 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_MODULO(loc);}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 124 "../grammar/MHSJScanner.ll"
+#line 149 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_ASSIGN(loc);}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 125 "../grammar/MHSJScanner.ll"
+#line 150 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_SEMICOLON(loc);}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 126 "../grammar/MHSJScanner.ll"
+#line 151 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_COMMA(loc);}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 127 "../grammar/MHSJScanner.ll"
+#line 152 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LPARENTHESE(loc);}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 128 "../grammar/MHSJScanner.ll"
+#line 153 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_RPARENTHESE(loc);}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 129 "../grammar/MHSJScanner.ll"
+#line 154 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LBRACKET(loc);} 
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 130 "../grammar/MHSJScanner.ll"
+#line 155 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_RBRACKET(loc);}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 131 "../grammar/MHSJScanner.ll"
+#line 156 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LBRACE(loc);}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 132 "../grammar/MHSJScanner.ll"
+#line 157 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_RBRACE(loc);}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 135 "../grammar/MHSJScanner.ll"
+#line 160 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_LRBRACKET(loc);}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 136 "../grammar/MHSJScanner.ll"
+#line 161 "../grammar/MHSJScanner.ll"
 {loc.step();}
 	YY_BREAK
 case 35:
 /* rule 35 can match eol */
 YY_RULE_SETUP
-#line 137 "../grammar/MHSJScanner.ll"
+#line 162 "../grammar/MHSJScanner.ll"
 {loc.lines(yyleng); loc.step();}
 	YY_BREAK
 case 36:
 /* rule 36 can match eol */
 YY_RULE_SETUP
-#line 138 "../grammar/MHSJScanner.ll"
+#line 163 "../grammar/MHSJScanner.ll"
 {std::string s = yytext;
                           size_t n = std::count(s.begin(), s.end(), '\n');
                           for (size_t i = 0; i < n; i++) loc.lines(1);}
@@ -1088,72 +1113,71 @@ case 37:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 141 "../grammar/MHSJScanner.ll"
+#line 166 "../grammar/MHSJScanner.ll"
 /* ignore */{}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 142 "../grammar/MHSJScanner.ll"
-{std::string s = yytext;
-                          int i = 0;
-                          int val = 0;
-                          for(;i < s.size();i++){
-                            val = val * 10;
-                            val = val + (s[i] - '0');
-                          }
-                          val = val % (1 << 31);
-                          return yy::MHSJParser::make_INTCONST(val,loc);}
+#line 167 "../grammar/MHSJScanner.ll"
+{std::string dec = yytext;
+                           unsigned sum = 0;
+                           int len = dec.size();
+                           for(int i = 0;i < len;i++){
+                               auto a = dec[i];
+                               sum = sum * 10 + a - 48;
+                           }
+                          return yy::MHSJParser::make_INTCONST(int(sum),loc);}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 151 "../grammar/MHSJScanner.ll"
-{std::string s = yytext;
-                          if(s.size() <= 9)return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);
-                          std::string head = "0x" + s.substr(s.size() - 8, 1);
-                          std::string tail = "0x" + s.substr(s.size() - 7);
-                          int msb = std::stoi(head,0,0);
-                          int lsb = std::stoi(tail,0,0);
-                          int val = (msb << 7 * 4) + lsb;
-                          return yy::MHSJParser::make_INTCONST(val, loc);}
+#line 175 "../grammar/MHSJScanner.ll"
+{std::string hex = yytext;
+                           unsigned sum = 0;
+                           int len = hex.size();
+                           for(int i = 2;i < len;i++){
+                               auto a = hex[i];
+                               sum  = sum * 16 + ch2int[a];
+                           }
+                           return yy::MHSJParser::make_INTCONST(int(sum),loc);}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 159 "../grammar/MHSJScanner.ll"
-{std::string s = yytext;
-                          if(s.size() <= 11)return yy::MHSJParser::make_INTCONST(std::stoi(yytext,0,0),loc);
-                          std::string head = "0" + s.substr(s.size() - 11, 1);
-                          std::string tail = "0" + s.substr(s.size() - 10);
-                          int msb = std::stoi(head,0,0);
-                          int lsb = std::stoi(tail,0,0);
-                          int val = (msb << 10 * 3) + lsb;
-                          return yy::MHSJParser::make_INTCONST(val, loc);}
+#line 183 "../grammar/MHSJScanner.ll"
+{std::string oct = yytext;
+                           unsigned sum = 0;
+                           int len = oct.size();
+                           for(int i = 1;i < len;i++){
+                               auto a = oct[i];
+                               sum  = sum * 8 + ch2int[a];
+                           }
+                           return yy::MHSJParser::make_INTCONST(int(sum),loc);}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 167 "../grammar/MHSJScanner.ll"
+#line 191 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_IDENTIFIER(yytext, loc);}
 	YY_BREAK
 case 42:
 /* rule 42 can match eol */
 YY_RULE_SETUP
-#line 168 "../grammar/MHSJScanner.ll"
+#line 192 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_STRINGCONST(yytext,loc);}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 169 "../grammar/MHSJScanner.ll"
+#line 193 "../grammar/MHSJScanner.ll"
 {return yy::MHSJParser::make_END(loc);}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 170 "../grammar/MHSJScanner.ll"
+#line 194 "../grammar/MHSJScanner.ll"
 {std::cout << "Error in scanner!" << '\n'; exit(1);}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 171 "../grammar/MHSJScanner.ll"
+#line 195 "../grammar/MHSJScanner.ll"
 ECHO;
 	YY_BREAK
-#line 1156 "MHSJScanner.cpp"
+#line 1180 "MHSJScanner.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2270,7 +2294,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 171 "../grammar/MHSJScanner.ll"
+#line 195 "../grammar/MHSJScanner.ll"
 
 
 int yyFlexLexer::yylex() {
