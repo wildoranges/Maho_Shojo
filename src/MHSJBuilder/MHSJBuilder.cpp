@@ -540,9 +540,6 @@ void MHSJBuilder::visit(SyntaxTree::UnaryCondExpr &node) {
   if (node.op == SyntaxTree::UnaryCondOp::NOT) {
     node.rhs->accept(*this);
     auto r_val = tmp_val;
-    if (dynamic_cast<CmpInst*>(r_val)) {
-      r_val = builder->create_zext(r_val, INT32_T);
-    }
     tmp_val = builder->create_icmp_eq(r_val, CONST_INT(0));
   }
 }
@@ -580,14 +577,8 @@ void MHSJBuilder::visit(SyntaxTree::BinaryCondExpr &node) {
   else {
     node.lhs->accept(*this);
     auto l_val = tmp_val;
-    if (dynamic_cast<CmpInst*>(l_val)) {
-      l_val = builder->create_zext(l_val, INT32_T);
-    }
     node.rhs->accept(*this);
     auto r_val = tmp_val;
-    if (dynamic_cast<CmpInst*>(r_val)) {
-      r_val = builder->create_zext(r_val, INT32_T);
-    }
     Value *cmp;
     switch (node.op) {
     case SyntaxTree::BinaryCondOp::LT:
@@ -678,9 +669,6 @@ void MHSJBuilder::visit(SyntaxTree::UnaryExpr &node) {
       tmp_val = CONST_INT(0 - val_const->get_value());
     }
     else{
-      if (dynamic_cast<CmpInst*>(r_val) != nullptr) {
-        r_val = builder->create_zext(r_val, INT32_T);
-      }
       tmp_val = builder->create_isub(CONST_INT(0), r_val);
     }
   }
