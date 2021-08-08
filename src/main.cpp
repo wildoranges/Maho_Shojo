@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
             if(!print_mir){
-                passmgr.addPass<ConstPropagation>();
+                //passmgr.addPass<ConstPropagation>();
                 passmgr.addPass<LIR>();
                 passmgr.addPass<CFGSimplifier>();
                 passmgr.addPass<ActiveVar>();
