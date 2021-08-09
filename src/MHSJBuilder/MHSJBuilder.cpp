@@ -610,12 +610,12 @@ void MHSJBuilder::visit(SyntaxTree::BinaryExpr &node) {
     node.lhs->accept(*this);
   }
   else {
-    node.rhs->accept(*this);
-    auto r_val_const = dynamic_cast<ConstantInt *>(tmp_val);
-    auto r_val = tmp_val;
     node.lhs->accept(*this);
     auto l_val_const = dynamic_cast<ConstantInt *>(tmp_val);
     auto l_val = tmp_val;
+    node.rhs->accept(*this);
+    auto r_val_const = dynamic_cast<ConstantInt *>(tmp_val);
+    auto r_val = tmp_val;
     switch (node.op) {
     case SyntaxTree::BinOp::PLUS:
       if (r_val_const != nullptr && l_val_const != nullptr){
