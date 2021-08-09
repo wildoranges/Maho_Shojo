@@ -17,7 +17,7 @@ void LIR::execute() {
             }
             for (auto bb : func->get_basic_blocks()){
                 split_srem(bb);
-                //div_const2mul(bb);
+                div_const2mul(bb);
             }
             for (auto bb : func->get_basic_blocks()){
                 remove_unused_op(bb);
@@ -56,27 +56,31 @@ void LIR::load_offset(BasicBlock *bb) {
                 } else if (gep_ptr->get_num_operand() == 3) {
                     offset = gep_ptr->get_operand(2);
                 }
-            } else if (inst_ptr->is_add()) {
-                base = inst_ptr->get_operand(0);
-                auto offset_instr = dynamic_cast<Instruction*>(inst_ptr->get_operand(1));
-                if (offset_instr->is_mul()) {
-                    offset = offset_instr->get_operand(0);
-                } else if (offset_instr->is_lsl()) {
-                    offset = offset_instr->get_operand(0);
+            } else if (inst_ptr) {
+                if (inst_ptr->is_add()) {
+                    base = inst_ptr->get_operand(0);
+                    auto offset_instr = dynamic_cast<Instruction*>(inst_ptr->get_operand(1));
+                    if (offset_instr->is_mul()) {
+                        offset = offset_instr->get_operand(0);
+                    } else if (offset_instr->is_lsl()) {
+                        offset = offset_instr->get_operand(0);
+                    }
+                } else if (inst_ptr->is_muladd()) {
+                    base = inst_ptr->get_operand(2);
+                    offset = inst_ptr->get_operand(0);
+                } else if (inst_ptr->is_lsladd()) {
+                    base = inst_ptr->get_operand(0);
+                    offset = inst_ptr->get_operand(1);
                 }
-            } else if (inst_ptr->is_muladd()) {
-                base = inst_ptr->get_operand(2);
-                offset = inst_ptr->get_operand(0);
-            } else if (inst_ptr->is_lsladd()) {
-                base = inst_ptr->get_operand(0);
-                offset = inst_ptr->get_operand(1);
             }
-            auto load_offset_instr = LoadOffsetInst::create_load_offset(base->get_type()->get_pointer_element_type(), base, offset, bb);
-            instructions.pop_back();
-            bb->add_instruction(iter, load_offset_instr);
-            iter--;
-            instr->replace_all_use_with(load_offset_instr);
-            bb->delete_instr(instr);
+            if (gep_ptr || inst_ptr) {
+                auto load_offset_instr = LoadOffsetInst::create_load_offset(base->get_type()->get_pointer_element_type(), base, offset, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, load_offset_instr);
+                iter--;
+                instr->replace_all_use_with(load_offset_instr);
+                bb->delete_instr(instr);
+            }
         }
     }
 }
@@ -99,27 +103,31 @@ void LIR::store_offset(BasicBlock *bb) {
                 } else if (gep_ptr->get_num_operand() == 3) {
                     offset = gep_ptr->get_operand(2);
                 }
-            } else if (inst_ptr->is_add()) {
-                base = inst_ptr->get_operand(0);
-                auto offset_instr = dynamic_cast<Instruction*>(inst_ptr->get_operand(1));
-                if (offset_instr->is_mul()) {
-                    offset = offset_instr->get_operand(0);
-                } else if (offset_instr->is_lsl()) {
-                    offset = offset_instr->get_operand(0);
+            } else if (inst_ptr) {
+                if (inst_ptr->is_add()) {
+                    base = inst_ptr->get_operand(0);
+                    auto offset_instr = dynamic_cast<Instruction*>(inst_ptr->get_operand(1));
+                    if (offset_instr->is_mul()) {
+                        offset = offset_instr->get_operand(0);
+                    } else if (offset_instr->is_lsl()) {
+                        offset = offset_instr->get_operand(0);
+                    }
+                } else if (inst_ptr->is_muladd()) {
+                    base = inst_ptr->get_operand(2);
+                    offset = inst_ptr->get_operand(0);
+                } else if (inst_ptr->is_lsladd()) {
+                    base = inst_ptr->get_operand(0);
+                    offset = inst_ptr->get_operand(1);
                 }
-            } else if (inst_ptr->is_muladd()) {
-                base = inst_ptr->get_operand(2);
-                offset = inst_ptr->get_operand(0);
-            } else if (inst_ptr->is_lsladd()) {
-                base = inst_ptr->get_operand(0);
-                offset = inst_ptr->get_operand(1);
             }
-            auto store_offset_instr = StoreOffsetInst::create_store_offset(store_instr->get_rval(), base, offset, bb);
-            instructions.pop_back();
-            bb->add_instruction(iter, store_offset_instr);
-            iter--;
-            instr->replace_all_use_with(store_offset_instr);
-            bb->delete_instr(instr);
+            if (gep_ptr || inst_ptr) {
+                auto store_offset_instr = StoreOffsetInst::create_store_offset(store_instr->get_rval(), base, offset, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, store_offset_instr);
+                iter--;
+                instr->replace_all_use_with(store_offset_instr);
+                bb->delete_instr(instr);
+            }
         }
     }
 }
