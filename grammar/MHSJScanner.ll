@@ -115,7 +115,7 @@ DecConst            ([1-9][0-9]*)
 HexConst            ("0"[xX][0-9a-fA-F]+)
 Blank               [ \t\r]
 NewLine             [\n]
-SingleLineComment	"//"[^\n]*[\n]
+SingleLineComment	"//"[^\n\r]*[\n\r]
 STRING              \"([^\"]*(\\\")?)*\"
 LRBRACKET          \[([ \r\t\n]|{MultilineComment}|{SingleLineComment})*\]
 
