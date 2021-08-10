@@ -1365,12 +1365,18 @@
                     }
                 }
                 code += push_regs(cmp_br_tmp_reg);
+                accumulate_line_num += 1;
                 for(auto opr:need_push_val){
                     code += IR2asm::space;
                     code += "ldr ";
                     code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
                             stack_map[opr]->get_ofst_code(sp_extra_ofst);
                     code += IR2asm::endl;
+                    accumulate_line_num += 1;
+                }
+                if(accumulate_line_num > 950){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
                 }
             }
         }
