@@ -5,8 +5,12 @@ std::string print_as_op( Value *v, bool print_ty )
     std::string op_ir;
     if( print_ty )
     {
-        op_ir += v->get_type()->print(); 
-        op_ir += " ";
+        if (dynamic_cast<CmpInst*>(v)) {
+            op_ir += "i1 ";
+        } else {
+            op_ir += v->get_type()->print(); 
+            op_ir += " ";
+        }
     }
 
     if (dynamic_cast<GlobalVariable *>(v))
