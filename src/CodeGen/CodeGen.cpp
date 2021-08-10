@@ -606,7 +606,7 @@
         int inst_count = 0;
         for(auto bb: fun->get_basic_blocks()){
             for(auto inst: bb->get_instructions()){
-                //TODO: instruction cost
+                //TODO: better evaluation instruction cost
                 switch(inst->get_instr_type()){
                     case Instruction::OpID::call :{
                         inst_count += dynamic_cast<CallInst *>(inst)->get_num_operand() + 4;
@@ -1092,7 +1092,6 @@
         if(stack_size)code += callee_stack_operation_in(fun, stack_size);
         code += callee_arg_move(fun);
 
-        //TODO: basicblock gen
         for(auto bb: linear_bb){
             code += bb_gen(bb);
         }
@@ -1955,11 +1954,10 @@
         return ret_code;
     }
 
-    //TODO: return bb
 
     std::string CodeGen::instr_gen(Instruction * inst){
         std::string code;
-        //TODO: call functions in IR2asm , deal with phi inst(mov inst)
+        // call functions in IR2asm , deal with phi inst(mov inst)
         // may have many bugs
         auto instr_type = inst->get_instr_type();
         switch (instr_type)
