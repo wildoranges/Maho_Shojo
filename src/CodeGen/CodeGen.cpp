@@ -115,7 +115,7 @@
                 if(arg->get_arg_no() < 4)continue;
                 int type_size = arg->get_type()->get_size();
                 arg_on_stack.push_back(new IR2asm::Regbase(IR2asm::sp, arg_size));
-                arg_size += type_size;
+                arg_size += ((type_size + 3) / 4) * 4;
                 stack_args.push_back(dynamic_cast<Value*>(arg));
             }
         }
@@ -146,7 +146,7 @@
                     }
                 }
                 int type_size = vreg->get_type()->get_size();
-                size += type_size;
+                size += ((type_size + 3) / 4) * 4;
                 stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
             }
             used_reg.second.insert(IR2asm::frame_ptr);
@@ -155,7 +155,7 @@
                 auto alloc = dynamic_cast<AllocaInst*>(inst);
                 if(!alloc)continue;
                 int type_size = alloc->get_alloca_type()->get_size();
-                size += type_size;
+                size += ((type_size + 3) / 4) * 4;
                 stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
             }
         }
@@ -187,14 +187,14 @@
                     }
                 }
                 int type_size = vreg->get_type()->get_size();
-                size += type_size;
+                size += ((type_size + 3) / 4) * 4;
                 stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::sp, -size)});
             }
             for(auto inst: fun->get_entry_block()->get_instructions()){
                 auto alloc = dynamic_cast<AllocaInst*>(inst);
                 if(!alloc)continue;
                 int type_size = alloc->get_alloca_type()->get_size();
-                size += type_size;
+                size += ((type_size + 3) / 4) * 4;
                 stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::sp, -size)});
             }
             for(auto map: stack_map){
