@@ -1568,17 +1568,20 @@
                 int size = phi_src.size();
                 for(int i = 0;i<size;i++){
                     IR2asm::Location* tar = phi_target[i];
+                    auto tar_reg = dynamic_cast<IR2asm::RegLoc*>(tar);
                     IR2asm::Location* src = phi_src[i];
                     if(dynamic_cast<IR2asm::Regbase*>(src)){
-                        *code += IR2asm::space;
-                        *code += "LDR";
-                        *code += cmpop;
-                        *code += " ";
-                        *code += tar->get_code();
-                        *code += ", ";
-                        auto src_base = dynamic_cast<IR2asm::Regbase*>(src);
-                        *code += src_base->get_ofst_code(sp_extra_ofst);
-                        *code += IR2asm::endl;
+                         auto src_base = dynamic_cast<IR2asm::Regbase*>(src);
+                        *code += IR2asm::safe_load(new IR2asm::Reg(tar_reg->get_reg_id()),src_base,sp_extra_ofst,long_func,cmpop);
+                        // *code += IR2asm::space;
+                        // *code += "LDR";
+                        // *code += cmpop;
+                        // *code += " ";
+                        // *code += tar->get_code();
+                        // *code += ", ";
+                       
+                        // *code += src_base->get_ofst_code(sp_extra_ofst);
+                        // *code += IR2asm::endl;
                     }else{
                         auto reg_loc = dynamic_cast<IR2asm::RegLoc*>(src);
                         if(!reg_loc->is_constant()){
