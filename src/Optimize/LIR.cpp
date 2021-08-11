@@ -202,7 +202,7 @@ void LIR::mov_const(BasicBlock *bb) {
             }
             if (const_op2) {
                 auto const_op2_val = const_op2->get_value();
-                if (const_op2_val >= (1<<11) || const_op2_val < -(1<<11)) {
+                if (const_op2_val >= (1<<7) || const_op2_val < -(1<<7)) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
