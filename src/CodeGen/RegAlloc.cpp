@@ -103,6 +103,7 @@ void RegAllocDriver::compute_reg_alloc() {
             auto allocator = new RegAlloc(func);
             allocator->execute();
             reg_alloc[func] = allocator->get_reg_alloc();
+            bb_order[func] = allocator->get_block_order();
         }
     }
     std::cerr << "finish reg alloc\n";
