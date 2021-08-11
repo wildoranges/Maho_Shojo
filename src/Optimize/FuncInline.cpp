@@ -34,7 +34,7 @@ void FuncInline::need_inline_call_find(){
             auto inst_val = use.val_;
             auto inst = dynamic_cast<Instruction *>(inst_val);
             auto depth = inst->get_parent()->get_loop_depth();
-            if (depth + 1 < exp(0.04 * (double)LOC)){
+            if (depth + 2 < exp(0.04 * (double)LOC)){
                 continue;
             }
             calling_pair.push_back({inst->get_parent()->get_parent(),{inst,func}});
