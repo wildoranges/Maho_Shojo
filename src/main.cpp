@@ -153,8 +153,8 @@ int main(int argc, char *argv[])
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
 
-            // if(!no_dead_code_eli)
-            //     passmgr.addPass<DeadCodeElimination>();
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
 
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
