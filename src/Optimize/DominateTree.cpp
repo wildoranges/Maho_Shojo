@@ -103,6 +103,11 @@ void RDominateTree::get_revserse_post_order(Function *f) {
             break;
         }
     }
+    if(!exit_block){
+        std::cerr << "exit block is null,function must have a exit block with a ret instr\n";
+        std::cerr << "err function:\n" << f->print() << std::endl;
+        exit(14);
+    }
     std::set<BasicBlock*> visited = {};
     get_post_order(exit_block,visited);
     reverse_post_order.reverse();
