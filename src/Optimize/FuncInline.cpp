@@ -47,14 +47,6 @@ void FuncInline::func_inline(){
         auto func = pair.first;
         auto inst_call = pair.second.first;
         auto call_func = pair.second.second;
-
-        //I need to move alloca to entry block
-        //so remove the terminator of entry block
-        auto func_entry = func->get_entry_block();
-        auto entry_insts = &func_entry->get_instructions();
-        auto entry_terminator = func_entry->get_terminator();
-        entry_insts->pop_back();
-
         auto call_BB = inst_call->get_parent();
         auto split_BB = BasicBlock::create(module,"",func);
         bool need_move = false;
@@ -90,6 +82,17 @@ void FuncInline::func_inline(){
         //relation of split_BB has been maintained
         //call_BB have a call instruction as end
         //now I need to copy the BBs of call_func
+
+        //but before copying, there are some things that I have to do
+        //I need to move alloca to entry block
+        //so remove the terminator of entry block
+        auto func_entry = func->get_entry_block();
+        auto entry_insts = &func_entry->get_instructions();
+        auto entry_terminator = func_entry->get_terminator();
+        if (entry_terminator != nullptr){
+            entry_insts->pop_back();
+        }
+
         auto call_func_BBs = call_func->get_basic_blocks();
         BasicBlock *new_BB;
         Instruction *new_inst;
@@ -209,6 +212,8 @@ void FuncInline::func_inline(){
         BranchInst::create_br(new_entry, call_BB);
 
         //finally, it's time to add the terminator of entry block
-        entry_insts->push_back(entry_terminator);
+        if (entry_terminator != nullptr){
+            entry_insts->push_back(entry_terminator);
+        }
     }//end of for calling pair
 }
