@@ -6,6 +6,7 @@
 void FuncInline::execute(){
     need_inline_call_find();
     func_inline();
+    std::cout<<module->print()<<std::endl;
 }
 
 void FuncInline::need_inline_call_find(){
@@ -51,9 +52,9 @@ void FuncInline::func_inline(){
         //I need to move alloca to entry block
         //so remove the terminator of entry block
         auto func_entry = func->get_entry_block();
-        auto entry_insts = func_entry->get_instructions();
+        auto entry_insts = &func_entry->get_instructions();
         auto entry_terminator = func_entry->get_terminator();
-        entry_insts.pop_back();
+        entry_insts->pop_back();
 
         auto call_BB = inst_call->get_parent();
         auto split_BB = BasicBlock::create(module,"",func);
@@ -209,6 +210,6 @@ void FuncInline::func_inline(){
         BranchInst::create_br(new_entry, call_BB);
 
         //finally, it's time to add the terminator of entry block
-        entry_insts.push_back(entry_terminator);
+        entry_insts->push_back(entry_terminator);
     }//end of for calling pair
 }
