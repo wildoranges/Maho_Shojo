@@ -18,15 +18,23 @@
         to_store_set.clear();
         interval_set.clear();
         std::set<Value*> to_ld_set = {};
+        std::set<int> used_tmp_regs = {};
         bool use_target = false;
         bool can_use_inst_reg = false;
         if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
             auto reg_inter = reg_map[inst];
             if(reg_inter->reg_num<0){
-                reg_inter->reg_num = store_list.size();
-                auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                if(it==store_list.end()){
-                    store_list.push_back(reg_inter->reg_num);
+                if(!cur_tmp_regs.empty()){
+                    reg_inter->reg_num = *cur_tmp_regs.begin();
+                    cur_tmp_regs.erase(reg_inter->reg_num);
+                    used_tmp_regs.insert(reg_inter->reg_num);
+                }
+                else{
+                    reg_inter->reg_num = store_list.size();
+                    auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
+                    if(it==store_list.end()){
+                        store_list.push_back(reg_inter->reg_num);
+                    }
                 }
                 interval_set.insert(reg_inter);
                 to_store_set.insert(inst);

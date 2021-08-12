@@ -39,7 +39,8 @@ class CodeGen{
     std::vector<int> store_list;
     std::set<Value*> to_store_set;
     std::set<Interval*> interval_set;
-
+    std::set<int> cur_tmp_regs;
+    std::map<int, IR2asm::Location*> tmp_regs_loc;
 public:
     std::string push_tmp_instr_regs(Instruction* inst);
     std::string pop_tmp_instr_regs(Instruction* inst);
