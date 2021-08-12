@@ -1,6 +1,8 @@
 #include "CFG_analyse.h"
 
 void CFG_analyse::execute(){
+    std::cout<<"analyse"<<std::endl;
+    std::cout<<module->print()<<std::endl;
     for (auto func : module->get_functions()){
         if (func->get_basic_blocks().size()==0) continue;
         //reset
@@ -64,7 +66,7 @@ void CFG_analyse::loop_find(Function *func){
         BB_DFN.clear();
         BB_LOW.clear();
         for (auto succ : find_loop_entry(loop)->get_succ_basic_blocks()){
-            if (bb_loop[succ] == loop){
+            if (bb_loop[succ] == loop && succ != find_loop_entry(loop)){
                 tarjan_DFS(succ);
             }
         }
