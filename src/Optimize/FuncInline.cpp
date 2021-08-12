@@ -6,7 +6,6 @@
 void FuncInline::execute(){
     need_inline_call_find();
     func_inline();
-    std::cout<<module->print()<<std::endl;
 }
 
 void FuncInline::need_inline_call_find(){
