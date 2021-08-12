@@ -95,7 +95,9 @@ public:
     explicit RegAllocDriver(Module* m):module(m){}
     void compute_reg_alloc();
     std::map<Value*, Interval*>& get_reg_alloc_in_func(Function* f){return reg_alloc[f];}
+    std::list<BasicBlock*>& get_bb_order_in_func(Function* f){return bb_order[f];}
 private:
+    std::map<Function*, std::list<BasicBlock*>> bb_order;
     std::map<Function*,std::map<Value*,Interval*>> reg_alloc;
     Module* module;
 };
@@ -113,6 +115,7 @@ public:
     void walk_intervals();
     void set_unused_reg_num();
     std::map<Value*,Interval*>& get_reg_alloc(){return val2Inter;}
+    std::list<BasicBlock*>& get_block_order(){return block_order;}
 private:
     void get_dfs_order(BasicBlock* bb,std::set<BasicBlock*>& visited);
     void add_interval(Interval* interval){interval_list.insert(interval);}

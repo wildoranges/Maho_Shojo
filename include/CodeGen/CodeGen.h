@@ -36,11 +36,14 @@ class CodeGen{
     int sp_extra_ofst = 0;
     int func_param_extra_offset = 0;
     std::map<int,int> caller_saved_pos;
-    std::vector<int> cmp_br_tmp_reg;
-    std::set<Interval*> cmp_br_tmp_inter;
+    std::vector<int> store_list;
+    std::set<Value*> to_store_set;
+    std::set<Interval*> interval_set;
 
 public:
-    void make_linear_bb(Function* fun);
+    std::string push_tmp_instr_regs(Instruction* inst);
+    std::string pop_tmp_instr_regs(Instruction* inst);
+    void make_linear_bb(Function* fun, RegAllocDriver* driver = nullptr);
     void func_call_check(Function* fun);
     std::string make_lit_pool(bool have_br = false);
     std::string push_regs(std::vector<int> &reg_list, std::string cond = "");
@@ -50,7 +53,7 @@ public:
     std::string module_gen(Module* module);
     std::string global_def_gen(Module* module);
     void make_global_table(Module* module);
-    std::string function_gen(Function* function);
+    std::string function_gen(Function* function, RegAllocDriver* driver = nullptr);
     int stack_space_allocation(Function* fun);
     std::string callee_reg_store(Function* fun);
     std::string callee_stack_operation_in(Function* fun, int stack_size);
