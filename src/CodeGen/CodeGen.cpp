@@ -127,6 +127,9 @@
         for(auto inter:interval_set){
             inter->reg_num = -1;
         }
+        to_store_set.clear();
+        store_list.clear();
+        interval_set.clear();
         return code;
     }
 
