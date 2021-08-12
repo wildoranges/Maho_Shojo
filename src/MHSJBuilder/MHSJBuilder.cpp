@@ -678,16 +678,20 @@ void MHSJBuilder::visit(SyntaxTree::FuncCallStmt &node) {
   auto fun = static_cast<Function *>(scope.find_func(node.name));//FIXME:STATIC OR DYNAMIC?
   std::vector<Value *> params;
   int i = 0;
-  for (auto &param : node.params) {
-    if (fun->get_function_type()->get_param_type(i++)->is_integer_type()) {
+  if (node.name == "starttime" || node.name == "stoptime") {
+    params.push_back(ConstantInt::get(node.loc.begin.line, module.get()));
+  } else {
+    for (auto &param : node.params) {
+      if (fun->get_function_type()->get_param_type(i++)->is_integer_type()) {
+        require_lvalue = false;
+      }
+      else {
+        require_lvalue = true;
+      }
+      param->accept(*this);
       require_lvalue = false;
+      params.push_back(tmp_val);
     }
-    else {
-      require_lvalue = true;
-    }
-    param->accept(*this);
-    require_lvalue = false;
-    params.push_back(tmp_val);
   }
   tmp_val = builder->create_call(static_cast<Function *>(fun), params);
 }
