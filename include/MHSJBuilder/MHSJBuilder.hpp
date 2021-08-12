@@ -196,14 +196,18 @@ public:
                     "putarray",
                     module.get());
 
-        auto time_type = FunctionType::get(TyVoid, {});
+        std::vector<Type *>().swap(input_params);
+        input_params.push_back(TyInt32);
+        auto time_type = FunctionType::get(TyVoid, input_params);
         auto start_time =
             Function::create(
                     time_type,
                     "_sysy_starttime",
                     module.get());
 
-        time_type = FunctionType::get(TyVoid, {});
+        std::vector<Type *>().swap(input_params);
+        input_params.push_back(TyInt32);
+        time_type = FunctionType::get(TyVoid, input_params);
         auto stop_time =
             Function::create(
                     time_type,

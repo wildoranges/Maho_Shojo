@@ -580,6 +580,11 @@
         newlabel = new IR2asm::label(label_str);
         bb_label.insert({ret_bb, newlabel});
         linear_bb.push_back(ret_bb);
+        for(auto pair:bb_label){
+            auto bb = pair.first;
+            auto label = pair.second;
+            std::cerr << bb->get_name() << ":" << label->get_label() << std::endl;
+        }
         return;
     }
 
@@ -606,7 +611,7 @@
         int inst_count = 0;
         for(auto bb: fun->get_basic_blocks()){
             for(auto inst: bb->get_instructions()){
-                //TODO: instruction cost
+                //TODO: better evaluation instruction cost
                 switch(inst->get_instr_type()){
                     case Instruction::OpID::call :{
                         inst_count += dynamic_cast<CallInst *>(inst)->get_num_operand() + 4;
@@ -1092,7 +1097,6 @@
         if(stack_size)code += callee_stack_operation_in(fun, stack_size);
         code += callee_arg_move(fun);
 
-        //TODO: basicblock gen
         for(auto bb: linear_bb){
             code += bb_gen(bb);
         }
@@ -1366,12 +1370,18 @@
                     }
                 }
                 code += push_regs(cmp_br_tmp_reg);
+                accumulate_line_num += 1;
                 for(auto opr:need_push_val){
                     code += IR2asm::space;
                     code += "ldr ";
                     code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
                             stack_map[opr]->get_ofst_code(sp_extra_ofst);
                     code += IR2asm::endl;
+                    accumulate_line_num += 1;
+                }
+                if(accumulate_line_num > 950){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
                 }
             }
         }
@@ -1563,17 +1573,20 @@
                 int size = phi_src.size();
                 for(int i = 0;i<size;i++){
                     IR2asm::Location* tar = phi_target[i];
+                    auto tar_reg = dynamic_cast<IR2asm::RegLoc*>(tar);
                     IR2asm::Location* src = phi_src[i];
                     if(dynamic_cast<IR2asm::Regbase*>(src)){
-                        *code += IR2asm::space;
-                        *code += "LDR";
-                        *code += cmpop;
-                        *code += " ";
-                        *code += tar->get_code();
-                        *code += ", ";
-                        auto src_base = dynamic_cast<IR2asm::Regbase*>(src);
-                        *code += src_base->get_ofst_code(sp_extra_ofst);
-                        *code += IR2asm::endl;
+                         auto src_base = dynamic_cast<IR2asm::Regbase*>(src);
+                        *code += IR2asm::safe_load(new IR2asm::Reg(tar_reg->get_reg_id()),src_base,sp_extra_ofst,long_func,cmpop);
+                        // *code += IR2asm::space;
+                        // *code += "LDR";
+                        // *code += cmpop;
+                        // *code += " ";
+                        // *code += tar->get_code();
+                        // *code += ", ";
+                       
+                        // *code += src_base->get_ofst_code(sp_extra_ofst);
+                        // *code += IR2asm::endl;
                     }else{
                         auto reg_loc = dynamic_cast<IR2asm::RegLoc*>(src);
                         if(!reg_loc->is_constant()){
@@ -1634,6 +1647,7 @@
                 auto unused_reg = bb->get_parent()->get_unused_reg_num();
                 int tmp_reg_id;
                 bool need_to_save = true;
+                int tmp_tar_index = 0;
                 if(!unused_reg.empty()){
                     tmp_reg_id = *unused_reg.begin();
                 }
@@ -1728,6 +1742,8 @@
                     if(reg_tar_ptr){
                         if(reg_tar_ptr->get_reg_id()==tmp_reg_id){
                             need_to_save = false;
+                            tmp_tar_index = i;
+                            continue;
                         }
                         if(reg_src_ptr){
                             if(reg_src_ptr->is_constant()){
@@ -1851,6 +1867,36 @@
                     // *code += ", ";
                     // *code += IR2asm::Regbase(IR2asm::Reg(13),reg_offset[tmp_reg_id]).get_ofst_code();
                     // *code += IR2asm::endl;
+                }else{
+                    auto src_loc = phi_src[tmp_tar_index];
+                    auto src_reg = dynamic_cast<IR2asm::RegLoc*>(src_loc);
+                    auto src_stack = dynamic_cast<IR2asm::Regbase*>(src_loc);
+                    if(src_reg){
+                        if(src_reg->is_constant()){
+                            *code += IR2asm::space;
+                            *code += "ldr";
+                            *code += cmpop;
+                            *code += " ";
+                            *code += IR2asm::Reg(tmp_reg_id).get_code();
+                            *code += " ,=";
+                            *code += std::to_string(src_reg->get_constant());
+                            *code += IR2asm::endl;
+                        }
+                        else{
+                            *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                                                        new IR2asm::Regbase(IR2asm::Reg(13),reg_offset[src_reg->get_reg_id()]),
+                                                        0,
+                                                        long_func,
+                                                        cmpop);
+                        }
+                    }
+                    else{
+                        *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
+                                                   new IR2asm::Regbase(IR2asm::Reg(13),stack_offset[src_stack]),
+                                                   0,
+                                                   long_func,
+                                                   cmpop);
+                    }
                 }
             }
 //            for(auto opr:sux_bb_phi){
@@ -1955,11 +2001,10 @@
         return ret_code;
     }
 
-    //TODO: return bb
 
     std::string CodeGen::instr_gen(Instruction * inst){
         std::string code;
-        //TODO: call functions in IR2asm , deal with phi inst(mov inst)
+        // call functions in IR2asm , deal with phi inst(mov inst)
         // may have many bugs
         auto instr_type = inst->get_instr_type();
         switch (instr_type)

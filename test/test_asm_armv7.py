@@ -2,7 +2,7 @@
 import subprocess
 import os
 
-ASMBuild_ptn = '"{}" "-nocheck" "-S" "-o" "{}" "{}"'
+ASMBuild_ptn = '"{}" "-S" "-o" "{}" "{}"'
 ExeGen_ptn = '"gcc" "-o" "{}" "{}" "../lib/libsysy.a"'
 Exe_ptn = '"{}"'
 
@@ -42,7 +42,7 @@ def eval(EXE_PATH, TEST_BASE_PATH, timeout):
                         line = line.strip(b'\n')
                         if line == '':
                             continue
-                        if out[i] != line:
+                        if out[i].strip(b'\r') != line:
                             Success_flag = False
                             succ = False
                             print(result.stdout[:100], result.returncode, out[i][:100], line[:100], end='')
@@ -57,6 +57,7 @@ def eval(EXE_PATH, TEST_BASE_PATH, timeout):
                 print('\t\033[31mCodeGen or CodeExecute Fail\033[0m')
             finally:
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH])
+                subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH + ".s"])
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH + ".o"])
                 subprocess.call(["rm", "-rf", TEST_PATH, TEST_PATH + ".ll"])
 
@@ -79,7 +80,7 @@ if __name__ == "__main__":
                  #'./performance_test2021_pre/'
                  ]
     #TEST_BASE_PATH = './performance_test2021_pre/'
-    timeout = 5             # generally less than 50s
+    timeout = 50             # generally less than 50s
     # you should only revise this
     for TEST_BASE_PATH in TEST_DIRS:
         testcases = {}  # { name: need_input }
