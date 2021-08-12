@@ -36,8 +36,6 @@ class CodeGen{
     int sp_extra_ofst = 0;
     int func_param_extra_offset = 0;
     std::map<int,int> caller_saved_pos;
-    std::vector<int> cmp_br_tmp_reg;
-    std::set<Interval*> cmp_br_tmp_inter;
     std::vector<int> store_list;
     std::set<Value*> to_store_set;
     std::set<Interval*> interval_set;

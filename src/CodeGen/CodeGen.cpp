@@ -336,7 +336,7 @@
 
     std::string CodeGen::callee_reg_store(Function* fun){
         std::string code;
-        if(!used_reg.second.size())return IR2asm::space + "push {lr}" + IR2asm::endl;
+        if(used_reg.second.empty())return IR2asm::space + "push {lr}" + IR2asm::endl;
         code += IR2asm::space;
         code += "push {";
         for(auto reg: used_reg.second){
@@ -1007,62 +1007,18 @@
                 }
             }
         }
-
-        cmp_br_tmp_reg.clear();
-        cmp_br_tmp_inter.clear();
         if(br_inst->is_cmpbr()){
-            std::set<int> used_regs = {};
-            std::set<Value*> need_push_val;
-            for(auto opr:br_inst->get_operands()){
-                if(dynamic_cast<ConstantInt*>(opr)||dynamic_cast<BasicBlock*>(opr)){
-                    continue;
-                }
-                else{
-                    auto cur_inter = reg_map[opr];
-                    if(cur_inter->reg_num<0){
-                        need_push_val.insert(opr);
-                    }else{
-                        used_regs.insert(cur_inter->reg_num);
-                    }
-                }
-            }
-            if(!need_push_val.empty()){
-                for(auto opr:need_push_val){
-                    for(int i = 0;i <= 12;i++){
-                        if(i == 11){
-                            continue;
-                        }
-                        //auto reg_it = std::find(cmp_br_tmp_reg.begin(),cmp_br_tmp_reg.end(),i);
-                        if(used_regs.find(i)==used_regs.end()){
-                            auto cur_inter = reg_map[opr];
-                            cur_inter->reg_num = i;
-                            used_regs.insert(i);
-                            cmp_br_tmp_inter.insert(cur_inter);
-                            cmp_br_tmp_reg.push_back(i);
-                            break;
-                        }
-                    }
-                }
-                code += push_regs(cmp_br_tmp_reg);
-                accumulate_line_num += 1;
-                for(auto opr:need_push_val){
-                    code += IR2asm::space;
-                    code += "ldr ";
-                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
-                            stack_map[opr]->get_ofst_code(sp_extra_ofst);
-                    code += IR2asm::endl;
-                    accumulate_line_num += 1;
-                }
-                if(accumulate_line_num > 950){
-                    code += make_lit_pool();
-                    accumulate_line_num = 0;
-                }
+            std::string new_code;
+            new_code += push_tmp_instr_regs(br_inst);
+            code += new_code;
+            accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
+            if(accumulate_line_num > 950){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
             }
         }
         code += phi_union(bb, br_inst);
-        // code += instr_gen(br_inst);
         return code;
-        //TODO:PHI INST CHECK
     }
 
     void spilt_str(const std::string& s, std::vector<std::string>& sv, const char delim = ' ') {
@@ -1076,7 +1032,6 @@
     }
 
     std::string CodeGen::phi_union(BasicBlock* bb, Instruction* br_inst){
-        //TODO:right?
         if(dynamic_cast<ReturnInst *>(br_inst)){
             std::string code;
             accumulate_line_num += 1;
@@ -1105,12 +1060,7 @@
         std::vector<std::string> cmpbr_inst;
         std::string cmpbr_code = instr_gen(br_inst);
         std::string pop_code;
-        if(!cmp_br_tmp_reg.empty()){
-            pop_code += pop_regs(cmp_br_tmp_reg);
-            for(auto inter:cmp_br_tmp_inter){
-                inter->reg_num = -1;
-            }
-        }
+        pop_code += pop_tmp_instr_regs(br_inst);
         spilt_str(cmpbr_code, cmpbr_inst, IR2asm::endl[0]);
         std::vector<IR2asm::Location*> phi_target;
         std::vector<IR2asm::Location*> phi_src;
