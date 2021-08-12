@@ -91,7 +91,7 @@ void CFG_analyse::tarjan_DFS(BasicBlock *BB){
     if (BB_DFN[BB] == BB_LOW[BB]){
         BBs = new std::vector<BasicBlock*>;
         auto bb_instack = BB_Stack.top();
-        while (BB_LOW[bb_instack] == BB_LOW[BB]){
+        while (bb_instack != BB){
             BB_Stack.pop();
             BBs->push_back(bb_instack);
             color[bb_instack] = 2;
@@ -100,6 +100,9 @@ void CFG_analyse::tarjan_DFS(BasicBlock *BB){
             }
             bb_instack = BB_Stack.top();
         }
+        BB_Stack.pop();
+        BBs->push_back(bb_instack);
+        color[bb_instack] = 2;
         if (BBs->size()>1){
             loops.push_back(BBs);
             loop_stack.push(BBs);
