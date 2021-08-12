@@ -342,6 +342,7 @@ void LIR::split_gep(BasicBlock* bb) {
             instructions.pop_back();
             inst_gep->remove_use(real_ptr);
             inst_gep->replace_all_use_with(real_ptr);
+            inst_gep->get_use_list().clear();
             inst_gep->add_use(real_ptr);
         }
     }
