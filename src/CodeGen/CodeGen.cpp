@@ -35,28 +35,8 @@
         std::set<Value*> to_ld_set = {};
         std::set<int> used_tmp_regs = {};
         std::set<int> inst_reg_num_set = {};
+        std::set<int> opr_reg_num_set = {};
         bool can_use_inst_reg = false;
-        if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
-            auto reg_inter = reg_map[inst];
-            if(reg_inter->reg_num<0){
-                if(!cur_tmp_regs.empty()){
-                    reg_inter->reg_num = *cur_tmp_regs.begin();
-                    cur_tmp_regs.erase(reg_inter->reg_num);
-                    used_tmp_regs.insert(reg_inter->reg_num);
-                }
-                else{
-                    reg_inter->reg_num = store_list.size();
-                    auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                    if(it==store_list.end()){
-                        store_list.push_back(reg_inter->reg_num);
-                    }
-                }
-                interval_set.insert(reg_inter);
-                to_store_set.insert(inst);
-                can_use_inst_reg = true;
-            }
-            inst_reg_num_set.insert(reg_inter->reg_num);
-        }
         for (auto opr : inst->get_operands()) {
             if(dynamic_cast<Constant*>(opr) ||
             dynamic_cast<BasicBlock *>(opr) ||
@@ -66,7 +46,46 @@
             }
             if (reg_map[opr]->reg_num >= 0) {
                 inst_reg_num_set.insert(reg_map[opr]->reg_num);
+                opr_reg_num_set.insert(reg_map[opr]->reg_num);
             }
+        }
+        if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
+            auto reg_inter = reg_map[inst];
+            if(reg_inter->reg_num<0){
+                if(!cur_tmp_regs.empty()){
+                    reg_inter->reg_num = *cur_tmp_regs.begin();
+                    cur_tmp_regs.erase(reg_inter->reg_num);
+                    used_tmp_regs.insert(reg_inter->reg_num);
+                }
+                else{
+                    if(!opr_reg_num_set.empty()){
+                        for(int i = 0;i <= 12;i++){
+                            if(i == 11){
+                                continue;
+                            }
+                            if(opr_reg_num_set.find(i) == opr_reg_num_set.end()){
+                                reg_inter->reg_num = i;
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    else{
+                        reg_inter->reg_num = store_list.size();
+                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
+                        if(it==store_list.end()){
+                            store_list.push_back(reg_inter->reg_num);
+                        }
+                    }
+                }
+                interval_set.insert(reg_inter);
+                to_store_set.insert(inst);
+                can_use_inst_reg = true;
+            }
+            inst_reg_num_set.insert(reg_inter->reg_num);
         }
         for(auto opr:inst->get_operands()){
             if(dynamic_cast<Constant*>(opr) ||
@@ -79,8 +98,26 @@
             if(reg_inter->reg_num<0){
                 if(can_use_inst_reg){
                     can_use_inst_reg = false;
-                    reg_inter->reg_num = reg_map[inst]->reg_num;
-                    inst_reg_num_set.insert(reg_inter->reg_num);
+                    if(opr_reg_num_set.find(reg_map[inst]->reg_num)==opr_reg_num_set.end()){
+                        reg_inter->reg_num = reg_map[inst]->reg_num;
+                        inst_reg_num_set.insert(reg_inter->reg_num);
+                    }
+                    else{
+                        for(int i = 0;i <= 12;i++){
+                            if(i==11){
+                                continue;
+                            }
+                            if(inst_reg_num_set.find(i)==inst_reg_num_set.end()&&used_tmp_regs.find(i)==used_tmp_regs.end()){
+                                reg_inter->reg_num = i;
+                                inst_reg_num_set.insert(i);
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
                 else{
                     if(!cur_tmp_regs.empty()){
