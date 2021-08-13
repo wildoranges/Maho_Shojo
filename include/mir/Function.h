@@ -54,6 +54,20 @@ public:
     void set_instr_name();
     std::string print();
 
+    void set_local_array_side_effect_store(std::set<Value*> local_array_has_side_effect){local_array_has_side_effect_ = local_array_has_side_effect;}
+    void set_global_var_side_effect_store(std::set<Value*> global_var_has_side_effect){global_var_has_side_effect_ = global_var_has_side_effect;}
+    void set_global_array_side_effect_store(std::set<Value*> global_array_has_side_effect){global_array_has_side_effect_ = global_array_has_side_effect;}
+    void set_local_array_side_effect_load(std::set<Value*> local_array_effected_by_side_effect){local_array_effected_by_side_effect_ = local_array_effected_by_side_effect;}
+    void set_global_var_side_effect_load(std::set<Value*> global_var_effected_by_side_effect){global_var_effected_by_side_effect_ = global_var_effected_by_side_effect;}
+    void set_global_array_side_effect_load(std::set<Value*> global_array_effected_by_side_effect){global_array_effected_by_side_effect_ = global_array_effected_by_side_effect;}
+
+    std::set<Value*>& get_local_array_side_effect_store(){return local_array_has_side_effect_;}
+    std::set<Value*>& get_global_var_side_effect_store(){return global_var_has_side_effect_;}
+    std::set<Value*>& get_global_array_side_effect_store(){return global_array_has_side_effect_;}
+    std::set<Value*>& get_local_array_side_effect_load(){return local_array_effected_by_side_effect_;}
+    std::set<Value*>& get_global_var_side_effect_load(){return global_var_effected_by_side_effect_;}
+    std::set<Value*>& get_global_array_side_effect_load(){return global_array_effected_by_side_effect_;}
+
 private:
     void build_args();
 
@@ -64,6 +78,8 @@ private:
     Module *parent_;
     std::set<int> unused_reg_num_;
     unsigned seq_cnt_;
+    std::set<Value *> local_array_has_side_effect_, global_var_has_side_effect_, global_array_has_side_effect_;
+    std::set<Value *> local_array_effected_by_side_effect_, global_var_effected_by_side_effect_, global_array_effected_by_side_effect_;
     // unsigned num_args_;
     // We don't need this, all value inside function should be unnamed
     // std::map<std::string, Value*> sym_table_;   // Symbol table of args/instructions
