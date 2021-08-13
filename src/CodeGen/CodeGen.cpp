@@ -818,34 +818,65 @@
     }
 
     std::string CodeGen::callee_arg_move(Function* fun){
+        std::string save_code;
         std::string code;
+        std::set<int> conflict_src_reg;
+        std::map<int, IR2asm::Regbase*> conflict_reg_loc;
+        int size = 0;
         int arg_num = fun->get_args().size();
         if(!arg_num)return code;
         if(arg_num > 4)arg_num = 4;
-        code += IR2asm::space + "STMDB SP, {";
-        for(int i = 0; i < arg_num - 1; i++){
-            code += IR2asm::Reg(i).get_code();
-            code += ", ";
+        for(auto arg: fun->get_args()){
+            if(reg_map.find(arg) != reg_map.end()){
+                if(reg_map[arg]->reg_num == arg->get_arg_no())continue;
+                if(reg_map[arg]->reg_num >= 0 && reg_map[arg]->reg_num < arg_num)conflict_src_reg.insert(reg_map[arg]->reg_num);
+            }
         }
-        code += IR2asm::Reg(arg_num - 1).get_code() + "}" + IR2asm::endl;
+        if(!conflict_src_reg.empty()){
+            save_code += IR2asm::space + "STMDB SP, {";
+            for(auto reg: conflict_src_reg){
+                if(reg == *(conflict_src_reg.rbegin()))break;
+                save_code += IR2asm::Reg(reg).get_code();
+                save_code += ", ";
+            }
+            save_code += IR2asm::Reg(*(conflict_src_reg.rbegin())).get_code() + "}" + IR2asm::endl;
+        }
+        int conflict_store_size = conflict_src_reg.size() * reg_size;
+        for(auto reg: conflict_src_reg){
+            conflict_reg_loc.insert({reg, new IR2asm::Regbase(IR2asm::sp, size - conflict_store_size)});
+            size += reg_size;
+        }
+        // code += IR2asm::space + "STMDB SP, {";
+        // for(int i = 0; i < arg_num - 1; i++){
+        //     code += IR2asm::Reg(i).get_code();
+        //     code += ", ";
+        // }
+        // code += IR2asm::Reg(arg_num - 1).get_code() + "}" + IR2asm::endl;
         for(auto arg: fun->get_args()){
             int reg;
-            if(reg_map.find(arg)!= reg_map.end()){
+            if(reg_map.find(arg) != reg_map.end()){
                 reg = reg_map[arg]->reg_num;
             }
-            else{
-//                reg = -1;
-                continue;
-            }
+            else continue;
             if(arg->get_arg_no() < 4){
                 if(arg->get_arg_no() == reg)continue;
                 if(reg >= 0){
-                    code += IR2asm::space;
-                    code += "Ldr ";
-                    code += IR2asm::Reg(reg).get_code();
-                    code += ", ";
-                    code += IR2asm::Regbase(IR2asm::sp, - int_size * (arg_num-arg->get_arg_no())).get_code();
-                    code += IR2asm::endl;
+                    if(conflict_src_reg.find(arg->get_arg_no()) == conflict_src_reg.end()){
+                        code += IR2asm::space;
+                        code += "Mov ";
+                        code += IR2asm::Reg(reg).get_code();
+                        code += ", ";
+                        code += IR2asm::Reg(arg->get_arg_no()).get_code();
+                        code += IR2asm::endl;
+                    }
+                    else{
+                        code += IR2asm::space;
+                        code += "Ldr ";
+                        code += IR2asm::Reg(reg).get_code();
+                        code += ", ";
+                        code += conflict_reg_loc[arg->get_arg_no()]->get_code();
+                        code += IR2asm::endl;
+                    }
                 }
                 else{
                     code += IR2asm::safe_store(new IR2asm::Reg(arg->get_arg_no()),
