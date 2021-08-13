@@ -12,6 +12,21 @@
         return IR2asm::space + ".globl " + ".." + name + IR2asm::endl;
     }
 
+    std::string CodeGen::tmp_reg_restore(Instruction *inst) {
+        std::string code;
+        for(auto pair:tmp_regs_loc){
+            code += IR2asm::safe_load(new IR2asm::Reg(pair.first),
+                                      pair.second,
+                                      sp_extra_ofst,
+                                      long_func);
+        }
+        tmp_regs_loc.clear();
+        cur_tmp_regs.clear();
+        free_tmp_pos.clear();
+        free_tmp_pos = all_free_tmp_pos;
+        return code;
+    }
+
     std::string CodeGen::push_tmp_instr_regs(Instruction *inst) {
         std::string code;
         store_list.clear();
@@ -1132,6 +1147,7 @@
         std::string cmpbr_code = instr_gen(br_inst);
         std::string pop_code;
         pop_code += pop_tmp_instr_regs(br_inst);
+        pop_code += tmp_reg_restore(br_inst);
         spilt_str(cmpbr_code, cmpbr_inst, IR2asm::endl[0]);
         std::vector<IR2asm::Location*> phi_target;
         std::vector<IR2asm::Location*> phi_src;
@@ -1463,22 +1479,22 @@
                                                cmpop);
                 }else{
                     auto src_loc = phi_src[tmp_tar_index];
-                    auto src_reg = dynamic_cast<IR2asm::RegLoc*>(src_loc);
-                    auto src_stack = dynamic_cast<IR2asm::Regbase*>(src_loc);
-                    if(src_reg){
-                        if(src_reg->is_constant()){
+                    auto src_tmp_reg = dynamic_cast<IR2asm::RegLoc*>(src_loc);
+                    auto src_tmp_stack = dynamic_cast<IR2asm::Regbase*>(src_loc);
+                    if(src_tmp_reg){
+                        if(src_tmp_reg->is_constant()){
                             *code += IR2asm::space;
                             *code += "ldr";
                             *code += cmpop;
                             *code += " ";
                             *code += IR2asm::Reg(tmp_reg_id).get_code();
                             *code += " ,=";
-                            *code += std::to_string(src_reg->get_constant());
+                            *code += std::to_string(src_tmp_reg->get_constant());
                             *code += IR2asm::endl;
                         }
                         else{
                             *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                        new IR2asm::Regbase(IR2asm::Reg(13),reg_offset[src_reg->get_reg_id()]),
+                                                        new IR2asm::Regbase(IR2asm::Reg(13),reg_offset[src_tmp_reg->get_reg_id()]),
                                                         0,
                                                         long_func,
                                                         cmpop);
@@ -1486,7 +1502,7 @@
                     }
                     else{
                         *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                   new IR2asm::Regbase(IR2asm::Reg(13),stack_offset[src_stack]),
+                                                   new IR2asm::Regbase(IR2asm::Reg(13),stack_offset[src_tmp_stack]),
                                                    0,
                                                    long_func,
                                                    cmpop);

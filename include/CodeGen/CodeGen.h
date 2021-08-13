@@ -28,6 +28,7 @@ class CodeGen{
     int pool_number = 0;
     int accumulate_line_num = 0;
     int temp_reg_store_num = 3;
+    const std::set<int> all_free_tmp_pos = {0,1,2};//TODO:TOGETHER WITH temp_reg_store_num;
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
@@ -45,6 +46,7 @@ class CodeGen{
     std::set<int> cur_tmp_regs;
     std::map<int, IR2asm::Regbase*> tmp_regs_loc;
 public:
+    std::string tmp_reg_restore(Instruction* inst);
     std::string ld_tmp_regs(Instruction* inst);
     std::string push_tmp_instr_regs(Instruction* inst);
     std::string pop_tmp_instr_regs(Instruction* inst);
