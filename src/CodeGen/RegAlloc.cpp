@@ -99,14 +99,18 @@ void RegAllocDriver::compute_reg_alloc() {
         if(func->get_basic_blocks().empty()){
             continue;
         }else{
+#ifdef DEBUG
             std::cerr << "function " << func->get_name() << std::endl;
+#endif
             auto allocator = new RegAlloc(func);
             allocator->execute();
             reg_alloc[func] = allocator->get_reg_alloc();
             bb_order[func] = allocator->get_block_order();
         }
     }
+#ifdef DEBUG
     std::cerr << "finish reg alloc\n";
+#endif
 }
 
 void RegAlloc::execute() {
@@ -254,11 +258,15 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         }
     }
     for(auto pair:val2Inter){
+#ifdef DEBUG
         std::cerr << "op:" <<pair.first->get_name() << std::endl;
+#endif
         add_interval(pair.second);
+#ifdef DEBUG
         for(auto range:pair.second->range_list){
             std::cerr << "from: " << range->from << " to: " << range->to << std::endl;
         }
+#endif
     }
 }
 
@@ -295,12 +303,7 @@ void RegAlloc::walk_intervals() {
 //                it--;
 //            }
 //        }
-
-        if(try_alloc_free_reg()){//for debug
-            std::cerr << "alloc reg " << current->reg_num << " for val "<<current->val->get_name()<<std::endl;
-        }else{
-            std::cerr << "spill to stack for val "<<current->val->get_name()<<std::endl;
-        }
+        try_alloc_free_reg();
     }
 }
 
@@ -312,6 +315,9 @@ bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
         unused_reg_id.erase(assigned_id);
         active.insert(current);
         reg2ActInter[assigned_id].insert(current);
+#ifdef DEBUG
+        std::cerr << "alloc reg " << current->reg_num << " for val " << current->val->get_name() << std::endl;
+#endif
         return true;
     }
     else{
@@ -326,6 +332,9 @@ bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
                 unused_reg_id.erase(cur_reg_id);
                 active.insert(current);
                 pair.second.insert(current);//TODO:CHECK STL
+#ifdef DEBUG
+                std::cerr << "alloc reg " << current->reg_num << " for val " << current->val->get_name() << std::endl;
+#endif
                 return true;
             }
         }
@@ -356,11 +365,16 @@ bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
             for(auto val:reg2ActInter[current->reg_num]){
                 active.erase(val);
                 val->reg_num = -1;
+#ifdef DEBUG
                 std::cerr << "spill "<< val->val->get_name() <<" to stack" << std::endl;
+#endif
             }
             reg2ActInter[current->reg_num].clear();
             reg2ActInter[current->reg_num].insert(current);
             active.insert(current);
+#ifdef DEBUG
+            std::cerr << "alloc reg " << current->reg_num << " for val " << current->val->get_name() << std::endl;
+#endif
             return true;
         }
     }
@@ -377,7 +391,9 @@ void RegAlloc::add_reg_to_pool(Interval* inter) {//TODO:FIX BUG:INTERVAL WITH HO
         return;
     }
     if(reg2ActInter[reg_id].size() <= 1){
+#ifdef DEBUG
         std::cerr << "add "<<reg_id <<" to pool" << std::endl;
+#endif
         remained_all_reg_id.insert(reg_id);
     }
     reg2ActInter[reg_id].erase(inter);
@@ -398,12 +414,17 @@ void RegAlloc::union_phi_val() {
                 if(vreg_ptr->intersects(final_ptr))continue;
                 interval_list.erase(vreg_ptr);
                 interval_list.erase(final_ptr);
+#ifdef DEBUG
                 std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
+#endif
                 final_ptr->union_interval(vreg_ptr);
+#ifdef DEBUG
                 std::cerr << "after union:\n";
+
                 for(auto range:final_ptr->range_list){
                     std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
                 }
+#endif
                 val2Inter.erase(vreg);
                 val2Inter[vreg] = final_ptr;
                 interval_list.insert(final_ptr);

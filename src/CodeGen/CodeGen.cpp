@@ -742,11 +742,13 @@
         newlabel = new IR2asm::label(label_str);
         bb_label.insert({ret_bb, newlabel});
         linear_bb.push_back(ret_bb);
+#ifdef DEBUG
         for(auto pair:bb_label){
             auto bb = pair.first;
             auto label = pair.second;
             std::cerr << bb->get_name() << ":" << label->get_label() << std::endl;
         }
+#endif
         return;
     }
 
