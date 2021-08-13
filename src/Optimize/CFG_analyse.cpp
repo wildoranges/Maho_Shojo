@@ -1,8 +1,6 @@
 #include "CFG_analyse.h"
 
 void CFG_analyse::execute(){
-    std::cout<<"analyse"<<std::endl;
-    std::cout<<module->print()<<std::endl;
     for (auto func : module->get_functions()){
         if (func->get_basic_blocks().size()==0) continue;
         //reset
