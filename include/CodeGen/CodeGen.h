@@ -28,6 +28,7 @@ class CodeGen{
     int pool_number = 0;
     int accumulate_line_num = 0;
     int temp_reg_store_num = 3;
+    int caller_saved_reg_num = 5;
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
