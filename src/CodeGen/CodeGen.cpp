@@ -847,12 +847,6 @@
             conflict_reg_loc.insert({reg, new IR2asm::Regbase(IR2asm::sp, size - conflict_store_size)});
             size += reg_size;
         }
-        // code += IR2asm::space + "STMDB SP, {";
-        // for(int i = 0; i < arg_num - 1; i++){
-        //     code += IR2asm::Reg(i).get_code();
-        //     code += ", ";
-        // }
-        // code += IR2asm::Reg(arg_num - 1).get_code() + "}" + IR2asm::endl;
         for(auto arg: fun->get_args()){
             int reg;
             if(reg_map.find(arg) != reg_map.end()){
