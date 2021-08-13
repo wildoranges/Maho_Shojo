@@ -6,6 +6,7 @@ void Mem2Reg::execute(){
         if(fun->get_basic_blocks().size()==0)continue;
         func_ = fun;
         lvalue_connection.clear();
+        no_union_set.clear();
         insideBlockForwarding();
         genPhi();
         module->set_print_name();
@@ -46,6 +47,7 @@ void Mem2Reg::insideBlockForwarding(){
                     else{
                         auto old_lval = lvalue_connection[rvalue];
                         if(old_lval != lvalue){
+                            no_union_set.insert(rvalue);
                             // exit(-1);
                         }
                     }
@@ -311,6 +313,7 @@ void Mem2Reg::phiStatistic(){
             for(auto opr: inst->get_operands()){
                 if(dynamic_cast<BasicBlock *>(opr))continue;
                 if(dynamic_cast<Constant *>(opr))continue;
+                if(no_union_set.find(opr) != no_union_set.end())continue;
                 if(value_map.find(opr) != value_map.end()){
                     auto opr_reduced_value = value_map.find(opr)->second;
                     if(opr_reduced_value != reduced_value){
