@@ -114,7 +114,7 @@ void RegAlloc::execute() {
     compute_block_order();
     number_operations();
     build_intervals();
-    //union_phi_val();
+    union_phi_val();
     walk_intervals();
     set_unused_reg_num();
 }
@@ -394,6 +394,8 @@ void RegAlloc::union_phi_val() {
             }else{
                 auto vreg_ptr = val2Inter[vreg];
                 auto final_ptr = val2Inter[final_vreg];
+                //TODO: smarter union strategy
+                if(vreg_ptr->intersects(final_ptr))continue;
                 interval_list.erase(vreg_ptr);
                 interval_list.erase(final_ptr);
                 std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
