@@ -179,10 +179,11 @@
             std::set<int> to_del_set;
             std::set<int> to_ld_set;
             for(auto opr:inst->get_operands()){
-                if(dynamic_cast<Constant*>(opr) ||
+                if(dynamic_cast<Constant *>(opr) ||
                 dynamic_cast<BasicBlock *>(opr) ||
                 dynamic_cast<GlobalVariable *>(opr) ||
-                dynamic_cast<AllocaInst *>(opr)){
+                dynamic_cast<AllocaInst *>(opr) ||
+                dynamic_cast<Function* >(opr)){
                     continue;
                 }
                 int opr_reg = reg_map[opr]->reg_num;
@@ -981,6 +982,10 @@
         std::string code;
         sp_extra_ofst = 0;
         pool_number = 0;
+        cur_tmp_regs.clear();
+        tmp_regs_loc.clear();
+        free_tmp_pos.clear();
+        free_tmp_pos = all_free_tmp_pos;
         global_label_gen(fun);
         make_linear_bb(fun, driver);
         func_call_check(fun);
@@ -1061,8 +1066,9 @@
                 br_inst = inst;
                 break;
             }
+            new_code += ld_tmp_regs(inst);
             if(dynamic_cast<CallInst*>(inst)){
-                auto call_inst = dynamic_cast<CallInst*>(inst);        
+                auto call_inst = dynamic_cast<CallInst*>(inst);
                 new_code += caller_reg_store(bb->get_parent(),call_inst);
                 new_code += arg_move(call_inst);
                 new_code += instr_gen(call_inst);
@@ -1074,8 +1080,6 @@
                     accumulate_line_num = 0;
                 }
             }else if(instr_may_need_push_stack(inst)){
-
-                new_code += ld_tmp_regs(inst);
 
                 new_code += push_tmp_instr_regs(inst);
 
@@ -1100,8 +1104,9 @@
                 }
             }
         }
+        std::string new_code;
+        new_code += ld_tmp_regs(br_inst);
         if(br_inst->is_cmpbr()){
-            std::string new_code;
             new_code += ld_tmp_regs(br_inst);
             new_code += push_tmp_instr_regs(br_inst);
             code += new_code;
