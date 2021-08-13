@@ -299,6 +299,15 @@ void Mem2Reg::phiStatistic(){
         for(auto inst: bb->get_instructions()){
             if(!inst->is_phi())continue;
             auto phi_value = dynamic_cast<Value *>(inst);
+            if(value_map.find(phi_value) == value_map.end()){
+                value_map.insert({phi_value, dynamic_cast<PhiInst *>(inst)->get_lval()});
+            }
+        }
+    }
+    for(auto bb: func_->get_basic_blocks()){
+        for(auto inst: bb->get_instructions()){
+            if(!inst->is_phi())continue;
+            auto phi_value = dynamic_cast<Value *>(inst);
 #ifdef DEBUG
             std::cout << "phi find: " << phi_value->print() << "\n";
 #endif
