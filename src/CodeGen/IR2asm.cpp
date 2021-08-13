@@ -105,7 +105,7 @@ std::string getelementptr(Reg* rd, Location * ptr){
     std::string asmstr;
     auto regbase = dynamic_cast<Regbase *>(ptr);
     if(regbase){
-        if (regbase->get_offset() >= (1<<11) || regbase->get_offset() < -(1<<11)) {
+        if (regbase->get_offset() >= (1<<7) || regbase->get_offset() < -(1<<7)) {
             asmstr += ldr_const(rd, new IR2asm::constant(regbase->get_offset()));
             asmstr += add(rd, &regbase->get_reg(), new Operand2(*rd));
         } else {
@@ -146,10 +146,16 @@ std::string ret(Location *addr){
 }
 
 std::string ret(Value* retval){
+    auto const_retval = dynamic_cast<IR2asm::constant*>(retval);
     std::string asmstr;
     asmstr += space;
-    asmstr += "mov r0, ";
-    asmstr += retval->get_code();
+    if (const_retval) {
+        asmstr += "ldr r0, =";
+        asmstr += const_retval->get_num();
+    } else {
+        asmstr += "mov r0, ";
+        asmstr += retval->get_code();
+    }
     asmstr += endl;
     // asmstr += space;
     // asmstr += "br lr" + endl;

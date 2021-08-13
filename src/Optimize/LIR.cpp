@@ -9,12 +9,14 @@ void LIR::execute() {
     for (auto func : module->get_functions()){
         if (func->get_num_basic_blocks()>0){
             for (auto bb : func->get_basic_blocks()){
+                split_gep(bb);
+            }
+            for (auto bb : func->get_basic_blocks()){
                 load_offset(bb);
                 store_offset(bb);
             }
             for (auto bb : func->get_basic_blocks()){
                 split_srem(bb);
-                split_gep(bb);
                 div_const2mul(bb);
             }
             for (auto bb : func->get_basic_blocks()){
@@ -44,14 +46,35 @@ void LIR::load_offset(BasicBlock *bb) {
             auto load_instr = dynamic_cast<LoadInst*>(instr);
             auto ptr = load_instr->get_lval();
             auto gep_ptr = dynamic_cast<GetElementPtrInst*>(ptr);
+            auto inst_ptr = dynamic_cast<Instruction*>(ptr);
+            Value *base;
             Value *offset;
             if (gep_ptr) {
+                base = gep_ptr;
                 if (gep_ptr->get_num_operand() == 2) {
                     offset = gep_ptr->get_operand(1);
                 } else if (gep_ptr->get_num_operand() == 3) {
                     offset = gep_ptr->get_operand(2);
                 }
-                auto load_offset_instr = LoadOffsetInst::create_load_offset(ptr->get_type()->get_pointer_element_type(), gep_ptr, offset, bb);
+            } else if (inst_ptr) {
+                if (inst_ptr->is_add()) {
+                    base = inst_ptr->get_operand(0);
+                    auto offset_instr = dynamic_cast<Instruction*>(inst_ptr->get_operand(1));
+                    if (offset_instr->is_mul()) {
+                        offset = offset_instr->get_operand(0);
+                    } else if (offset_instr->is_lsl()) {
+                        offset = offset_instr->get_operand(0);
+                    }
+                } else if (inst_ptr->is_muladd()) {
+                    base = inst_ptr->get_operand(2);
+                    offset = inst_ptr->get_operand(0);
+                } else if (inst_ptr->is_lsladd()) {
+                    base = inst_ptr->get_operand(0);
+                    offset = inst_ptr->get_operand(1);
+                }
+            }
+            if (gep_ptr || inst_ptr) {
+                auto load_offset_instr = LoadOffsetInst::create_load_offset(base->get_type()->get_pointer_element_type(), base, offset, bb);
                 instructions.pop_back();
                 bb->add_instruction(iter, load_offset_instr);
                 iter--;
@@ -70,14 +93,35 @@ void LIR::store_offset(BasicBlock *bb) {
             auto store_instr = dynamic_cast<StoreInst*>(instr);
             auto ptr = store_instr->get_lval();
             auto gep_ptr = dynamic_cast<GetElementPtrInst*>(ptr);
+            auto inst_ptr = dynamic_cast<Instruction*>(ptr);
+            Value *base;
             Value *offset;
             if (gep_ptr) {
+                base = gep_ptr;
                 if (gep_ptr->get_num_operand() == 2) {
                     offset = gep_ptr->get_operand(1);
                 } else if (gep_ptr->get_num_operand() == 3) {
                     offset = gep_ptr->get_operand(2);
                 }
-                auto store_offset_instr = StoreOffsetInst::create_store_offset(store_instr->get_rval(), gep_ptr, offset, bb);
+            } else if (inst_ptr) {
+                if (inst_ptr->is_add()) {
+                    base = inst_ptr->get_operand(0);
+                    auto offset_instr = dynamic_cast<Instruction*>(inst_ptr->get_operand(1));
+                    if (offset_instr->is_mul()) {
+                        offset = offset_instr->get_operand(0);
+                    } else if (offset_instr->is_lsl()) {
+                        offset = offset_instr->get_operand(0);
+                    }
+                } else if (inst_ptr->is_muladd()) {
+                    base = inst_ptr->get_operand(2);
+                    offset = inst_ptr->get_operand(0);
+                } else if (inst_ptr->is_lsladd()) {
+                    base = inst_ptr->get_operand(0);
+                    offset = inst_ptr->get_operand(1);
+                }
+            }
+            if (gep_ptr || inst_ptr) {
+                auto store_offset_instr = StoreOffsetInst::create_store_offset(store_instr->get_rval(), base, offset, bb);
                 instructions.pop_back();
                 bb->add_instruction(iter, store_offset_instr);
                 iter--;
@@ -134,7 +178,7 @@ void LIR::mov_const(BasicBlock *bb) {
             auto const_op2 = dynamic_cast<ConstantInt*>(op2);
             if (const_op2) {
                 auto const_op2_val = const_op2->get_value();
-                if (const_op2_val >= (1<<11) || const_op2_val < -(1<<11)) {
+                if (const_op2_val >= (1<<7) || const_op2_val < -(1<<7)) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
@@ -158,7 +202,7 @@ void LIR::mov_const(BasicBlock *bb) {
             }
             if (const_op2) {
                 auto const_op2_val = const_op2->get_value();
-                if (const_op2_val >= (1<<11) || const_op2_val < -(1<<11)) {
+                if (const_op2_val >= (1<<7) || const_op2_val < -(1<<7)) {
                     auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
                     instructions.pop_back();
                     bb->add_instruction(iter, mov_const_instr);
@@ -290,6 +334,16 @@ void LIR::split_gep(BasicBlock* bb) {
             auto offset = inst_gep->get_operand(offset_op_num);
             inst_gep->remove_operands(offset_op_num, offset_op_num);
             inst_gep->add_operand(ConstantInt::get(0, module));
+            auto real_offset = BinaryInst::create_mul(offset, size, bb, module);
+            bb->add_instruction(++iter, instructions.back());
+            instructions.pop_back();
+            auto real_ptr = BinaryInst::create_add(inst_gep, real_offset, bb, module);
+            bb->add_instruction(iter--, instructions.back());
+            instructions.pop_back();
+            inst_gep->remove_use(real_ptr);
+            inst_gep->replace_all_use_with(real_ptr);
+            inst_gep->get_use_list().clear();
+            inst_gep->add_use(real_ptr);
         }
     }
 }
