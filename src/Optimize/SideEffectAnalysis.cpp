@@ -174,6 +174,8 @@ void SideEffectAnalysis::get_func_var_effected_by_side_effect(Function *func) {
 }
 
 void SideEffectAnalysis::get_func_total_side_effect() {
+    func_total_global_var_side_effect = func_global_var_side_effect;
+    func_total_global_array_side_effect = func_global_array_side_effect;
     for (auto func : module->get_functions()) {
         if (func->get_num_basic_blocks() == 0) continue;
         for (auto bb : func->get_basic_blocks()) {
@@ -252,6 +254,8 @@ void SideEffectAnalysis::get_func_total_side_effect() {
 }
 
 void SideEffectAnalysis::get_func_total_var_effected_by_side_effect() {
+    func_total_global_var_effected_by_side_effect = func_global_var_effected_by_side_effect;
+    func_total_global_array_effected_by_side_effect = func_global_array_effected_by_side_effect;
     for (auto func : module->get_functions()) {
         if (func->get_num_basic_blocks() == 0) continue;
         for (auto bb : func->get_basic_blocks()) {
