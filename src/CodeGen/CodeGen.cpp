@@ -318,10 +318,10 @@
                 size += ((type_size + 3) / 4) * 4;
                 stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::sp, -size)});
             }
-            for(auto map: stack_map){
-                int offset = map.second->get_offset();
-                map.second->set_offset(size + offset);
-            }
+            // for(auto map: stack_map){
+            //     int offset = map.second->get_offset();
+            //     map.second->set_offset(size + offset);
+            // }
         }
         // int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
         /******always save lr for tmp use*******/
@@ -335,6 +335,14 @@
                             + ((have_func_call)?20:0));
             stack_map.insert({stack_args[i], item});
             i++;
+        }
+        if(!have_func_call){
+            for(auto map: stack_map){
+                int offset = map.second->get_offset();
+                map.second->set_offset(size + offset
+                                        + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                                        + ((have_func_call)?20:0));
+            }
         }
         return size;
     }
