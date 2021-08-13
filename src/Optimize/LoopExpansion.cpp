@@ -13,7 +13,7 @@ void LoopExpansion::find_try(){
             continue;
         }
         auto expand_time = loop_check(loop);
-        if (expand_time == 0){
+        if (expand_time == 0 || expand_time > 20){
             continue;
         }
         expand(expand_time, loop);

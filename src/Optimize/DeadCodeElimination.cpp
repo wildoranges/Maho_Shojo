@@ -21,7 +21,7 @@ void DeadCodeElimination::execute() {
 }
 
 bool DeadCodeElimination::is_critical(Instruction *instr) {
-    if (instr->is_ret()) return true;
+    if (instr->isTerminator()) return true;
     else if (instr->is_call()) return true;
     else if (instr->is_store() || instr->is_store_offset() || instr->is_load() || instr->is_load_offset()) {
         // TODO: 需要修改策略
