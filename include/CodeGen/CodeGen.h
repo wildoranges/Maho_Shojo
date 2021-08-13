@@ -27,10 +27,12 @@ class CodeGen{
     int max_arg_size = 0;
     int pool_number = 0;
     int accumulate_line_num = 0;
+    int temp_reg_store_num = 3;
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
     bool long_func = false;
+    bool have_temp_reg = true;
     std::map<int, std::vector<Value*>> reg2val;
     std::vector<int> to_save_reg;
     int sp_extra_ofst = 0;

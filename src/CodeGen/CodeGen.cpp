@@ -209,7 +209,9 @@
         int i = 0;
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
-            item->set_offset(offset + reg_store_size + size + ((have_func_call)?20:0));
+            item->set_offset(offset + reg_store_size + size 
+                            + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                            + ((have_func_call)?20:0));
             stack_map.insert({stack_args[i], item});
             i++;
         }
@@ -1082,7 +1084,9 @@
         global_label_gen(fun);
         make_linear_bb(fun);
         func_call_check(fun);
-        int stack_size = stack_space_allocation(fun) + ((have_func_call)?20:0);
+        int stack_size = stack_space_allocation(fun) 
+                        + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                        + ((have_func_call)?20:0);
 //                + std::max(max_arg_size - 4 * reg_size, 0);
         code += IR2asm::space + ".globl " + fun->get_name() + IR2asm::endl;
         code += IR2asm::space + ".p2align " + std::to_string(int_p2align) + IR2asm::endl;
