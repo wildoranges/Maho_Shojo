@@ -287,89 +287,6 @@
                 stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::sp, -size)});
             }
         }
-        // if(have_func_call){
-        //     for(auto iter: reg_map){
-        //         Value* vreg = iter.first;
-        //         Interval* interval = iter.second;
-        //         if(interval->reg_num >= 0){
-        //             if(interval->reg_num > 3){
-        //                 used_reg.second.insert(interval->reg_num);
-        //             }
-        //             else{
-        //                 used_reg.first.insert(interval->reg_num);
-        //             }
-        //             if(reg2val.find(interval->reg_num)!=reg2val.end()){
-        //                 reg2val.find(interval->reg_num)->second.push_back(vreg);
-        //             }
-        //             else{
-        //                 reg2val.insert({interval->reg_num, {vreg}});
-        //             }
-        //             continue;
-        //         }
-        //         if(dynamic_cast<Argument*>(vreg)){
-        //             auto arg = dynamic_cast<Argument*>(vreg);
-        //             if(arg->get_arg_no() > 3){
-        //                 stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
-        //                 continue;
-        //             }
-        //         }
-        //         int type_size = vreg->get_type()->get_size();
-        //         size += ((type_size + 3) / 4) * 4;
-        //         stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
-        //     }
-        //     used_reg.second.insert(IR2asm::frame_ptr);
-        //     // size += reg_size;
-        //     for(auto inst: fun->get_entry_block()->get_instructions()){
-        //         auto alloc = dynamic_cast<AllocaInst*>(inst);
-        //         if(!alloc)continue;
-        //         int type_size = alloc->get_alloca_type()->get_size();
-        //         size += ((type_size + 3) / 4) * 4;
-        //         stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
-        //     }
-        // }
-        // else{
-        //     // stack alloc without frame pointer
-        //     for(auto iter: reg_map){
-        //         Value* vreg = iter.first;
-        //         Interval* interval = iter.second;
-        //         if(interval->reg_num >= 0){
-        //             if(interval->reg_num > 3){
-        //                 used_reg.second.insert(interval->reg_num);
-        //             }
-        //             else{
-        //                 used_reg.first.insert(interval->reg_num);
-        //             }
-        //             if(reg2val.find(interval->reg_num)!=reg2val.end()){
-        //                 reg2val.find(interval->reg_num)->second.push_back(vreg);
-        //             }
-        //             else{
-        //                 reg2val.insert({interval->reg_num, {vreg}});
-        //             }
-        //             continue;
-        //         }
-        //         if(dynamic_cast<Argument*>(vreg)){
-        //             auto arg = dynamic_cast<Argument*>(vreg);
-        //             if(arg->get_arg_no() > 3){
-        //                 // stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
-        //                 continue;
-        //             }
-        //         }
-        //         int type_size = vreg->get_type()->get_size();
-        //         size += ((type_size + 3) / 4) * 4;
-        //         stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::sp, -size)});
-        //     }
-        //     for(auto inst: fun->get_entry_block()->get_instructions()){
-        //         auto alloc = dynamic_cast<AllocaInst*>(inst);
-        //         if(!alloc)continue;
-        //         int type_size = alloc->get_alloca_type()->get_size();
-        //         size += ((type_size + 3) / 4) * 4;
-        //         stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::sp, -size)});
-        //     }
-        //     // for(auto map: stack_map){
-        //     //     int offset = map.second->get_offset();
-        //     //     map.second->set_offset(size + offset);
-        //     // }
-        // }
         size += ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
                 + ((have_func_call)?(caller_saved_reg_num * reg_size):0);
         if(!have_func_call){
@@ -430,7 +347,6 @@
     }
 
     std::string CodeGen::callee_stack_operation_in(Function* fun, int stack_size){
-        //TODO: immediate overflow
         int remain_stack_size = stack_size;
         std::string code;
         code += IR2asm::space;
