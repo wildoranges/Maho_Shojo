@@ -39,9 +39,11 @@ class CodeGen{
     std::vector<int> store_list;
     std::set<Value*> to_store_set;
     std::set<Interval*> interval_set;
+    std::set<int> free_tmp_pos = {0,1,2};//FIXME:4 TMP REG
     std::set<int> cur_tmp_regs;
-    std::map<int, IR2asm::Location*> tmp_regs_loc;
+    std::map<int, IR2asm::Regbase*> tmp_regs_loc;
 public:
+    std::string ld_tmp_regs(Instruction* inst);
     std::string push_tmp_instr_regs(Instruction* inst);
     std::string pop_tmp_instr_regs(Instruction* inst);
     void make_linear_bb(Function* fun, RegAllocDriver* driver = nullptr);

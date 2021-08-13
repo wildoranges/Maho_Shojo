@@ -19,7 +19,7 @@
         interval_set.clear();
         std::set<Value*> to_ld_set = {};
         std::set<int> used_tmp_regs = {};
-        bool use_target = false;
+        std::set<int> inst_reg_num_set = {};
         bool can_use_inst_reg = false;
         if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
             auto reg_inter = reg_map[inst];
@@ -38,13 +38,9 @@
                 }
                 interval_set.insert(reg_inter);
                 to_store_set.insert(inst);
-                use_target = true;
                 can_use_inst_reg = true;
             }
-        }
-        std::set<int> inst_reg_num_set = {};
-        if (!inst->is_void() && !dynamic_cast<AllocaInst *>(inst) && reg_map[inst]->reg_num >= 0) {
-            inst_reg_num_set.insert(reg_map[inst]->reg_num);
+            inst_reg_num_set.insert(reg_inter->reg_num);
         }
         for (auto opr : inst->get_operands()) {
             if(dynamic_cast<Constant*>(opr) ||
@@ -66,37 +62,30 @@
             }
             auto reg_inter = reg_map[opr];
             if(reg_inter->reg_num<0){
-                if(use_target){
-                    reg_inter->reg_num = store_list.size() - 1;
-                }else{
-                    reg_inter->reg_num = store_list.size();
+                if(can_use_inst_reg){
+                    can_use_inst_reg = false;
+                    reg_inter->reg_num = reg_map[inst]->reg_num;
+                    inst_reg_num_set.insert(reg_inter->reg_num);
                 }
-                auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                auto reg_it = inst_reg_num_set.find(reg_inter->reg_num);
-                if(it==store_list.end() && reg_it == inst_reg_num_set.end()){
-                    store_list.push_back(reg_inter->reg_num);
-                } else {
-                    if (can_use_inst_reg) {
-                        if (reg_it == inst_reg_num_set.end()) {
-                            can_use_inst_reg = false;
-                        } else {
-                            for (int i = 0; i <= 12; i++) {
-                                if (i == 11) continue;
-                                if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() &&
-                                inst_reg_num_set.find(i) == inst_reg_num_set.end()) {
-                                    reg_inter->reg_num = i;
-                                    store_list.push_back(reg_inter->reg_num);
-                                    break;
-                                }
+                else{
+                    if(!cur_tmp_regs.empty()){
+                        reg_inter->reg_num = *cur_tmp_regs.begin();
+                        cur_tmp_regs.erase(reg_inter->reg_num);
+                        used_tmp_regs.insert(reg_inter->reg_num);
+                        inst_reg_num_set.insert(reg_inter->reg_num);
+                    }
+                    else{
+                        for(int i = 0;i <= 12;i++){
+                            if(i==11){
+                                continue;
                             }
-                        }
-                    } else {
-                        for (int i = 0; i <= 12; i++) {
-                            if (i == 11) continue;
-                            if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() &&
-                            inst_reg_num_set.find(i) == inst_reg_num_set.end()) {
+                            if(inst_reg_num_set.find(i)==inst_reg_num_set.end()&&used_tmp_regs.find(i)==used_tmp_regs.end()){
                                 reg_inter->reg_num = i;
-                                store_list.push_back(reg_inter->reg_num);
+                                inst_reg_num_set.insert(i);
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
+                                }
                                 break;
                             }
                         }
@@ -106,8 +95,25 @@
                 to_ld_set.insert(opr);
             }
         }
-        if(!store_list.empty()){
-            code += push_regs(store_list);
+        int tmp_reg_base = have_func_call?20:0;
+        for(auto reg_id:store_list){
+            if(free_tmp_pos.empty()){
+                std::cerr << "free pos not empty, something was wrong with inst: "<< inst->print() << std::endl;
+                exit(15);
+            }
+            int free_pos = *free_tmp_pos.begin();
+            free_tmp_pos.erase(free_pos);
+            int cur_ofset = free_pos;//FIXME:offset
+            auto loc = new IR2asm::Regbase(IR2asm::Reg(13),cur_ofset*4+tmp_reg_base);
+            tmp_regs_loc[reg_id] = loc;
+            code += IR2asm::safe_store(new IR2asm::Reg(reg_id),
+                                       loc,
+                                       sp_extra_ofst,
+                                       long_func);
+            cur_tmp_regs.insert(reg_id);
+        }
+        for(auto tmp_reg:used_tmp_regs){
+            cur_tmp_regs.insert(tmp_reg);
         }
         for(auto opr:to_ld_set){
             code += IR2asm::safe_load(new IR2asm::Reg(reg_map[opr]->reg_num),
@@ -126,10 +132,6 @@
                                            stack_map[opr],
                                            sp_extra_ofst,
                                            long_func);
-        }
-
-        if(!store_list.empty()){
-            code += pop_regs(store_list);
         }
 
         for(auto inter:interval_set){
@@ -154,6 +156,57 @@
             }
         }
         return true;
+    }
+
+    std::string CodeGen::ld_tmp_regs(Instruction *inst) {
+        std::string code;
+        if(!inst->is_alloca() && !inst->is_phi()){
+            std::set<int> to_del_set;
+            std::set<int> to_ld_set;
+            for(auto opr:inst->get_operands()){
+                if(dynamic_cast<Constant*>(opr) ||
+                dynamic_cast<BasicBlock *>(opr) ||
+                dynamic_cast<GlobalVariable *>(opr) ||
+                dynamic_cast<AllocaInst *>(opr)){
+                    continue;
+                }
+                int opr_reg = reg_map[opr]->reg_num;
+                if(opr_reg >= 0){
+                    for(auto reg:cur_tmp_regs){
+                        if(reg==opr_reg){
+                            to_ld_set.insert(reg);
+                            to_del_set.insert(reg);
+                        }
+                    }
+                }
+            }
+            if(!inst->is_void()){
+                int inst_reg = reg_map[inst]->reg_num;
+                if(inst_reg >= 0){
+                    if(cur_tmp_regs.find(inst_reg)!=cur_tmp_regs.end()){
+                        to_del_set.insert(inst_reg);
+                    }
+                }
+            }
+            for(auto ld_reg:to_ld_set){
+                code += IR2asm::safe_load(new IR2asm::Reg(ld_reg),
+                                          tmp_regs_loc[ld_reg],
+                                          sp_extra_ofst,
+                                          long_func);
+            }
+            for(auto del_reg:to_del_set){
+                auto del_pos = tmp_regs_loc[del_reg];
+                int del_free_pos = del_pos->get_offset();
+                if(have_func_call){
+                    del_free_pos -= 20;
+                }
+                del_free_pos /= 4;
+                free_tmp_pos.insert(del_free_pos);
+                cur_tmp_regs.erase(del_reg);
+                tmp_regs_loc.erase(del_reg);//FIXME:CUR_OFFSET
+            }
+        }
+        return code;
     }
 
     std::string CodeGen::global_def_gen(Module* module){
@@ -995,6 +1048,8 @@
                 }
             }else if(instr_may_need_push_stack(inst)){
 
+                new_code += ld_tmp_regs(inst);
+
                 new_code += push_tmp_instr_regs(inst);
 
                 new_code += instr_gen(inst);
@@ -1020,6 +1075,7 @@
         }
         if(br_inst->is_cmpbr()){
             std::string new_code;
+            new_code += ld_tmp_regs(br_inst);
             new_code += push_tmp_instr_regs(br_inst);
             code += new_code;
             accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
