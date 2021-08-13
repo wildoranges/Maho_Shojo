@@ -403,6 +403,14 @@
         /******always save lr for tmp use*******/
         int reg_store_size = reg_size * (used_reg.second.size() + 1);
 //        int reg_store_size = reg_size * ((have_func_call)? 5 : 0);
+        if(!have_func_call){
+            for(auto map: stack_map){
+                int offset = map.second->get_offset();
+                map.second->set_offset(size + offset
+                + ((have_temp_reg)?(temp_reg_store_num * reg_size):0)
+                + ((have_func_call)?20:0));
+            }
+        }
         int i = 0;
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
@@ -411,14 +419,6 @@
                             + ((have_func_call)?20:0));
             stack_map.insert({stack_args[i], item});
             i++;
-        }
-        if(!have_func_call){
-            for(auto map: stack_map){
-                int offset = map.second->get_offset();
-                map.second->set_offset(size + offset
-                                        + ((have_temp_reg)?(temp_reg_store_num * reg_size):0)
-                                        + ((have_func_call)?20:0));
-            }
         }
         return size;
     }
