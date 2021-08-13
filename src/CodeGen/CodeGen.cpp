@@ -828,8 +828,9 @@
         if(arg_num > 4)arg_num = 4;
         for(auto arg: fun->get_args()){
             if(reg_map.find(arg) != reg_map.end()){
-                if(reg_map[arg]->reg_num == arg->get_arg_no())continue;
-                if(reg_map[arg]->reg_num >= 0 && reg_map[arg]->reg_num < arg_num)conflict_src_reg.insert(reg_map[arg]->reg_num);
+                int target = reg_map[arg]->reg_num;
+                if(target == arg->get_arg_no())continue;
+                if(target >= 0 && target < arg_num)conflict_src_reg.insert(target);
             }
         }
         if(!conflict_src_reg.empty()){
@@ -893,7 +894,7 @@
                                           long_func);
             }
         }
-        return code;
+        return save_code + code;
     }
 
     std::string CodeGen::function_gen(Function* fun,RegAllocDriver* driver){
