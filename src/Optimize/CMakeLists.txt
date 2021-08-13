@@ -13,5 +13,7 @@ add_library(
         AvailableExpr.cpp
         FuncInline.cpp
         LoopExpansion.cpp
+        Global2Local.cpp
+        SideEffectAnalysis.cpp
 )
 
