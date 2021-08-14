@@ -118,7 +118,7 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                     //get the local global of succ BB
                     //fill the no-operand phi
                     //check if phi is need
-                    Value * first_local_global;
+                    Value * first_local_global = nullptr;
                     bool all_same = true;
                     for (auto succ_pre : succ_BB->get_pre_basic_blocks()){
                         if (first_local_global == nullptr){
@@ -126,7 +126,15 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                             first_local_global = bb2local_global[succ_pre];
                         }
                         else {
-                            if (first_local_global != bb2local_global[succ_pre]){
+                            auto const_first_local_global = dynamic_cast<ConstantInt *>(first_local_global);
+                            auto const_local_global = dynamic_cast<ConstantInt *>(bb2local_global[succ_pre]);
+                            if (const_first_local_global != nullptr && const_local_global != nullptr){
+                                if (const_first_local_global->get_value() != const_local_global->get_value()){
+                                    all_same = false;
+                                    break;
+                                }
+                            }
+                            else if (first_local_global != bb2local_global[succ_pre]){
                                 all_same = false;
                                 break;
                             }
