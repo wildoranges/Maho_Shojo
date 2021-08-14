@@ -2,6 +2,8 @@
 #define MHSJ_GLOBAL2LOCAL_H
 
 #include "Pass.h"
+#include "SideEffectAnalysis.h"
+#include <memory>
 
 class Global2Local : public Pass
 {

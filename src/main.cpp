@@ -155,6 +155,8 @@ int main(int argc, char *argv[])
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
 
+            passmgr.addPass<Global2Local>();
+
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
@@ -266,8 +268,6 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
-            passmgr.addPass<SideEffectAnalysis>();
-            passmgr.addPass<Global2Local>();
 
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();

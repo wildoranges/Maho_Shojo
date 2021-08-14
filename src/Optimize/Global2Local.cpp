@@ -2,6 +2,8 @@
 #include <queue>
 
 void Global2Local::execute(){
+    auto sea = std::make_unique<SideEffectAnalysis>(module);
+    sea->execute();
     analyse();
     for (auto pair : localize_info){
         if (pair.second.size()>0){
@@ -36,6 +38,7 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
     std::map<BasicBlock *, int> color;
     std::queue<BasicBlock *> BB_queue;
     std::vector<Instruction *> need_delete;
+    std::map<BasicBlock *, PhiInst *> phis;
     BB_queue.push(func_entry);
     while (!BB_queue.empty()){
         auto cur_BB = BB_queue.front();
@@ -113,7 +116,7 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                 if (ready){
                     //all pre BB are analysed
                     //get the local global of succ BB
-
+                    //fill the no-operand phi
                     //check if phi is need
                     Value * first_local_global;
                     bool all_same = true;
@@ -129,20 +132,35 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                             }
                         }
                     }
+                    auto phi_global = phis[succ_BB];
                     if (all_same){
                         //all pre BBs have the same local global
+                        //phi is not need
+                        //delete the phi
                         bb2local_global[succ_BB] = first_local_global;
+                        succ_BB->delete_instr(phi_global);
                     }
                     else{
                         //phi is need
-                        auto phi_global = PhiInst::create_phi(global->get_type()->get_pointer_element_type(), succ_BB);
+                        //fill the phi
                         for (auto succ_pre : succ_BB->get_pre_basic_blocks()){
                             phi_global->add_phi_pair_operand(bb2local_global[succ_pre], succ_pre);
                         }
+                    }
+                }
+                else if (color[succ_BB] != 1) {
+                    //if there is a loop
+                    //a bb has to be searched before it's pre BB
+                    //so we have to search a BB before it's pre BB
+                    //create a phi without operands
+                    if (phis[succ_BB] == nullptr){
+                        //I cannot create a lot of phis
+                        auto phi_global = PhiInst::create_phi(global->get_type()->get_pointer_element_type(), succ_BB);
                         succ_BB->add_instr_begin(phi_global);
                         bb2local_global[succ_BB] = phi_global;
+                        phis[succ_BB] = phi_global;
+                        BB_queue.push(succ_BB);
                     }
-                    BB_queue.push(succ_BB);
                 }
             }
         }
