@@ -172,6 +172,10 @@ void RegAlloc::get_dfs_order(BasicBlock *bb, std::set<BasicBlock *> &visited) {
     }
 }
 
+void RegAlloc::compute_bonus_and_cost() {
+
+}
+
 void RegAlloc::number_operations() {
     int next_id = 0;
     for(auto bb:block_order){

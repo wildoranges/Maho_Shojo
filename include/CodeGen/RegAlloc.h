@@ -102,13 +102,14 @@ private:
     Module* module;
 };
 
-class RegAlloc{
+class RegAlloc{//Linear Scan Register Allocation
 public:
     explicit RegAlloc(Function* f):func(f){}
     //int get_reg(Value* value);
     void execute();
     void init();
     void compute_block_order();
+    void compute_bonus_and_cost();
     void number_operations();
     void build_intervals();
     void union_phi_val();
@@ -132,6 +133,9 @@ private:
     std::list<BasicBlock*> block_order={};
     std::set<Interval*,cmp_interval> interval_list;
     std::map<int,std::set<Interval*>> reg2ActInter;
+    std::map<Value* ,double> spill_cost;
+    std::map<Value* ,std::map<Value*, double>> phi_bonus;
+    std::map<Value* ,std::map<int, double>> call_bonus;
 };
 
 #endif //MHSJ_REG_ALLOC_H
