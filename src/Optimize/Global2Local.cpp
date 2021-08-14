@@ -14,7 +14,7 @@ void Global2Local::execute(){
 
 void Global2Local::analyse(){
     for (auto global : module->get_global_variable()){
-        if (global->get_type()->is_array_type()){
+        if (global->get_type()->get_pointer_element_type()->is_array_type()){
             continue;
         }
         for (auto use_pair : global->get_use_list()){
@@ -148,7 +148,12 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                         //all pre BBs have the same local global
                         //phi is not need
                         //delete the phi
-                        bb2local_global[succ_BB] = first_local_global;
+                        //replace phi_global to first_local_global
+                        for (auto pair : bb2local_global){
+                            if (pair.second == phi_global){
+                                bb2local_global[pair.first] = first_local_global;
+                            }
+                        }
                         phi_global->replace_all_use_with(first_local_global);
                         succ_BB->delete_instr(phi_global);
                     }
