@@ -146,6 +146,7 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                         //phi is not need
                         //delete the phi
                         bb2local_global[succ_BB] = first_local_global;
+                        phi_global->replace_all_use_with(first_local_global);
                         succ_BB->delete_instr(phi_global);
                     }
                     else{
