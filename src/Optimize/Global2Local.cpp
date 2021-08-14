@@ -182,6 +182,7 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
         }
     }
     //delete useless phis
+    std::set<PhiInst *> wait_for_delete;
     while (!can_delete_phis.empty()){
         auto can_delete_phi = can_delete_phis.front();
         can_delete_phis.pop();
@@ -217,6 +218,10 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                 }
             }
         }
-        can_delete_phi->get_parent()->delete_instr(can_delete_phi);
+        can_delete_phi->get_use_list().clear();
+        wait_for_delete.insert(can_delete_phi);
+    }
+    for (auto local_global_phi : wait_for_delete){
+        local_global_phi->get_parent()->delete_instr(local_global_phi);
     }
 }
