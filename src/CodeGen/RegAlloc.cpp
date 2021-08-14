@@ -392,34 +392,45 @@ void RegAlloc::add_reg_to_pool(Interval* inter) {//TODO:FIX BUG:INTERVAL WITH HO
 }
 
 void RegAlloc::union_phi_val() {
-    auto vreg_sets = func->get_vreg_set();
-    for(const auto& set:vreg_sets){
-        Value* final_vreg = nullptr;
-        for(auto vreg:set){
-            if(val2Inter.find(vreg) == val2Inter.end())continue;
-            if(final_vreg == nullptr){
-                final_vreg = vreg;
-            }else{
-                auto vreg_ptr = val2Inter[vreg];
-                auto final_ptr = val2Inter[final_vreg];
-                //TODO: smarter union strategy
-                if(vreg_ptr->intersects(final_ptr))continue;
-                interval_list.erase(vreg_ptr);
-                interval_list.erase(final_ptr);
+    bool change = true;
+    while(change){
+        change = false;
+        auto vreg_sets = func->get_vreg_set();
+        for(auto& set:vreg_sets){
+            std::set<Value*> to_del_set = {};
+            Value* final_vreg = nullptr;
+            for(auto vreg:set){
+                if(val2Inter.find(vreg) == val2Inter.end())continue;
+                if(final_vreg == nullptr){
+                    final_vreg = vreg;
+                }else{
+                    auto vreg_ptr = val2Inter[vreg];
+                    auto final_ptr = val2Inter[final_vreg];
+                    //TODO: smarter union strategy
+                    if(vreg_ptr->intersects(final_ptr))continue;
+                    interval_list.erase(vreg_ptr);
+                    interval_list.erase(final_ptr);
 #ifdef DEBUG
-                std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
+                    std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
 #endif
-                final_ptr->union_interval(vreg_ptr);
+                    final_ptr->union_interval(vreg_ptr);
 #ifdef DEBUG
-                std::cerr << "after union:\n";
+                    std::cerr << "after union:\n";
 
-                for(auto range:final_ptr->range_list){
-                    std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
-                }
+                    for(auto range:final_ptr->range_list){
+                        std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
+                    }
 #endif
-                val2Inter.erase(vreg);
-                val2Inter[vreg] = final_ptr;
-                interval_list.insert(final_ptr);
+                    val2Inter.erase(vreg);
+                    val2Inter[vreg] = final_ptr;
+                    interval_list.insert(final_ptr);
+                    change = true;
+                    to_del_set.insert(final_vreg);
+                    to_del_set.insert(vreg);
+                }
+            }
+            for(auto val:to_del_set){
+                set.erase(val);
             }
         }
     }
