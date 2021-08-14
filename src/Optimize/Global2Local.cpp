@@ -14,6 +14,9 @@ void Global2Local::execute(){
 
 void Global2Local::analyse(){
     for (auto global : module->get_global_variable()){
+        if (global->get_type()->is_array_type()){
+            continue;
+        }
         for (auto use_pair : global->get_use_list()){
             auto use_inst = dynamic_cast<Instruction *>(use_pair.val_);
             if (use_inst != nullptr){
