@@ -184,24 +184,28 @@ void SideEffectAnalysis::get_func_total_side_effect() {
                     auto callee = dynamic_cast<Function*>(instr->get_operand(0));
                     for (int i = 1; i < instr->get_num_operand(); i++) {
                         if (func_args_side_effect[callee].find(i-1) != func_args_side_effect[callee].end()) {
-                            auto base_ptr = dynamic_cast<Instruction*>(instr->get_operand(i));
-                            Value *base_addr;
-                            if (base_ptr->is_gep()) {
-                                base_addr = base_ptr->get_operand(0);
-                            } else if (base_ptr->is_add()) {
-                                base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
-                            } else if (base_ptr->is_muladd()) {
-                                base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(2))->get_operand(0);
-                            } else if (base_ptr->is_lsladd()) {
-                                base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+                            if (dynamic_cast<Argument*>(instr->get_operand(i))) {
+                                func_total_local_array_side_effect[func].insert(instr->get_operand(i));
                             } else {
-                                base_addr = nullptr;
-                            }
-                            if (base_addr) {
-                                if (dynamic_cast<GlobalVariable*>(base_addr)) {
-                                    func_total_global_array_side_effect[func].insert(base_addr);
-                                } else if (dynamic_cast<AllocaInst*>(base_addr)) {
-                                    func_total_local_array_side_effect[func].insert(base_addr);
+                                auto base_ptr = dynamic_cast<Instruction*>(instr->get_operand(i));
+                                Value *base_addr;
+                                if (base_ptr->is_gep()) {
+                                    base_addr = base_ptr->get_operand(0);
+                                } else if (base_ptr->is_add()) {
+                                    base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+                                } else if (base_ptr->is_muladd()) {
+                                    base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(2))->get_operand(0);
+                                } else if (base_ptr->is_lsladd()) {
+                                    base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+                                } else {
+                                    base_addr = nullptr;
+                                }
+                                if (base_addr) {
+                                    if (dynamic_cast<GlobalVariable*>(base_addr)) {
+                                        func_total_global_array_side_effect[func].insert(base_addr);
+                                    } else if (dynamic_cast<AllocaInst*>(base_addr)) {
+                                        func_total_local_array_side_effect[func].insert(base_addr);
+                                    }
                                 }
                             }
                         }
@@ -264,24 +268,28 @@ void SideEffectAnalysis::get_func_total_var_effected_by_side_effect() {
                     auto callee = dynamic_cast<Function*>(instr->get_operand(0));
                     for (int i = 1; i < instr->get_num_operand(); i++) {
                         if (func_args_effected_by_side_effect[callee].find(i-1) != func_args_effected_by_side_effect[callee].end()) {
-                            auto base_ptr = dynamic_cast<Instruction*>(instr->get_operand(i));
-                            Value *base_addr;
-                            if (base_ptr->is_gep()) {
-                                base_addr = base_ptr->get_operand(0);
-                            } else if (base_ptr->is_add()) {
-                                base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
-                            } else if (base_ptr->is_muladd()) {
-                                base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(2))->get_operand(0);
-                            } else if (base_ptr->is_lsladd()) {
-                                base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+                            if (dynamic_cast<Argument*>(instr->get_operand(i))) {
+                                func_total_local_array_effected_by_side_effect[func].insert(instr->get_operand(i));
                             } else {
-                                base_addr = nullptr;
-                            }
-                            if (base_addr) {
-                                if (dynamic_cast<GlobalVariable*>(base_addr)) {
-                                    func_total_global_array_effected_by_side_effect[func].insert(base_addr);
-                                } else if (dynamic_cast<AllocaInst*>(base_addr)) {
-                                    func_total_local_array_effected_by_side_effect[func].insert(base_addr);
+                                auto base_ptr = dynamic_cast<Instruction*>(instr->get_operand(i));
+                                Value *base_addr;
+                                if (base_ptr->is_gep()) {
+                                    base_addr = base_ptr->get_operand(0);
+                                } else if (base_ptr->is_add()) {
+                                    base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+                                } else if (base_ptr->is_muladd()) {
+                                    base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(2))->get_operand(0);
+                                } else if (base_ptr->is_lsladd()) {
+                                    base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+                                } else {
+                                    base_addr = nullptr;
+                                }
+                                if (base_addr) {
+                                    if (dynamic_cast<GlobalVariable*>(base_addr)) {
+                                        func_total_global_array_effected_by_side_effect[func].insert(base_addr);
+                                    } else if (dynamic_cast<AllocaInst*>(base_addr)) {
+                                        func_total_local_array_effected_by_side_effect[func].insert(base_addr);
+                                    }
                                 }
                             }
                         }
