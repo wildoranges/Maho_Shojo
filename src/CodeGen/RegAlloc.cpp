@@ -289,20 +289,12 @@ void RegAlloc::walk_intervals() {
                 delete_list.push_back(it);
             }
         }
+
         for(auto inter:delete_list){
             active.erase(inter);
+            reg2ActInter[inter->reg_num].erase(inter);
         }
-//        for(auto it = inactive.begin();it != inactive.end();it++){
-//            if((*((*it)->range_list.rbegin()))->to < position){
-//                handled.insert(*it);
-//                it = inactive.erase(it);
-//                it--;
-//            }else if((*it)->covers(position)){
-//                active.insert(*it);
-//                it = inactive.erase(it);
-//                it--;
-//            }
-//        }
+
         try_alloc_free_reg();
     }
 }

@@ -624,13 +624,13 @@
             if(ret_id!=0){
                 if(ret_id > 0){
                     code += IR2asm::space;
-                    code += "MOV " + IR2asm::Reg(ret_id).get_code();
+                    code += "mov " + IR2asm::Reg(ret_id).get_code();
                     code += ", ";
                     code += IR2asm::Reg(0).get_code();
                     code += IR2asm::endl;
                 }else{
                     code += IR2asm::space;
-                    code += "STR ";
+                    code += "str ";
                     code += IR2asm::Reg(0).get_code();
                     code += ", ";
                     code += stack_map[call]->get_ofst_code(sp_extra_ofst);
@@ -640,7 +640,7 @@
 
             if(init_id && ret_id != 0){
                 code += IR2asm::space;
-                code += "LDR r0, [SP]";
+                code += "ldr r0, [SP]";
                 code += IR2asm::endl;
             }
         }
@@ -847,7 +847,7 @@
                     }
                     else if(reg!=12){
                         regcode += IR2asm::space;
-                        regcode += "MOV ";
+                        regcode += "mov ";
                         regcode += IR2asm::Reg(i).get_code();
                         regcode += ", ";
                         regcode += IR2asm::Reg(reg).get_code();
@@ -888,7 +888,7 @@
             func_param_extra_offset ++;
             if(dynamic_cast<ConstantInt *>(arg)){
                 memcode += IR2asm::space;
-                memcode += "LDR ";
+                memcode += "ldr ";
                 memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                 memcode += " ,=";
                 memcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
@@ -1336,7 +1336,7 @@
                         auto reg_loc = dynamic_cast<IR2asm::RegLoc*>(src);
                         if(!reg_loc->is_constant()){
                             *code += IR2asm::space;
-                            *code += "MOV";
+                            *code += "mov";
                             *code += cmpop;
                             *code += " ";
                             *code += tar->get_code();
@@ -1345,7 +1345,7 @@
                             *code += IR2asm::endl;
                         }else{
                             *code += IR2asm::space;
-                            *code += "LDR";
+                            *code += "ldr";
                             *code += cmpop;
                             *code += " ";
                             *code += tar->get_code();
@@ -1369,7 +1369,7 @@
                                                     cmpop);
                     }else{
                         *code += IR2asm::space;
-                        *code += "MOV";
+                        *code += "mov";
                         *code += cmpop;
                         *code += " ";
                         *code += tar->get_code();
@@ -1452,7 +1452,7 @@
                         if(reg_src_ptr){
                             if(reg_src_ptr->is_constant()){
                                 *code += IR2asm::space;
-                                *code += "LDR";
+                                *code += "ldr";
                                 *code += cmpop;
                                 *code += " ";
                                 *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
@@ -1481,7 +1481,7 @@
                         if(reg_src_ptr){
                             if(reg_src_ptr->is_constant()){
                                 *code += IR2asm::space;
-                                *code += "LDR";
+                                *code += "ldr";
                                 *code += cmpop;
                                 *code += " ";
                                 *code += IR2asm::Reg(tmp_reg_id).get_code();
