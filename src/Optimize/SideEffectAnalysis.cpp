@@ -104,6 +104,13 @@ void SideEffectAnalysis::get_func_side_effect(Function *func) {
         for (auto bb : func->get_basic_blocks()) {
             for (auto instr : bb->get_instructions()) {
                 if (instr->is_store() || instr->is_store_offset()) {
+                    auto val = instr->get_operand(0);
+                    if (val->get_type()->is_pointer_type()) {
+                        auto arg_ptr = dynamic_cast<Argument*>(val);
+                        if (arg_ptr) {
+                            func_args_side_effect[func].insert(arg_ptr->get_arg_no());
+                        }
+                    }
                     auto base = instr->get_operand(1);
                     auto base_ptr = dynamic_cast<Instruction*>(base);
                     if (dynamic_cast<GlobalVariable*>(base)) {
