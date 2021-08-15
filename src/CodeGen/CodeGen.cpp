@@ -1101,6 +1101,9 @@
                         find_circ = true;
                         break;
                     }
+                    if(loops.find(iter) != loops.end()){
+                        break;
+                    }
                     iter = pred_locs[iter];
                 }
 
