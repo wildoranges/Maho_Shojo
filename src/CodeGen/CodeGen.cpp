@@ -1115,6 +1115,7 @@
         //     need_restore_temp = true;
         // }
 
+        //TODO: smarter temp forwarding strategy: no temp needed on the path end at temp reg
         if(reg2loc.find(temp_reg) != reg2loc.end()
             && pred_locs.find(reg2loc[temp_reg]) != pred_locs.end()
             && pred_locs.find(pred_locs[reg2loc[temp_reg]]) == pred_locs.end()){
