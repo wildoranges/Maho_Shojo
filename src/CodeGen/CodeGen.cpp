@@ -12,32 +12,31 @@
         return IR2asm::space + ".globl " + ".." + name + IR2asm::endl;
     }
 
+    std::string CodeGen::tmp_reg_restore(Instruction *inst) {
+        std::string code;
+        for(auto pair:tmp_regs_loc){
+            code += IR2asm::safe_load(new IR2asm::Reg(pair.first),
+                                      pair.second,
+                                      sp_extra_ofst,
+                                      long_func);
+        }
+        tmp_regs_loc.clear();
+        cur_tmp_regs.clear();
+        free_tmp_pos.clear();
+        free_tmp_pos = all_free_tmp_pos;
+        return code;
+    }
+
     std::string CodeGen::push_tmp_instr_regs(Instruction *inst) {
         std::string code;
         store_list.clear();
         to_store_set.clear();
         interval_set.clear();
         std::set<Value*> to_ld_set = {};
-        bool use_target = false;
-        bool can_use_inst_reg = false;
-        if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
-            auto reg_inter = reg_map[inst];
-            if(reg_inter->reg_num<0){
-                reg_inter->reg_num = store_list.size();
-                auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                if(it==store_list.end()){
-                    store_list.push_back(reg_inter->reg_num);
-                }
-                interval_set.insert(reg_inter);
-                to_store_set.insert(inst);
-                use_target = true;
-                can_use_inst_reg = true;
-            }
-        }
+        std::set<int> used_tmp_regs = {};
         std::set<int> inst_reg_num_set = {};
-        if (!inst->is_void() && !dynamic_cast<AllocaInst *>(inst) && reg_map[inst]->reg_num >= 0) {
-            inst_reg_num_set.insert(reg_map[inst]->reg_num);
-        }
+        std::set<int> opr_reg_num_set = {};
+        bool can_use_inst_reg = false;
         for (auto opr : inst->get_operands()) {
             if(dynamic_cast<Constant*>(opr) ||
             dynamic_cast<BasicBlock *>(opr) ||
@@ -47,7 +46,46 @@
             }
             if (reg_map[opr]->reg_num >= 0) {
                 inst_reg_num_set.insert(reg_map[opr]->reg_num);
+                opr_reg_num_set.insert(reg_map[opr]->reg_num);
             }
+        }
+        if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
+            auto reg_inter = reg_map[inst];
+            if(reg_inter->reg_num<0){
+                if(!cur_tmp_regs.empty()){
+                    reg_inter->reg_num = *cur_tmp_regs.begin();
+                    cur_tmp_regs.erase(reg_inter->reg_num);
+                    used_tmp_regs.insert(reg_inter->reg_num);
+                }
+                else{
+                    if(!opr_reg_num_set.empty()){
+                        for(int i = 0;i <= 12;i++){
+                            if(i == 11){
+                                continue;
+                            }
+                            if(opr_reg_num_set.find(i) == opr_reg_num_set.end()){
+                                reg_inter->reg_num = i;
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    else{
+                        reg_inter->reg_num = store_list.size();
+                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
+                        if(it==store_list.end()){
+                            store_list.push_back(reg_inter->reg_num);
+                        }
+                    }
+                }
+                interval_set.insert(reg_inter);
+                to_store_set.insert(inst);
+                can_use_inst_reg = true;
+            }
+            inst_reg_num_set.insert(reg_inter->reg_num);
         }
         for(auto opr:inst->get_operands()){
             if(dynamic_cast<Constant*>(opr) ||
@@ -58,37 +96,48 @@
             }
             auto reg_inter = reg_map[opr];
             if(reg_inter->reg_num<0){
-                if(use_target){
-                    reg_inter->reg_num = store_list.size() - 1;
-                }else{
-                    reg_inter->reg_num = store_list.size();
-                }
-                auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                auto reg_it = inst_reg_num_set.find(reg_inter->reg_num);
-                if(it==store_list.end() && reg_it == inst_reg_num_set.end()){
-                    store_list.push_back(reg_inter->reg_num);
-                } else {
-                    if (can_use_inst_reg) {
-                        if (reg_it == inst_reg_num_set.end()) {
-                            can_use_inst_reg = false;
-                        } else {
-                            for (int i = 0; i <= 12; i++) {
-                                if (i == 11) continue;
-                                if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() &&
-                                inst_reg_num_set.find(i) == inst_reg_num_set.end()) {
-                                    reg_inter->reg_num = i;
-                                    store_list.push_back(reg_inter->reg_num);
-                                    break;
+                if(can_use_inst_reg){
+                    can_use_inst_reg = false;
+                    if(opr_reg_num_set.find(reg_map[inst]->reg_num)==opr_reg_num_set.end()){
+                        reg_inter->reg_num = reg_map[inst]->reg_num;
+                        inst_reg_num_set.insert(reg_inter->reg_num);
+                    }
+                    else{
+                        for(int i = 0;i <= 12;i++){
+                            if(i==11){
+                                continue;
+                            }
+                            if(inst_reg_num_set.find(i)==inst_reg_num_set.end()&&used_tmp_regs.find(i)==used_tmp_regs.end()){
+                                reg_inter->reg_num = i;
+                                inst_reg_num_set.insert(i);
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
                                 }
+                                break;
                             }
                         }
-                    } else {
-                        for (int i = 0; i <= 12; i++) {
-                            if (i == 11) continue;
-                            if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() &&
-                            inst_reg_num_set.find(i) == inst_reg_num_set.end()) {
+                    }
+                }
+                else{
+                    if(!cur_tmp_regs.empty()){
+                        reg_inter->reg_num = *cur_tmp_regs.begin();
+                        cur_tmp_regs.erase(reg_inter->reg_num);
+                        used_tmp_regs.insert(reg_inter->reg_num);
+                        inst_reg_num_set.insert(reg_inter->reg_num);
+                    }
+                    else{
+                        for(int i = 0;i <= 12;i++){
+                            if(i==11){
+                                continue;
+                            }
+                            if(inst_reg_num_set.find(i)==inst_reg_num_set.end()&&used_tmp_regs.find(i)==used_tmp_regs.end()){
                                 reg_inter->reg_num = i;
-                                store_list.push_back(reg_inter->reg_num);
+                                inst_reg_num_set.insert(i);
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
+                                }
                                 break;
                             }
                         }
@@ -98,8 +147,25 @@
                 to_ld_set.insert(opr);
             }
         }
-        if(!store_list.empty()){
-            code += push_regs(store_list);
+        int tmp_reg_base = have_func_call?20:0;
+        for(auto reg_id:store_list){
+            if(free_tmp_pos.empty()){
+                std::cerr << "free pos not empty, something was wrong with inst: "<< inst->print() << std::endl;
+                exit(15);
+            }
+            int free_pos = *free_tmp_pos.begin();
+            free_tmp_pos.erase(free_pos);
+            int cur_ofset = free_pos;//FIXME:offset
+            auto loc = new IR2asm::Regbase(IR2asm::Reg(13),cur_ofset*4+tmp_reg_base);
+            tmp_regs_loc[reg_id] = loc;
+            code += IR2asm::safe_store(new IR2asm::Reg(reg_id),
+                                       loc,
+                                       sp_extra_ofst,
+                                       long_func);
+            cur_tmp_regs.insert(reg_id);
+        }
+        for(auto tmp_reg:used_tmp_regs){
+            cur_tmp_regs.insert(tmp_reg);
         }
         for(auto opr:to_ld_set){
             code += IR2asm::safe_load(new IR2asm::Reg(reg_map[opr]->reg_num),
@@ -118,10 +184,6 @@
                                            stack_map[opr],
                                            sp_extra_ofst,
                                            long_func);
-        }
-
-        if(!store_list.empty()){
-            code += pop_regs(store_list);
         }
 
         for(auto inter:interval_set){
@@ -146,6 +208,58 @@
             }
         }
         return true;
+    }
+
+    std::string CodeGen::ld_tmp_regs(Instruction *inst) {
+        std::string code;
+        if(!inst->is_alloca() && !inst->is_phi()){
+            std::set<int> to_del_set;
+            std::set<int> to_ld_set;
+            for(auto opr:inst->get_operands()){
+                if(dynamic_cast<Constant *>(opr) ||
+                dynamic_cast<BasicBlock *>(opr) ||
+                dynamic_cast<GlobalVariable *>(opr) ||
+                dynamic_cast<AllocaInst *>(opr) ||
+                dynamic_cast<Function* >(opr)){
+                    continue;
+                }
+                int opr_reg = reg_map[opr]->reg_num;
+                if(opr_reg >= 0){
+                    for(auto reg:cur_tmp_regs){
+                        if(reg==opr_reg){
+                            to_ld_set.insert(reg);
+                            to_del_set.insert(reg);
+                        }
+                    }
+                }
+            }
+            if(!inst->is_void()){
+                int inst_reg = reg_map[inst]->reg_num;
+                if(inst_reg >= 0){
+                    if(cur_tmp_regs.find(inst_reg)!=cur_tmp_regs.end()){
+                        to_del_set.insert(inst_reg);
+                    }
+                }
+            }
+            for(auto ld_reg:to_ld_set){
+                code += IR2asm::safe_load(new IR2asm::Reg(ld_reg),
+                                          tmp_regs_loc[ld_reg],
+                                          sp_extra_ofst,
+                                          long_func);
+            }
+            for(auto del_reg:to_del_set){
+                auto del_pos = tmp_regs_loc[del_reg];
+                int del_free_pos = del_pos->get_offset();
+                if(have_func_call){
+                    del_free_pos -= 20;
+                }
+                del_free_pos /= 4;
+                free_tmp_pos.insert(del_free_pos);
+                cur_tmp_regs.erase(del_reg);
+                tmp_regs_loc.erase(del_reg);//FIXME:CUR_OFFSET
+            }
+        }
+        return code;
     }
 
     std::string CodeGen::global_def_gen(Module* module){
@@ -240,97 +354,72 @@
                 stack_args.push_back(dynamic_cast<Value*>(arg));
             }
         }
-        if(have_func_call){
-            for(auto iter: reg_map){
-                Value* vreg = iter.first;
-                Interval* interval = iter.second;
-                if(interval->reg_num >= 0){
-                    if(interval->reg_num > 3){
-                        used_reg.second.insert(interval->reg_num);
-                    }
-                    else{
-                        used_reg.first.insert(interval->reg_num);
-                    }
-                    if(reg2val.find(interval->reg_num)!=reg2val.end()){
-                        reg2val.find(interval->reg_num)->second.push_back(vreg);
-                    }
-                    else{
-                        reg2val.insert({interval->reg_num, {vreg}});
-                    }
+        for(auto iter: reg_map){
+            Value* vreg = iter.first;
+            Interval* interval = iter.second;
+            if(interval->reg_num >= 0){
+                if(interval->reg_num > 3){
+                    used_reg.second.insert(interval->reg_num);
+                }
+                else{
+                    used_reg.first.insert(interval->reg_num);
+                }
+                if(reg2val.find(interval->reg_num)!=reg2val.end()){
+                    reg2val.find(interval->reg_num)->second.push_back(vreg);
+                }
+                else{
+                    reg2val.insert({interval->reg_num, {vreg}});
+                }
+                continue;
+            }
+            if(dynamic_cast<Argument*>(vreg)){
+                auto arg = dynamic_cast<Argument*>(vreg);
+                if(arg->get_arg_no() > 3){
+                    // stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
                     continue;
                 }
-                if(dynamic_cast<Argument*>(vreg)){
-                    auto arg = dynamic_cast<Argument*>(vreg);
-                    if(arg->get_arg_no() > 3){
-                        stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
-                        continue;
-                    }
-                }
-                int type_size = vreg->get_type()->get_size();
-                size += ((type_size + 3) / 4) * 4;
+            }
+            int type_size = vreg->get_type()->get_size();
+            size += ((type_size + 3) / 4) * 4;
+            if(have_func_call){
                 stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
             }
-            used_reg.second.insert(IR2asm::frame_ptr);
-            // size += reg_size;
-            for(auto inst: fun->get_entry_block()->get_instructions()){
-                auto alloc = dynamic_cast<AllocaInst*>(inst);
-                if(!alloc)continue;
-                int type_size = alloc->get_alloca_type()->get_size();
-                size += ((type_size + 3) / 4) * 4;
-                stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
-            }
-        }
-        else{
-            // stack alloc without frame pointer
-            for(auto iter: reg_map){
-                Value* vreg = iter.first;
-                Interval* interval = iter.second;
-                if(interval->reg_num >= 0){
-                    if(interval->reg_num > 3){
-                        used_reg.second.insert(interval->reg_num);
-                    }
-                    else{
-                        used_reg.first.insert(interval->reg_num);
-                    }
-                    if(reg2val.find(interval->reg_num)!=reg2val.end()){
-                        reg2val.find(interval->reg_num)->second.push_back(vreg);
-                    }
-                    else{
-                        reg2val.insert({interval->reg_num, {vreg}});
-                    }
-                    continue;
-                }
-                if(dynamic_cast<Argument*>(vreg)){
-                    auto arg = dynamic_cast<Argument*>(vreg);
-                    if(arg->get_arg_no() > 3){
-                        // stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
-                        continue;
-                    }
-                }
-                int type_size = vreg->get_type()->get_size();
-                size += ((type_size + 3) / 4) * 4;
+            else{
                 stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::sp, -size)});
             }
-            for(auto inst: fun->get_entry_block()->get_instructions()){
-                auto alloc = dynamic_cast<AllocaInst*>(inst);
-                if(!alloc)continue;
-                int type_size = alloc->get_alloca_type()->get_size();
-                size += ((type_size + 3) / 4) * 4;
+        }
+        if(have_func_call)used_reg.second.insert(IR2asm::frame_ptr);
+        for(auto inst: fun->get_entry_block()->get_instructions()){
+            auto alloc = dynamic_cast<AllocaInst*>(inst);
+            if(!alloc)continue;
+            int type_size = alloc->get_alloca_type()->get_size();
+            size += ((type_size + 3) / 4) * 4;
+            if(have_func_call){
+                stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
+            }
+            else{
                 stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::sp, -size)});
             }
+        }
+        size += ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                + ((have_func_call)?(caller_saved_reg_num * reg_size):0);
+        if(!have_func_call){
             for(auto map: stack_map){
                 int offset = map.second->get_offset();
                 map.second->set_offset(size + offset);
+                                        // + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                                        // + ((have_func_call)?20:0));
             }
         }
-        // int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
         /******always save lr for tmp use*******/
+        // int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
         int reg_store_size = reg_size * (used_reg.second.size() + 1);
-//        int reg_store_size = reg_size * ((have_func_call)? 5 : 0);
         int i = 0;
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
-            item->set_offset(offset + reg_store_size + size + ((have_func_call)?20:0));
+            item->set_offset(offset + reg_store_size + size);
+                            // + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                            // + ((have_func_call)?20:0));
             stack_map.insert({stack_args[i], item});
             i++;
         }
@@ -372,7 +461,6 @@
     }
 
     std::string CodeGen::callee_stack_operation_in(Function* fun, int stack_size){
-        //TODO: immediate overflow
         int remain_stack_size = stack_size;
         std::string code;
         code += IR2asm::space;
@@ -536,13 +624,13 @@
             if(ret_id!=0){
                 if(ret_id > 0){
                     code += IR2asm::space;
-                    code += "MOV " + IR2asm::Reg(ret_id).get_code();
+                    code += "mov " + IR2asm::Reg(ret_id).get_code();
                     code += ", ";
                     code += IR2asm::Reg(0).get_code();
                     code += IR2asm::endl;
                 }else{
                     code += IR2asm::space;
-                    code += "STR ";
+                    code += "str ";
                     code += IR2asm::Reg(0).get_code();
                     code += ", ";
                     code += stack_map[call]->get_ofst_code(sp_extra_ofst);
@@ -552,7 +640,7 @@
 
             if(init_id && ret_id != 0){
                 code += IR2asm::space;
-                code += "LDR r0, [SP]";
+                code += "ldr r0, [SP]";
                 code += IR2asm::endl;
             }
         }
@@ -654,11 +742,13 @@
         newlabel = new IR2asm::label(label_str);
         bb_label.insert({ret_bb, newlabel});
         linear_bb.push_back(ret_bb);
+#ifdef DEBUG
         for(auto pair:bb_label){
             auto bb = pair.first;
             auto label = pair.second;
             std::cerr << bb->get_name() << ":" << label->get_label() << std::endl;
         }
+#endif
         return;
     }
 
@@ -757,7 +847,7 @@
                     }
                     else if(reg!=12){
                         regcode += IR2asm::space;
-                        regcode += "MOV ";
+                        regcode += "mov ";
                         regcode += IR2asm::Reg(i).get_code();
                         regcode += ", ";
                         regcode += IR2asm::Reg(reg).get_code();
@@ -798,7 +888,7 @@
             func_param_extra_offset ++;
             if(dynamic_cast<ConstantInt *>(arg)){
                 memcode += IR2asm::space;
-                memcode += "LDR ";
+                memcode += "ldr ";
                 memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                 memcode += " ,=";
                 memcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
@@ -844,34 +934,60 @@
     }
 
     std::string CodeGen::callee_arg_move(Function* fun){
+        std::string save_code;
         std::string code;
+        std::set<int> conflict_src_reg;
+        std::map<int, IR2asm::Regbase*> conflict_reg_loc;
+        int size = 0;
         int arg_num = fun->get_args().size();
         if(!arg_num)return code;
         if(arg_num > 4)arg_num = 4;
-        code += IR2asm::space + "STMDB SP, {";
-        for(int i = 0; i < arg_num - 1; i++){
-            code += IR2asm::Reg(i).get_code();
-            code += ", ";
+        for(auto arg: fun->get_args()){
+            if(reg_map.find(arg) != reg_map.end()){
+                int target = reg_map[arg]->reg_num;
+                if(target == arg->get_arg_no())continue;
+                if(target >= 0 && target < arg_num)conflict_src_reg.insert(target);
+            }
         }
-        code += IR2asm::Reg(arg_num - 1).get_code() + "}" + IR2asm::endl;
+        if(!conflict_src_reg.empty()){
+            save_code += IR2asm::space + "STMDB SP, {";
+            for(auto reg: conflict_src_reg){
+                if(reg == *(conflict_src_reg.rbegin()))break;
+                save_code += IR2asm::Reg(reg).get_code();
+                save_code += ", ";
+            }
+            save_code += IR2asm::Reg(*(conflict_src_reg.rbegin())).get_code() + "}" + IR2asm::endl;
+        }
+        int conflict_store_size = conflict_src_reg.size() * reg_size;
+        for(auto reg: conflict_src_reg){
+            conflict_reg_loc.insert({reg, new IR2asm::Regbase(IR2asm::sp, size - conflict_store_size)});
+            size += reg_size;
+        }
         for(auto arg: fun->get_args()){
             int reg;
-            if(reg_map.find(arg)!= reg_map.end()){
+            if(reg_map.find(arg) != reg_map.end()){
                 reg = reg_map[arg]->reg_num;
             }
-            else{
-//                reg = -1;
-                continue;
-            }
+            else continue;
             if(arg->get_arg_no() < 4){
                 if(arg->get_arg_no() == reg)continue;
                 if(reg >= 0){
-                    code += IR2asm::space;
-                    code += "Ldr ";
-                    code += IR2asm::Reg(reg).get_code();
-                    code += ", ";
-                    code += IR2asm::Regbase(IR2asm::sp, - int_size * (arg_num-arg->get_arg_no())).get_code();
-                    code += IR2asm::endl;
+                    if(conflict_src_reg.find(arg->get_arg_no()) == conflict_src_reg.end()){
+                        code += IR2asm::space;
+                        code += "Mov ";
+                        code += IR2asm::Reg(reg).get_code();
+                        code += ", ";
+                        code += IR2asm::Reg(arg->get_arg_no()).get_code();
+                        code += IR2asm::endl;
+                    }
+                    else{
+                        code += IR2asm::space;
+                        code += "Ldr ";
+                        code += IR2asm::Reg(reg).get_code();
+                        code += ", ";
+                        code += conflict_reg_loc[arg->get_arg_no()]->get_code();
+                        code += IR2asm::endl;
+                    }
                 }
                 else{
                     code += IR2asm::safe_store(new IR2asm::Reg(arg->get_arg_no()),
@@ -888,17 +1004,23 @@
                                           long_func);
             }
         }
-        return code;
+        return save_code + code;
     }
 
     std::string CodeGen::function_gen(Function* fun,RegAllocDriver* driver){
         std::string code;
         sp_extra_ofst = 0;
         pool_number = 0;
+        cur_tmp_regs.clear();
+        tmp_regs_loc.clear();
+        free_tmp_pos.clear();
+        free_tmp_pos = all_free_tmp_pos;
         global_label_gen(fun);
         make_linear_bb(fun, driver);
         func_call_check(fun);
-        int stack_size = stack_space_allocation(fun) + ((have_func_call)?20:0);
+        int stack_size = stack_space_allocation(fun);
+                        // + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                        // + ((have_func_call)?20:0);
 //                + std::max(max_arg_size - 4 * reg_size, 0);
         code += IR2asm::space + ".globl " + fun->get_name() + IR2asm::endl;
         code += IR2asm::space + ".p2align " + std::to_string(int_p2align) + IR2asm::endl;
@@ -973,8 +1095,9 @@
                 br_inst = inst;
                 break;
             }
+            new_code += ld_tmp_regs(inst);
             if(dynamic_cast<CallInst*>(inst)){
-                auto call_inst = dynamic_cast<CallInst*>(inst);        
+                auto call_inst = dynamic_cast<CallInst*>(inst);
                 new_code += caller_reg_store(bb->get_parent(),call_inst);
                 new_code += arg_move(call_inst);
                 new_code += instr_gen(call_inst);
@@ -1010,8 +1133,10 @@
                 }
             }
         }
+        std::string new_code;
+        new_code += ld_tmp_regs(br_inst);
         if(br_inst->is_cmpbr()){
-            std::string new_code;
+            new_code += ld_tmp_regs(br_inst);
             new_code += push_tmp_instr_regs(br_inst);
             code += new_code;
             accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
@@ -1064,6 +1189,7 @@
         std::string cmpbr_code = instr_gen(br_inst);
         std::string pop_code;
         pop_code += pop_tmp_instr_regs(br_inst);
+        pop_code += tmp_reg_restore(br_inst);
         spilt_str(cmpbr_code, cmpbr_inst, IR2asm::endl[0]);
         std::vector<IR2asm::Location*> phi_target;
         std::vector<IR2asm::Location*> phi_src;
@@ -1210,7 +1336,7 @@
                         auto reg_loc = dynamic_cast<IR2asm::RegLoc*>(src);
                         if(!reg_loc->is_constant()){
                             *code += IR2asm::space;
-                            *code += "MOV";
+                            *code += "mov";
                             *code += cmpop;
                             *code += " ";
                             *code += tar->get_code();
@@ -1219,7 +1345,7 @@
                             *code += IR2asm::endl;
                         }else{
                             *code += IR2asm::space;
-                            *code += "LDR";
+                            *code += "ldr";
                             *code += cmpop;
                             *code += " ";
                             *code += tar->get_code();
@@ -1243,7 +1369,7 @@
                                                     cmpop);
                     }else{
                         *code += IR2asm::space;
-                        *code += "MOV";
+                        *code += "mov";
                         *code += cmpop;
                         *code += " ";
                         *code += tar->get_code();
@@ -1326,7 +1452,7 @@
                         if(reg_src_ptr){
                             if(reg_src_ptr->is_constant()){
                                 *code += IR2asm::space;
-                                *code += "LDR";
+                                *code += "ldr";
                                 *code += cmpop;
                                 *code += " ";
                                 *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
@@ -1355,7 +1481,7 @@
                         if(reg_src_ptr){
                             if(reg_src_ptr->is_constant()){
                                 *code += IR2asm::space;
-                                *code += "LDR";
+                                *code += "ldr";
                                 *code += cmpop;
                                 *code += " ";
                                 *code += IR2asm::Reg(tmp_reg_id).get_code();
@@ -1395,22 +1521,22 @@
                                                cmpop);
                 }else{
                     auto src_loc = phi_src[tmp_tar_index];
-                    auto src_reg = dynamic_cast<IR2asm::RegLoc*>(src_loc);
-                    auto src_stack = dynamic_cast<IR2asm::Regbase*>(src_loc);
-                    if(src_reg){
-                        if(src_reg->is_constant()){
+                    auto src_tmp_reg = dynamic_cast<IR2asm::RegLoc*>(src_loc);
+                    auto src_tmp_stack = dynamic_cast<IR2asm::Regbase*>(src_loc);
+                    if(src_tmp_reg){
+                        if(src_tmp_reg->is_constant()){
                             *code += IR2asm::space;
                             *code += "ldr";
                             *code += cmpop;
                             *code += " ";
                             *code += IR2asm::Reg(tmp_reg_id).get_code();
                             *code += " ,=";
-                            *code += std::to_string(src_reg->get_constant());
+                            *code += std::to_string(src_tmp_reg->get_constant());
                             *code += IR2asm::endl;
                         }
                         else{
                             *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                        new IR2asm::Regbase(IR2asm::Reg(13),reg_offset[src_reg->get_reg_id()]),
+                                                        new IR2asm::Regbase(IR2asm::Reg(13),reg_offset[src_tmp_reg->get_reg_id()]),
                                                         0,
                                                         long_func,
                                                         cmpop);
@@ -1418,7 +1544,7 @@
                     }
                     else{
                         *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                   new IR2asm::Regbase(IR2asm::Reg(13),stack_offset[src_stack]),
+                                                   new IR2asm::Regbase(IR2asm::Reg(13),stack_offset[src_tmp_stack]),
                                                    0,
                                                    long_func,
                                                    cmpop);

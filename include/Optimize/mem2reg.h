@@ -15,6 +15,7 @@ private:
 	std::map<BasicBlock *, std::vector<Value *>> define_var;
     std::string name = "mem2reg";
 	std::map<Value*, Value*> lvalue_connection;
+	std::set<Value*> no_union_set;
 
 public:
 	explicit Mem2Reg(Module *m) : Pass(m) {}

@@ -19,8 +19,8 @@
 #include "AvailableExpr.h"
 #include "FuncInline.h"
 #include "LoopExpansion.h"
-#include "SideEffectAnalysis.h"
 #include "Global2Local.h"
+#include "MovConst.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
@@ -131,6 +131,7 @@ int main(int argc, char *argv[])
                 //passmgr.addPass<ConstPropagation>();
                 passmgr.addPass<LIR>();
                 passmgr.addPass<CFGSimplifier>();
+                passmgr.addPass<MovConst>();
                 passmgr.addPass<ActiveVar>();
                 passmgr.addPass<CFG_analyse>();
             }
@@ -254,6 +255,7 @@ int main(int argc, char *argv[])
 
             if(!print_mir){
                 passmgr.addPass<LIR>();
+                passmgr.addPass<MovConst>();
             }
 
             if(!no_dead_code_eli)
@@ -268,7 +270,11 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
+<<<<<<< HEAD
 
+=======
+            passmgr.addPass<MovConst>();
+>>>>>>> ad707db77916a389df95f10d0237fbd38475f150
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
 

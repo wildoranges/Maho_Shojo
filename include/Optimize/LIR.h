@@ -19,7 +19,7 @@ public:
     void merge_mul_sub(BasicBlock* bb);
     void load_offset(BasicBlock *bb);
     void store_offset(BasicBlock *bb);
-    void mov_const(BasicBlock *bb);
+    //void mov_const(BasicBlock *bb);
     void split_gep(BasicBlock* bb);
     void split_srem(BasicBlock* bb);
     void mul_const2shift(BasicBlock* bb);
