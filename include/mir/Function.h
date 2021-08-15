@@ -54,16 +54,22 @@ public:
     void set_instr_name();
     std::string print();
 
+    void set_callee_set(std::set<Function*> callee_set){callee_set_ = callee_set;}
+    void set_args_side_effect_store(std::set<int> args_has_side_effect){args_has_side_effect_ = args_has_side_effect;}
     void set_local_array_side_effect_store(std::set<Value*> local_array_has_side_effect){local_array_has_side_effect_ = local_array_has_side_effect;}
     void set_global_var_side_effect_store(std::set<Value*> global_var_has_side_effect){global_var_has_side_effect_ = global_var_has_side_effect;}
     void set_global_array_side_effect_store(std::set<Value*> global_array_has_side_effect){global_array_has_side_effect_ = global_array_has_side_effect;}
+    void set_args_side_effect_load(std::set<int> args_effected_by_side_effect){args_effected_by_side_effect_ = args_effected_by_side_effect;}
     void set_local_array_side_effect_load(std::set<Value*> local_array_effected_by_side_effect){local_array_effected_by_side_effect_ = local_array_effected_by_side_effect;}
     void set_global_var_side_effect_load(std::set<Value*> global_var_effected_by_side_effect){global_var_effected_by_side_effect_ = global_var_effected_by_side_effect;}
     void set_global_array_side_effect_load(std::set<Value*> global_array_effected_by_side_effect){global_array_effected_by_side_effect_ = global_array_effected_by_side_effect;}
 
+    std::set<Function*>& get_callee_set(){return callee_set_;}
+    std::set<int>& get_args_side_effect_store(){return args_has_side_effect_;}
     std::set<Value*>& get_local_array_side_effect_store(){return local_array_has_side_effect_;}
     std::set<Value*>& get_global_var_side_effect_store(){return global_var_has_side_effect_;}
     std::set<Value*>& get_global_array_side_effect_store(){return global_array_has_side_effect_;}
+    std::set<int>& get_args_side_effect_load(){return args_effected_by_side_effect_;}
     std::set<Value*>& get_local_array_side_effect_load(){return local_array_effected_by_side_effect_;}
     std::set<Value*>& get_global_var_side_effect_load(){return global_var_effected_by_side_effect_;}
     std::set<Value*>& get_global_array_side_effect_load(){return global_array_effected_by_side_effect_;}
@@ -78,6 +84,8 @@ private:
     Module *parent_;
     std::set<int> unused_reg_num_;
     unsigned seq_cnt_;
+    std::set<Function *> callee_set_;
+    std::set<int> args_has_side_effect_, args_effected_by_side_effect_;
     std::set<Value *> local_array_has_side_effect_, global_var_has_side_effect_, global_array_has_side_effect_;
     std::set<Value *> local_array_effected_by_side_effect_, global_var_effected_by_side_effect_, global_array_effected_by_side_effect_;
     // unsigned num_args_;

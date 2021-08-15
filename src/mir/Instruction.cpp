@@ -358,7 +358,7 @@ void CmpInst::assertValid()
 CmpInst *CmpInst::create_cmp(CmpOp op, Value *lhs, Value *rhs, 
                         BasicBlock *bb, Module *m)
 {
-    return new CmpInst(m->get_int32_type(), op, lhs, rhs, bb);
+    return new CmpInst(m->get_int1_type(), op, lhs, rhs, bb);
 }
 
 std::string CmpInst::print()

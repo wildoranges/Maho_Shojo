@@ -2,7 +2,71 @@
 
 #include <algorithm>
 
+// 函数形参到实参的映射(只限数组)
+std::map<Function *, std::map<int, std::set<Value *>>> func_array_args_to_params_map;
+std::map<Function *, std::set<Function *>> func_caller_map;
+std::map<Function *, bool> visited_func;
+
+void build_func_array_args_to_params_map(Module *module) {
+    func_array_args_to_params_map.clear();
+    for (auto func : module->get_functions()) {
+        func_array_args_to_params_map.insert({func, {}});
+        for (auto arg : func->get_args()) {
+            if (arg->get_type()->is_pointer_type()) {
+                func_array_args_to_params_map[func].insert({arg->get_arg_no(), {}});
+            }
+        }
+        if (func->get_num_basic_blocks() == 0) continue;
+        for (auto use : func->get_use_list()) {
+            auto call_instr = dynamic_cast<CallInst*>(use.val_);
+            for (int i = 1; i < call_instr->get_num_operand(); i++) {
+                auto param = call_instr->get_operand(i);
+                if (param->get_type()->is_pointer_type()) {
+                    func_array_args_to_params_map[func][i-1].insert(param);
+                }
+            }
+        }
+    }
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (auto func : module->get_functions()) {
+            for (auto arg : func_array_args_to_params_map[func]) {
+                for (auto param : arg.second) {
+                    auto caller_arg_to_callee_param = dynamic_cast<Argument*>(param);
+                    if (caller_arg_to_callee_param) {
+                        auto old_func_array_args_to_params_size = func_array_args_to_params_map[func][arg.first].size();
+                        std::set_union(func_array_args_to_params_map[func][arg.first].begin(), 
+                                        func_array_args_to_params_map[func][arg.first].end(), 
+                                        func_array_args_to_params_map[func][caller_arg_to_callee_param->get_arg_no()].begin(), 
+                                        func_array_args_to_params_map[func][caller_arg_to_callee_param->get_arg_no()].end(), 
+                                        std::inserter(func_array_args_to_params_map[func][arg.first], func_array_args_to_params_map[func][arg.first].begin()));
+                        if (old_func_array_args_to_params_size < func_array_args_to_params_map[func][arg.first].size()) {
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /*for (auto func : module->get_functions()) {
+        for (auto arg : func_array_args_to_params_map[func]) {
+            std::vector<Value*> args_to_delete;
+            for (auto param : arg.second) {
+                if (dynamic_cast<Argument*>(param)) {
+                    args_to_delete.push_back(param);
+                }
+            }
+            for (auto arg_to_delete : args_to_delete) {
+                arg.second.erase(arg_to_delete);
+            }
+        }
+    }*/
+    return ;
+}
+
 void DeadCodeElimination::execute() {
+    build_func_array_args_to_params_map(module);
     for (auto func : module->get_functions()) {
         if (func->get_num_basic_blocks() == 0) {
             continue;
@@ -11,6 +75,8 @@ void DeadCodeElimination::execute() {
         instr_mark.clear();
         RDominateTree r_dom_tree(module);
         r_dom_tree.execute();
+        SideEffectAnalysis side_effect_analysis(module);
+        side_effect_analysis.execute();
         mark();
         remove_unmarked_bb();
         RDominateTree r_dom_tree_new(module);
@@ -20,26 +86,175 @@ void DeadCodeElimination::execute() {
     return ;
 }
 
-bool DeadCodeElimination::is_critical(Instruction *instr) {
-    if (instr->isTerminator()) return true;
-    else if (instr->is_call()) return true;
-    else if (instr->is_store() || instr->is_store_offset() || instr->is_load() || instr->is_load_offset()) {
-        // TODO: 需要修改策略
-        /*auto addr = instr->get_operand(1);
-        auto alloca_addr = dynamic_cast<AllocaInst*>(addr);
-        auto global_addr = dynamic_cast<GlobalVariable*>(addr);
-        auto arg_addr = dynamic_cast<Argument*>(addr);
-        if ((arg_addr && arg_addr->get_type()->is_integer_type()) ||
-            (alloca_addr && alloca_addr->get_alloca_type() == Type::get_int32_type(module)) ||
-            (global_addr && global_addr->get_type()->is_pointer_type()) && global_addr->get_type()->get_pointer_element_type()->is_integer_type()) {
-            for (auto use : addr->get_use_list()) {
-                auto use_instr = dynamic_cast<Instruction*>(use.val_);
-                if (use_instr->is_load()) {
-                    return true;
+Value* get_store_base_addr(Instruction *store_instr) {
+    auto base = store_instr->get_operand(1);
+    auto base_ptr = dynamic_cast<Instruction*>(base);
+    Value *base_addr;
+    if (dynamic_cast<GlobalVariable*>(base)) {
+        base_addr = base;
+    } else if (base_ptr) {
+        if (base_ptr->is_gep()) {
+            base_addr = base_ptr->get_operand(0);
+        } else if (base_ptr->is_add()) {
+            base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+        } else if (base_ptr->is_muladd()) {
+            base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(2))->get_operand(0);
+        } else if (base_ptr->is_lsladd()) {
+            base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+        } else {
+            base_addr = nullptr;
+        }
+    }
+    return base_addr;
+}
+
+Value* get_load_base_addr(Instruction *load_instr) {
+    auto base = load_instr->get_operand(0);
+    auto base_ptr = dynamic_cast<Instruction*>(base);
+    Value *base_addr;
+    if (dynamic_cast<GlobalVariable*>(base)) {
+        base_addr = base;
+    } else if (base_ptr) {
+        if (base_ptr->is_gep()) {
+            base_addr = base_ptr->get_operand(0);
+        } else if (base_ptr->is_add()) {
+            base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+        } else if (base_ptr->is_muladd()) {
+            base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(2))->get_operand(0);
+        } else if (base_ptr->is_lsladd()) {
+            base_addr = dynamic_cast<Instruction*>(base_ptr->get_operand(0))->get_operand(0);
+        } else {
+            base_addr = nullptr;
+        }
+    }
+    return base_addr;
+}
+
+bool DeadCodeElimination::has_side_effect(Instruction *store_instr) {
+    auto cur_bb = store_instr->get_parent();
+    auto cur_func = cur_bb->get_parent();
+    if (has_side_effect_to_cur_bb(store_instr, cur_bb)) {
+        return true;
+    } else if (has_side_effect_to_path(store_instr, cur_bb)) {
+        return true;
+    } else {
+        for (auto use : cur_func->get_use_list()) {
+            auto call_instr = dynamic_cast<CallInst*>(use.val_);
+            if (call_instr) {
+                auto caller = dynamic_cast<Function*>(call_instr->get_operand(0));
+                if (caller) {
+                    if (has_side_effect_to_caller(store_instr, caller)) {
+                        return true;
+                    }
                 }
             }
-            return false;
-        }*/
+        }
+    }
+    return false;
+}
+
+bool DeadCodeElimination::has_side_effect_to_caller(Instruction *store_instr, Function *caller) {
+    if (caller->get_num_basic_blocks() == 0) return false;
+    // FIXME:
+    return true;
+}
+
+bool DeadCodeElimination::has_side_effect_to_path(Instruction *store_instr, BasicBlock *start_bb) {
+    if (has_side_effect_to_cur_bb(store_instr, start_bb)) return true;
+    std::set<BasicBlock*> visited_bb = {start_bb};
+    std::list<BasicBlock*> bb_to_visit = {start_bb};
+    while (bb_to_visit.empty() == false) {
+        auto cur_bb = bb_to_visit.front();
+        for (auto succ_bb : cur_bb->get_succ_basic_blocks()) {
+            if (visited_bb.find(succ_bb) != visited_bb.end()) continue;
+            if (has_side_effect_to_cur_bb(store_instr, succ_bb)) {
+                return true;
+            }
+            visited_bb.insert(succ_bb);
+        }
+        bb_to_visit.pop_front();
+    }
+    return false;
+}
+
+bool DeadCodeElimination::has_side_effect_to_cur_bb(Instruction *store_instr, BasicBlock *cur_bb) {
+    auto base_addr = get_store_base_addr(store_instr);
+    if (base_addr == nullptr) return false;
+    auto cur_func = cur_bb->get_parent();
+    auto global_var = dynamic_cast<GlobalVariable*>(store_instr->get_operand(1));
+    auto arg_base_addr = dynamic_cast<Argument*>(base_addr);
+    auto alloca_base_addr = dynamic_cast<AllocaInst*>(base_addr);
+    auto global_array_base_addr = dynamic_cast<GlobalVariable*>(base_addr);
+    auto store_instr_pos = cur_bb->find_instruction(store_instr);
+    std::list<Instruction*>::iterator start_pos;
+    if (store_instr_pos != cur_bb->get_instructions().end()) {
+        start_pos = store_instr_pos;
+    } else {
+        start_pos = cur_bb->get_instructions().begin();
+    }
+    for (auto iter = start_pos; iter != cur_bb->get_instructions().end(); iter++) {
+        auto instr = *iter;
+        if (instr->is_call()) {
+            auto callee = dynamic_cast<Function*>(instr->get_operand(0));
+            if (callee) {
+                if (callee->get_global_array_side_effect_load().find(base_addr) != callee->get_global_array_side_effect_load().end() || 
+                    callee->get_global_var_side_effect_load().find(base_addr) != callee->get_global_var_side_effect_load().end()) {
+                    return true;
+                }
+                for (int i = 1; i < instr->get_num_operand(); i++) {
+                    if (callee->get_args_side_effect_load().find(i-1) != callee->get_args_side_effect_load().end()) {
+                        if (func_array_args_to_params_map[cur_func][i-1].find(base_addr) 
+                            != func_array_args_to_params_map[cur_func][i-1].end()) {
+                                return true;
+                        }
+                    }
+                }
+            }
+        } else if (instr->is_load() || instr->is_load_offset()) {
+            auto load_base_addr = get_load_base_addr(instr);
+            if (global_var) {
+                if (load_base_addr == base_addr) {
+                    return true;
+                }
+            } else {
+                if (load_base_addr == base_addr) {
+                    return true;
+                } else {
+                    if (arg_base_addr) {
+                        if (func_array_args_to_params_map[cur_func][arg_base_addr->get_arg_no()].find(base_addr) 
+                            != func_array_args_to_params_map[cur_func][arg_base_addr->get_arg_no()].end()) {
+                                return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool DeadCodeElimination::is_critical(Instruction *instr) {
+    if (instr->isTerminator()) return true;
+    else if (instr->is_call()) {
+        auto callee = dynamic_cast<Function*>(instr->get_operand(0));
+        if (callee->get_num_basic_blocks() == 0) return true;
+        if (callee->get_global_array_side_effect_store().size() > 0 || 
+            callee->get_global_var_side_effect_store().size() > 0 ||
+            callee->get_local_array_side_effect_store().size() > 0 || 
+            callee->get_args_side_effect_store().size() > 0) {
+                return true;
+            } else {
+                for (auto callee_callee : callee->get_callee_set()) {
+                    if (callee_callee->get_num_basic_blocks() == 0) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+    }
+    else if (instr->is_store() || instr->is_store_offset()) {
+        // TODO: better strategy
+        // return has_side_effect(instr);
         return true;
     }
     else return false;
