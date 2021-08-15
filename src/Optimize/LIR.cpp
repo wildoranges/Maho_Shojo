@@ -20,7 +20,7 @@ void LIR::execute() {
                 div_const2mul(bb);
             }
             for (auto bb : func->get_basic_blocks()){
-                remove_unused_op(bb);
+                mul_const2shift(bb);
             }
             for (auto bb : func->get_basic_blocks()){
                 remove_unused_op(bb);
@@ -30,8 +30,10 @@ void LIR::execute() {
 //            }
             for (auto bb : func->get_basic_blocks()){
                 // merge instr (when all optimization finished)
-                //merge_mul_add(bb);
-                //merge_mul_sub(bb);
+                merge_shift_add(bb);
+                merge_shift_sub(bb);
+                merge_mul_add(bb);
+                merge_mul_sub(bb);
                 merge_cmp_br(bb);
             }
         }
@@ -319,6 +321,88 @@ void LIR::merge_mul_sub(BasicBlock* bb) {
     }
 }
 
+void LIR::merge_shift_add(BasicBlock* bb) {
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin();iter != instructions.end();iter++){
+        auto inst_add = *iter;
+        if (inst_add->is_add()){
+            auto op1 = inst_add->get_operand(0);
+            auto op_ins1 = dynamic_cast<Instruction *>(op1);
+            auto op2 = inst_add->get_operand(1);
+            auto op_ins2 = dynamic_cast<Instruction *>(op2);
+            if (op_ins1!=nullptr){
+                if ((op_ins1->is_lsl() || op_ins1->is_lsr() || op_ins1->is_asr()) && op_ins1->get_parent() == bb && op_ins1->get_use_list().size() == 1){
+                    Instruction *shift_add;
+                    if (op_ins1->is_lsl()) {
+                        shift_add = ShiftBinaryInst::create_lsladd(op2,op_ins1->get_operand(0),op_ins1->get_operand(1),bb,module);
+                    } else if (op_ins1->is_lsr()) {
+                        shift_add = ShiftBinaryInst::create_lsradd(op2,op_ins1->get_operand(0),op_ins1->get_operand(1),bb,module);
+                    } else if (op_ins1->is_asr()) {
+                        shift_add = ShiftBinaryInst::create_asradd(op2,op_ins1->get_operand(0),op_ins1->get_operand(1),bb,module);
+                    }
+                    instructions.pop_back();
+                    bb->add_instruction(iter,shift_add);
+                    bb->delete_instr(op_ins1);
+                    iter--;
+                    inst_add->replace_all_use_with(shift_add);
+                    bb->delete_instr(inst_add);
+                    continue;
+                }
+            }
+            if (op_ins2!=nullptr){
+                if ((op_ins2->is_lsl() || op_ins2->is_lsr() || op_ins2->is_asr()) && op_ins2->get_parent() == bb && op_ins2->get_use_list().size() == 1){
+                    Instruction *shift_add;
+                    if (op_ins2->is_lsl()) {
+                        shift_add = ShiftBinaryInst::create_lsladd(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    } else if (op_ins2->is_lsr()) {
+                        shift_add = ShiftBinaryInst::create_lsradd(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    } else if (op_ins2->is_asr()) {
+                        shift_add = ShiftBinaryInst::create_asradd(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    }
+                    instructions.pop_back();
+                    bb->add_instruction(iter,shift_add);
+                    bb->delete_instr(op_ins2);
+                    iter--;
+                    inst_add->replace_all_use_with(shift_add);
+                    bb->delete_instr(inst_add);
+                    continue;
+                }
+            }
+        }
+    }
+}
+
+void LIR::merge_shift_sub(BasicBlock* bb) {
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin();iter != instructions.end();iter++){
+        auto inst_sub = *iter;
+        if (inst_sub->is_sub()){
+            auto op1 = inst_sub->get_operand(0);
+            auto op2 = inst_sub->get_operand(1);
+            auto op_ins2 = dynamic_cast<Instruction *>(op2);
+            if (op_ins2!=nullptr){
+                if ((op_ins2->is_lsl() || op_ins2->is_lsr() || op_ins2->is_asr()) && op_ins2->get_parent() == bb && op_ins2->get_use_list().size() == 1){
+                    Instruction *shift_sub;
+                    if (op_ins2->is_lsl()) {
+                        shift_sub = ShiftBinaryInst::create_lslsub(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    } else if (op_ins2->is_lsr()) {
+                        shift_sub = ShiftBinaryInst::create_lsrsub(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    } else if (op_ins2->is_asr()) {
+                        shift_sub = ShiftBinaryInst::create_asrsub(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    }
+                    instructions.pop_back();
+                    bb->add_instruction(iter,shift_sub);
+                    bb->delete_instr(op_ins2);
+                    iter--;
+                    inst_sub->replace_all_use_with(shift_sub);
+                    bb->delete_instr(inst_sub);
+                    continue;
+                }
+            }
+        }
+    }
+}
+
 void LIR::split_gep(BasicBlock* bb) {
     auto &instructions = bb->get_instructions();
     for (auto iter = instructions.begin(); iter != instructions.end(); iter++) {
@@ -371,13 +455,34 @@ void LIR::split_srem(BasicBlock* bb) {
     }
 }
 
-void LIR::mul_const2shift(BasicBlock* bb) {
-    
-}
-
 bool is_power_of_two(int x) {
     // First x in the below expression is for the case when x is 0
     return x && (!(x & (x - 1)));
+}
+
+void LIR::mul_const2shift(BasicBlock* bb) {
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin(); iter != instructions.end(); iter++) {
+        auto instruction = *iter;
+        if (instruction->is_mul()) {
+            auto op1 = instruction->get_operand(0);
+            auto op2 = instruction->get_operand(1);
+            auto op_const2 = dynamic_cast<ConstantInt*>(op2);
+            if (op_const2 != nullptr) {
+                if (is_power_of_two(op_const2->get_value())) {
+                    if (op_const2->get_value() == 0 || op_const2->get_value() == 1) continue;
+                    int k = ceil(std::log2(op_const2->get_value()));
+                    iter++;
+                    auto lsl = BinaryInst::create_lsl(op1, ConstantInt::get(k, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    instruction->replace_all_use_with(lsl);
+                    bb->delete_instr(instruction);
+                    iter--;
+                }
+            }
+        }
+    }
 }
 
 void LIR::div_const2mul(BasicBlock* bb) {
@@ -394,6 +499,8 @@ void LIR::div_const2mul(BasicBlock* bb) {
                 if (divisor == 0) {
                     std::cerr<<"divided by zero!"<<std::endl;
                     exit(-1);
+                } else if (op_const2->get_value() == 1) {
+                    continue;
                 } else if (op_const2->get_value() == 2) {
                     iter++;
                     auto lsr = BinaryInst::create_lsr(op1, ConstantInt::get(31, module), bb, module);
