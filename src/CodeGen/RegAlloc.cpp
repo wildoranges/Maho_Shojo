@@ -409,10 +409,12 @@ bool RegAlloc::try_alloc_free_reg() {//TODO:spill by cost eval
     else{
         std::set<int, cmp_reg> spare_reg_id = {};
         for(const auto& pair:reg2ActInter){
+            bool insert_in_hole = true;
             for(auto inter:pair.second){
-                if(!inter->intersects(current)){
-                    spare_reg_id.insert(pair.first);
-                }
+                insert_in_hole = insert_in_hole && (!inter->intersects(current));
+            }
+            if(insert_in_hole){
+                spare_reg_id.insert(pair.first);
             }
         }
         if(!spare_reg_id.empty()){
