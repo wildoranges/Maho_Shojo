@@ -23,6 +23,9 @@ void LoopExpansion::find_try(){
 int LoopExpansion::loop_check(std::vector<BasicBlock*>* loop){
     auto entry_BB = *(*loop).rbegin();
     auto body_BB = *(*loop).begin();
+    if (entry_BB->get_pre_basic_blocks().size()>2){
+        return 0;
+    }
     if (body_BB->get_succ_basic_blocks().size()>1){
         return 0;
     }

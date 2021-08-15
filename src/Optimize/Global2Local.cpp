@@ -41,7 +41,8 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
     std::map<BasicBlock *, int> color;
     std::queue<BasicBlock *> BB_queue;
     std::vector<Instruction *> need_delete;
-    std::map<BasicBlock *, PhiInst *> phis;
+    std::map<BasicBlock *, PhiInst *> local_global_phis;
+    std::queue<PhiInst *> can_delete_phis;
     BB_queue.push(func_entry);
     while (!BB_queue.empty()){
         auto cur_BB = BB_queue.front();
@@ -121,48 +122,39 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                     //get the local global of succ BB
                     //fill the no-operand phi
                     //check if phi is need
+                    auto phi_global = local_global_phis[succ_BB];
                     Value * first_local_global = nullptr;
                     bool all_same = true;
                     for (auto succ_pre : succ_BB->get_pre_basic_blocks()){
+                        if (bb2local_global[succ_pre] == phi_global){
+                            continue;
+                        }
                         if (first_local_global == nullptr){
-                            //local global of first pre BB
                             first_local_global = bb2local_global[succ_pre];
                         }
                         else {
                             auto const_first_local_global = dynamic_cast<ConstantInt *>(first_local_global);
-                            auto const_local_global = dynamic_cast<ConstantInt *>(bb2local_global[succ_pre]);
+                            auto local_global = bb2local_global[succ_pre];
+                            auto const_local_global = dynamic_cast<ConstantInt *>(local_global);
                             if (const_first_local_global != nullptr && const_local_global != nullptr){
                                 if (const_first_local_global->get_value() != const_local_global->get_value()){
                                     all_same = false;
                                     break;
                                 }
                             }
-                            else if (first_local_global != bb2local_global[succ_pre]){
+                            else if (first_local_global != local_global){
                                 all_same = false;
                                 break;
                             }
                         }
                     }
-                    auto phi_global = phis[succ_BB];
                     if (all_same){
-                        //all pre BBs have the same local global
-                        //phi is not need
-                        //delete the phi
-                        //replace phi_global to first_local_global
-                        for (auto pair : bb2local_global){
-                            if (pair.second == phi_global){
-                                bb2local_global[pair.first] = first_local_global;
-                            }
-                        }
-                        phi_global->replace_all_use_with(first_local_global);
-                        succ_BB->delete_instr(phi_global);
+                       //record the phis which can be deleted
+                       can_delete_phis.push(phi_global);
                     }
-                    else{
-                        //phi is need
-                        //fill the phi
-                        for (auto succ_pre : succ_BB->get_pre_basic_blocks()){
-                            phi_global->add_phi_pair_operand(bb2local_global[succ_pre], succ_pre);
-                        }
+                    //fill the phi
+                    for (auto succ_pre : succ_BB->get_pre_basic_blocks()){
+                        phi_global->add_phi_pair_operand(bb2local_global[succ_pre], succ_pre);
                     }
                 }
                 else if (color[succ_BB] != 1) {
@@ -170,12 +162,12 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                     //a bb has to be searched before it's pre BB
                     //so we have to search a BB before it's pre BB
                     //create a phi without operands
-                    if (phis[succ_BB] == nullptr){
+                    if (local_global_phis[succ_BB] == nullptr){
                         //I cannot create a lot of phis
                         auto phi_global = PhiInst::create_phi(global->get_type()->get_pointer_element_type(), succ_BB);
                         succ_BB->add_instr_begin(phi_global);
                         bb2local_global[succ_BB] = phi_global;
-                        phis[succ_BB] = phi_global;
+                        local_global_phis[succ_BB] = phi_global;
                         BB_queue.push(succ_BB);
                     }
                 }
@@ -191,5 +183,61 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                 cur_BB->add_instruction(terminator);
             }
         }
+    }
+    //delete useless phis
+    std::set<PhiInst *> wait_for_delete;
+    while (!can_delete_phis.empty()){
+        auto can_delete_phi = can_delete_phis.front();
+        can_delete_phis.pop();
+        Value *replace_val = nullptr;
+        for (auto i = 0; i < can_delete_phi->get_num_operand(); i+=2){
+            if (can_delete_phi->get_operand(i) != can_delete_phi){
+                replace_val = can_delete_phi->get_operand(i);
+            }
+        }
+        for (auto use_pair : can_delete_phi->get_use_list()){
+            auto use_inst = dynamic_cast<Instruction *>(use_pair.val_);
+            if (use_inst!=nullptr){
+                //replace all use with first_local_global
+                use_inst->set_operand(use_pair.arg_no_, replace_val);
+                if (use_inst->is_phi() || local_global_phis[use_inst->get_parent()]==use_inst ){
+                    //when use_inst is a phi created by G2L
+                    //check if it should be deleted
+                    bool all_same = true;
+                    Value *first_local_global = nullptr;
+                    for (auto i = 0; i < use_inst->get_num_operand(); i+=2){
+                        if (use_inst->get_operand(i) == use_inst){
+                            continue;
+                        }
+                        if (first_local_global == nullptr){
+                            first_local_global = use_inst->get_operand(i);
+                        }
+                        else{
+                            auto const_first_local_global = dynamic_cast<ConstantInt *>(first_local_global);
+                            auto local_global = use_inst->get_operand(i);
+                            auto const_local_global = dynamic_cast<ConstantInt *>(local_global);
+                            if (const_first_local_global != nullptr && const_local_global != nullptr){
+                                if (const_first_local_global->get_value() != const_local_global->get_value()){
+                                    all_same = false;
+                                    break;
+                                }
+                            }
+                            else if (first_local_global != local_global){
+                                all_same = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (all_same){
+                        can_delete_phis.push(dynamic_cast<PhiInst *>(use_inst));
+                    }
+                }
+            }
+        }
+        can_delete_phi->get_use_list().clear();
+        wait_for_delete.insert(can_delete_phi);
+    }
+    for (auto local_global_phi : wait_for_delete){
+        local_global_phi->get_parent()->delete_instr(local_global_phi);
     }
 }
