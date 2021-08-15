@@ -270,11 +270,7 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
-<<<<<<< HEAD
-
-=======
             passmgr.addPass<MovConst>();
->>>>>>> ad707db77916a389df95f10d0237fbd38475f150
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
 
