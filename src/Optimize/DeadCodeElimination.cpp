@@ -237,6 +237,7 @@ bool DeadCodeElimination::is_critical(Instruction *instr) {
     if (instr->isTerminator()) return true;
     else if (instr->is_call()) {
         auto callee = dynamic_cast<Function*>(instr->get_operand(0));
+        if (callee->get_num_basic_blocks() == 0) return true;
         if (callee->get_global_array_side_effect_store().size() > 0 || 
             callee->get_global_var_side_effect_store().size() > 0 ||
             callee->get_local_array_side_effect_store().size() > 0 || 
