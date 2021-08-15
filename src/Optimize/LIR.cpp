@@ -394,6 +394,20 @@ void LIR::div_const2mul(BasicBlock* bb) {
                 if (divisor == 0) {
                     std::cerr<<"divided by zero!"<<std::endl;
                     exit(-1);
+                } else if (op_const2->get_value() == 2) {
+                    iter++;
+                    auto lsr = BinaryInst::create_lsr(op1, ConstantInt::get(31, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    auto add = BinaryInst::create_add(op1, lsr, bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    auto asr = BinaryInst::create_asr(add, ConstantInt::get(1, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    instruction->replace_all_use_with(asr);
+                    bb->delete_instr(instruction);
+                    iter--;
                 } else if (is_power_of_two(op_const2->get_value())) {
                     int k = ceil(std::log2(op_const2->get_value()));
                     iter++;
