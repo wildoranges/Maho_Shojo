@@ -111,6 +111,33 @@ void MovConst::mov_const(BasicBlock *bb) {
                 instr->set_operand(1, mov_const_instr);
             }
         }
+        if (instr->is_muladd() || instr->is_mulsub() || instr->is_asradd() || instr->is_lsladd() || instr->is_lsradd() || instr->is_asrsub() || instr->is_lslsub() || instr->is_lsrsub()) {
+            // TODO:
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto op3 = instr->get_operand(2);
+            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+            if (const_op1) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                instr->set_operand(0, mov_const_instr);
+            }
+            if (const_op2) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                instr->set_operand(1, mov_const_instr);
+            }
+            if (const_op3) {
+                auto mov_const_instr = MovConstInst::create_mov_const(const_op3, bb);
+                instructions.pop_back();
+                bb->add_instruction(iter, mov_const_instr);
+                instr->set_operand(2, mov_const_instr);
+            }
+        }
     }
 }
 
