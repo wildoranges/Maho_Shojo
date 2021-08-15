@@ -41,6 +41,9 @@ void SideEffectAnalysis::execute() {
     // TODO: may need improvement
     get_func_total_var_effected_by_side_effect();
     for (auto func : module->get_functions()) {
+        func->set_callee_set(func_callee_map[func]);
+        func->set_args_side_effect_store(func_args_side_effect[func]);
+        func->set_args_side_effect_load(func_args_effected_by_side_effect[func]);
         func->set_local_array_side_effect_store(func_total_local_array_side_effect[func]);
         func->set_local_array_side_effect_load(func_total_local_array_effected_by_side_effect[func]);
         func->set_global_var_side_effect_store(func_total_global_var_side_effect[func]);
