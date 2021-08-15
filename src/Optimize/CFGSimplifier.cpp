@@ -59,11 +59,9 @@ bool CFGSimplifier::delete_redundant_phi() {
                         } else {
                             for (int i = 2; i < instr->get_num_operand(); i+=2) {
                                 auto cur_val = instr->get_operand(i);
-                                if (dynamic_cast<ConstantInt*>(cur_val)) {
-                                    if (cur_val != val) {
-                                        can_replace = false;
-                                        break;
-                                    }
+                                if (cur_val != val) {
+                                    can_replace = false;
+                                    break;
                                 }
                             }
                         }
