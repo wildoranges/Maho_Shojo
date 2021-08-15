@@ -187,8 +187,8 @@ enum Operand2Type{
                                                         else if (shift_op == ShiftOp::LSR) return "lsr";
                                                         else return "";}
             std::string get_code(){if (shift_op_ == NOSHIFT) {if (ty == RegTy) return reg_1_.get_code(); else return "#" + std::to_string(value_);}
-                                    else {if (ty == RegShiftRegTy) return reg_1_.get_code() + " " + get_operand2(shift_op_) + " " + reg_2_.get_code();
-                                            else return reg_1_.get_code() + " " + get_operand2(shift_op_) + " " + "#" + std::to_string(value_);}}
+                                    else {if (ty == RegShiftRegTy) return reg_1_.get_code() + ", " + get_operand2(shift_op_) + " " + reg_2_.get_code();
+                                            else return reg_1_.get_code() + ", " + get_operand2(shift_op_) + " " + "#" + std::to_string(value_);}}
     };
 
 }
