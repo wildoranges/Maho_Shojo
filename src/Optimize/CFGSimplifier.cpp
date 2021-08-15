@@ -52,17 +52,18 @@ bool CFGSimplifier::delete_redundant_phi() {
                             }
                         }
                     } else {
-                        can_replace = false;
-                        break;
-                        for (int i = 2; i < instr->get_num_operand(); i+=2) {
-                            auto cur_val = instr->get_operand(i);
-                            if (dynamic_cast<ConstantInt*>(cur_val)) {
-                                can_replace = false;
-                                break;
-                            } else {
-                                if (cur_val != val) {
-                                    can_replace = false;
-                                    break;
+                        auto val_to_instr = dynamic_cast<Instruction*>(val);
+                        if (val_to_instr->is_phi() && val_to_instr->get_parent() == instr->get_parent()) {
+                            can_replace = false;
+                            break;
+                        } else {
+                            for (int i = 2; i < instr->get_num_operand(); i+=2) {
+                                auto cur_val = instr->get_operand(i);
+                                if (dynamic_cast<ConstantInt*>(cur_val)) {
+                                    if (cur_val != val) {
+                                        can_replace = false;
+                                        break;
+                                    }
                                 }
                             }
                         }
