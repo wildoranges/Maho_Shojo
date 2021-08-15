@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
 
             if(!print_mir){
                 passmgr.addPass<LIR>();
-                passmgr.addPass<MovConst>();
+                // passmgr.addPass<MovConst>();
             }
 
             if(!no_dead_code_eli)
@@ -271,6 +271,13 @@ int main(int argc, char *argv[])
                 passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<MovConst>();
+
+            if(!no_ava_expr)
+                passmgr.addPass<AvailableExpr>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
 
