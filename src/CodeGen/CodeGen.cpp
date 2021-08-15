@@ -1048,6 +1048,7 @@
         std::set<IR2asm::Location*> loop_breaker;
         bool need_temp = false;
         bool need_restore_temp = true;
+        bool temp_forwarding = false;
         int temp_reg = 12;
         int size = src.size();
         for(int i = 0; i < size; i++){
@@ -1057,7 +1058,8 @@
             if(dynamic_cast<IR2asm::Regbase*>(srcloc)
                 && dynamic_cast<IR2asm::Regbase*>(dstloc))need_temp = true;
             if(dynamic_cast<IR2asm::RegLoc *>(srcloc) 
-                && dynamic_cast<IR2asm::RegLoc *>(srcloc)->is_constant())need_temp = true;
+                && dynamic_cast<IR2asm::RegLoc *>(srcloc)->is_constant()
+                && dynamic_cast<IR2asm::Regbase *>(dstloc))need_temp = true;
 
             IR2asm::RegLoc* srcreg = dynamic_cast<IR2asm::RegLoc *>(srcloc);
             IR2asm::RegLoc* dstreg = dynamic_cast<IR2asm::RegLoc *>(dstloc);            
@@ -1108,6 +1110,17 @@
             }
         }
 
+        // if(reg2loc.find(temp_reg)!= reg2loc.end()
+        //     && data_graph.find(reg2loc[temp_reg]) == data_graph.end()){
+        //     need_restore_temp = true;
+        // }
+
+        if(reg2loc.find(temp_reg) != reg2loc.end()
+            && pred_locs.find(reg2loc[temp_reg]) != pred_locs.end()
+            && pred_locs.find(pred_locs[reg2loc[temp_reg]]) == pred_locs.end()){
+            temp_forwarding = true;
+        }
+
         for(auto looploc: loops){
             auto iter = pred_locs[looploc];
             int reg_cost, stack_cost;
@@ -1141,6 +1154,7 @@
 
         auto temp_reg_loc = new IR2asm::Regbase(IR2asm::sp, 0);
         if(need_temp){
+            //TODO: not always meed store temp reg
             code += IR2asm::store(new IR2asm::Reg(temp_reg), temp_reg_loc, cmpop);
             IR2asm::Location* temp_reg_node = nullptr;
             if(reg2loc.find(temp_reg) != reg2loc.end()){
@@ -1153,7 +1167,7 @@
                     for(auto item: succ_list){
                         data_graph[temp_reg_loc].insert(item);
                     }
-                    data_graph.erase(temp_reg_node);
+                    data_graph[temp_reg_node].clear();
                 }
                 for(auto succ: data_graph[temp_reg_loc]){
                     if(pred_locs.find(succ) != pred_locs.end()){
@@ -1161,17 +1175,19 @@
                     }
                 }
 
-                for(auto map: data_graph){
-                    auto node = map.first;
-                    std::set<IR2asm::Location *> &succs = map.second;
-                    if(succs.find(temp_reg_node) != succs.end()){
-                        succs.erase(temp_reg_node);
-                        succs.insert(temp_reg_loc);
+                if(!temp_forwarding){//TODO: may break loop too
+                    for(auto map: data_graph){
+                        auto node = map.first;
+                        std::set<IR2asm::Location *> &succs = map.second;
+                        if(succs.find(temp_reg_node) != succs.end()){
+                            succs.erase(temp_reg_node);
+                            succs.insert(temp_reg_loc);
+                        }
                     }
-                }
-                if(pred_locs.find(temp_reg_node) != pred_locs.end()){
-                    pred_locs.insert({temp_reg_loc, pred_locs[temp_reg_node]});
-                    pred_locs.erase(temp_reg_node);
+                    if(pred_locs.find(temp_reg_node) != pred_locs.end()){
+                        pred_locs.insert({temp_reg_loc, pred_locs[temp_reg_node]});
+                        pred_locs.erase(temp_reg_node);
+                    }
                 }
             }
         }
@@ -1208,6 +1224,10 @@
             auto target_loc = ready_queue.front();
             ready_queue.pop();
             if(pred_locs.find(target_loc) == pred_locs.end())continue;
+            if(temp_forwarding && target_loc == reg2loc[temp_reg] && !ready_queue.empty()){
+                ready_queue.push(target_loc);
+                continue;
+            }
             auto src_loc = pred_locs[target_loc];
             if(dynamic_cast<IR2asm::RegLoc *>(src_loc)){
                 auto regloc = dynamic_cast<IR2asm::RegLoc *>(src_loc);
@@ -1267,7 +1287,7 @@
             }
         }
 
-        if(need_temp && need_restore_temp){
+        if(need_temp && need_restore_temp && !temp_forwarding){
             code += IR2asm::safe_load(reg_tmp, temp_reg_loc, sp_extra_ofst, long_func, cmpop);
         }
 
