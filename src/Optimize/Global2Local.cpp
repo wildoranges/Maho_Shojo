@@ -122,29 +122,32 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                     //get the local global of succ BB
                     //fill the no-operand phi
                     //check if phi is need
+                    auto phi_global = local_global_phis[succ_BB];
                     Value * first_local_global = nullptr;
                     bool all_same = true;
                     for (auto succ_pre : succ_BB->get_pre_basic_blocks()){
+                        if (bb2local_global[succ_pre] == phi_global){
+                            continue;
+                        }
                         if (first_local_global == nullptr){
-                            //local global of first pre BB
                             first_local_global = bb2local_global[succ_pre];
                         }
                         else {
                             auto const_first_local_global = dynamic_cast<ConstantInt *>(first_local_global);
-                            auto const_local_global = dynamic_cast<ConstantInt *>(bb2local_global[succ_pre]);
+                            auto local_global = bb2local_global[succ_pre];
+                            auto const_local_global = dynamic_cast<ConstantInt *>(local_global);
                             if (const_first_local_global != nullptr && const_local_global != nullptr){
                                 if (const_first_local_global->get_value() != const_local_global->get_value()){
                                     all_same = false;
                                     break;
                                 }
                             }
-                            else if (first_local_global != bb2local_global[succ_pre]){
+                            else if (first_local_global != local_global){
                                 all_same = false;
                                 break;
                             }
                         }
                     }
-                    auto phi_global = local_global_phis[succ_BB];
                     if (all_same){
                        //record the phis which can be deleted
                        can_delete_phis.push(phi_global);
@@ -186,7 +189,12 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
     while (!can_delete_phis.empty()){
         auto can_delete_phi = can_delete_phis.front();
         can_delete_phis.pop();
-        auto replace_val = can_delete_phi->get_operand(0);
+        Value *replace_val = nullptr;
+        for (auto i = 0; i < can_delete_phi->get_num_operand(); i+=2){
+            if (can_delete_phi->get_operand(i) != can_delete_phi){
+                replace_val = can_delete_phi->get_operand(i);
+            }
+        }
         for (auto use_pair : can_delete_phi->get_use_list()){
             auto use_inst = dynamic_cast<Instruction *>(use_pair.val_);
             if (use_inst!=nullptr){
@@ -196,20 +204,28 @@ void Global2Local::localize(GlobalVariable *global, Function *func){
                     //when use_inst is a phi created by G2L
                     //check if it should be deleted
                     bool all_same = true;
-                    auto first_local_global = use_inst->get_operand(0);
-                    auto const_first_local_global = dynamic_cast<ConstantInt *>(first_local_global);
-                    for (auto i = 2; i < use_inst->get_num_operand(); i+=2){
-                        auto local_global = use_inst->get_operand(i);
-                        auto const_local_global = dynamic_cast<ConstantInt *>(local_global);
-                        if (const_first_local_global != nullptr && const_local_global != nullptr){
-                            if (const_first_local_global->get_value() != const_local_global->get_value()){
+                    Value *first_local_global = nullptr;
+                    for (auto i = 0; i < use_inst->get_num_operand(); i+=2){
+                        if (use_inst->get_operand(i) == use_inst){
+                            continue;
+                        }
+                        if (first_local_global == nullptr){
+                            first_local_global = use_inst->get_operand(i);
+                        }
+                        else{
+                            auto const_first_local_global = dynamic_cast<ConstantInt *>(first_local_global);
+                            auto local_global = use_inst->get_operand(i);
+                            auto const_local_global = dynamic_cast<ConstantInt *>(local_global);
+                            if (const_first_local_global != nullptr && const_local_global != nullptr){
+                                if (const_first_local_global->get_value() != const_local_global->get_value()){
+                                    all_same = false;
+                                    break;
+                                }
+                            }
+                            else if (first_local_global != local_global){
                                 all_same = false;
                                 break;
                             }
-                        }
-                        else if (first_local_global != local_global){
-                            all_same = false;
-                            break;
                         }
                     }
                     if (all_same){
