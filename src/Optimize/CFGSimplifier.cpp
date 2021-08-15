@@ -53,7 +53,7 @@ bool CFGSimplifier::delete_redundant_phi() {
                         }
                     } else {
                         auto val_to_instr = dynamic_cast<Instruction*>(val);
-                        if (val_to_instr->is_phi() && val_to_instr->get_parent() == instr->get_parent()) {
+                        if (val_to_instr && val_to_instr->is_phi() && val_to_instr->get_parent() == instr->get_parent()) {
                             can_replace = false;
                             break;
                         } else {
