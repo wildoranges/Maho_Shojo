@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
     if (print_LIR||codegen||print_mir) {
         root->accept(builder);
         auto m = builder.getModule();
+        m->set_file_name(filename);
         if(!optimize){
             PassMgr passmgr(m.get());
             //passmgr.addPass<CFGSimplifier>();
