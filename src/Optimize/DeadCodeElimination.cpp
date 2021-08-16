@@ -304,6 +304,10 @@ void DeadCodeElimination::remove_unmarked_bb() {
         }
     }
     for (auto delete_bb : wait_delete_bb) {
+        auto delete_instr_list = delete_bb->get_instructions();
+        for (auto instr : delete_instr_list) {
+            delete_bb->delete_instr(instr);
+        }
         func_->remove(delete_bb);
     }
 }
