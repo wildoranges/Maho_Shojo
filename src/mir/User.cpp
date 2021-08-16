@@ -1,5 +1,7 @@
 #include "User.h"
+#ifdef DEBUG
 #include <cassert>
+#endif
 
 User::User(Type *ty, const std::string &name , unsigned num_ops )
     : Value(ty, name), num_ops_(num_ops)
@@ -21,7 +23,9 @@ Value *User::get_operand(unsigned i) const
 
 void User::set_operand(unsigned i, Value *v)
 {
+#ifdef DEBUG
     assert(i < num_ops_ && "set_operand out of index");
+#endif
     // assert(operands_[i] == nullptr && "ith operand is not null");
     operands_[i] = v;  
     v->add_use(this, i);

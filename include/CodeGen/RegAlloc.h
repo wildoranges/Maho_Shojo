@@ -81,7 +81,9 @@ const int priority[] = {
 
 struct cmp_reg {
     bool operator()(const int reg1,const int reg2)const{
+#ifdef DEBUG
         assert(reg1>=0&&reg1<=12&&reg2<=12&&reg2>=0&&"invalid reg id");
+#endif
         return priority[reg1] > priority[reg2];
     }
 };

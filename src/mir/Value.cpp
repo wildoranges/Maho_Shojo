@@ -1,7 +1,9 @@
 #include "Value.h"
 #include "Type.h"
 #include "User.h"
+#ifdef DEBUG
 #include <cassert>
+#endif
 
 Value::Value(Type *ty, const std::string &name )
   : type_(ty), name_(name)
@@ -23,7 +25,9 @@ void Value::replace_all_use_with(Value *new_val)
 {
     for (auto use : use_list_) {
         auto val = dynamic_cast<User *>(use.val_);
+#ifdef DEBUG
         assert(val && "new_val is not a user");
+#endif
         val->set_operand(use.arg_no_, new_val);
     }
 }

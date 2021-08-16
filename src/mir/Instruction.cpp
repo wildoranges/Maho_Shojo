@@ -4,7 +4,9 @@
 #include "BasicBlock.h"
 #include "Instruction.h"
 #include "IRprinter.h"
+#ifdef DEBUG
 #include <cassert>
+#endif
 #include <vector>
 #include <algorithm>
 
@@ -462,7 +464,9 @@ std::string CmpBrInst::print()
 CallInst::CallInst(Function *func, std::vector<Value *> args, BasicBlock *bb)
     : Instruction(func->get_return_type(), Instruction::call, args.size() + 1, bb)
 {
+#ifdef DEBUG
     assert(func->get_num_of_args() == args.size());
+#endif
     int num_ops = args.size() + 1; 
     set_operand(0, func);
     for (int i = 1; i < num_ops; i++) {
@@ -503,7 +507,9 @@ std::string CallInst::print()
     instr_ir += this->get_function_type()->get_return_type()->print();    
     
     instr_ir += " ";
+#ifdef DEBUG
     assert(dynamic_cast<Function *>(this->get_operand(0)) && "Wrong call operand function");
+#endif
     instr_ir += print_as_op(this->get_operand(0), false);
     instr_ir += "(";
     for (int i = 1; i < this->get_num_operand(); i++)
@@ -647,14 +653,18 @@ Type *GetElementPtrInst::get_element_type(Value *ptr, std::vector<Value *> idxs)
 {
 
     Type *ty = ptr->get_type()->get_pointer_element_type();
+#ifdef DEBUG
     assert( "GetElementPtrInst ptr is wrong type" && (ty->is_array_type()||ty->is_integer_type()) );
+#endif
     if (ty->is_array_type())
     {
         ArrayType *arr_ty = static_cast<ArrayType *>(ty);
         for (int i = 1; i < idxs.size(); i++) {
             ty = arr_ty->get_element_type();
             if (i < idxs.size() - 1) {
-                assert(ty->is_array_type() && "Index error!");    
+#ifdef DEBUG
+                assert(ty->is_array_type() && "Index error!");
+#endif
             }
             if (ty->is_array_type()) {
                 arr_ty = static_cast<ArrayType *>(ty);
@@ -682,7 +692,9 @@ std::string GetElementPtrInst::print()
     instr_ir += " = ";
     instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
     instr_ir += " ";
+#ifdef DEBUG
     assert(this->get_operand(0)->get_type()->is_pointer_type());
+#endif
     instr_ir += this->get_operand(0)->get_type()->get_pointer_element_type()->print();
     instr_ir += ", ";
     for (int i = 0; i < this->get_num_operand(); i++)
@@ -759,8 +771,10 @@ std::string StoreOffsetInst::print()
 LoadInst::LoadInst(Type *ty, Value *ptr, BasicBlock *bb)
     : Instruction(ty, Instruction::load, 1, bb)
 {
+#ifdef DEBUG
     assert(ptr->get_type()->is_pointer_type());
     assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
+#endif
     set_operand(0, ptr);
 }
 
@@ -782,7 +796,9 @@ std::string LoadInst::print()
     instr_ir += " = ";
     instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
     instr_ir += " ";
+#ifdef DEBUG
     assert(this->get_operand(0)->get_type()->is_pointer_type());
+#endif
     instr_ir += this->get_operand(0)->get_type()->get_pointer_element_type()->print();
     instr_ir += ",";
     instr_ir += " ";
@@ -793,8 +809,10 @@ std::string LoadInst::print()
 LoadOffsetInst::LoadOffsetInst(Type *ty, Value *ptr, Value *offset, BasicBlock *bb)
     : Instruction(ty, Instruction::load_offset, 2, bb)
 {
+#ifdef DEBUG
     assert(ptr->get_type()->is_pointer_type());
     assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
+#endif
     set_operand(0, ptr);
     set_operand(1, offset);
 }
@@ -802,8 +820,10 @@ LoadOffsetInst::LoadOffsetInst(Type *ty, Value *ptr, Value *offset, BasicBlock *
 LoadOffsetInst::LoadOffsetInst(Type *ty, Value *ptr, BasicBlock *bb)
     : Instruction(ty, Instruction::load_offset, 2, bb)
 {
+#ifdef DEBUG
     assert(ptr->get_type()->is_pointer_type());
     assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
+#endif
     set_operand(0, ptr);
 }
 
@@ -825,7 +845,9 @@ std::string LoadOffsetInst::print()
     instr_ir += " = ";
     instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
     instr_ir += " ";
+#ifdef DEBUG
     assert(this->get_operand(0)->get_type()->is_pointer_type());
+#endif
     instr_ir += this->get_operand(0)->get_type()->get_pointer_element_type()->print();
     instr_ir += ",";
     instr_ir += " ";
