@@ -258,6 +258,12 @@ int main(int argc, char *argv[])
                 // passmgr.addPass<MovConst>();
             }
 
+            if(!no_const_prop)
+                passmgr.addPass<ConstPropagation>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
+
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
