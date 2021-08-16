@@ -42,13 +42,14 @@ BinaryInst::BinaryInst(Type *ty, OpID id, Value *v1, Value *v2,
     // assertValid();
 }
 
-void BinaryInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
-}
+
+//void BinaryInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
+//}
 
 BinaryInst *BinaryInst::create_add(Value *v1, Value *v2, BasicBlock *bb, Module *m)
 {
@@ -153,16 +154,16 @@ MulAddInst::MulAddInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3,
     // assertValid();
 }
 
-void MulAddInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(get_operand(2)->get_type()->is_integer_type());
-    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
-        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
-}
+//void MulAddInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(get_operand(2)->get_type()->is_integer_type());
+//    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) &&
+//        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
+//}
 
 MulAddInst *MulAddInst::create_muladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
@@ -211,16 +212,16 @@ MulSubInst::MulSubInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3,
     // assertValid();
 }
 
-void MulSubInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(get_operand(2)->get_type()->is_integer_type());
-    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
-        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
-}
+//void MulSubInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(get_operand(2)->get_type()->is_integer_type());
+//    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) &&
+//        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
+//}
 
 MulSubInst *MulSubInst::create_mulsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
@@ -269,14 +270,14 @@ ShiftBinaryInst::ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Value 
     // assertValid();
 }
 
-void ShiftBinaryInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
-        static_cast<Constant *>(get_operand(2)));
-}
+//void ShiftBinaryInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) &&
+//        static_cast<Constant *>(get_operand(2)));
+//}
 
 ShiftBinaryInst *ShiftBinaryInst::create_asradd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
@@ -349,13 +350,13 @@ CmpInst::CmpInst(Type *ty, CmpOp op, Value *lhs, Value *rhs,
     // assertValid();
 }
 
-void CmpInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
-}
+//void CmpInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
+//}
 
 CmpInst *CmpInst::create_cmp(CmpOp op, Value *lhs, Value *rhs, 
                         BasicBlock *bb, Module *m)
@@ -408,13 +409,13 @@ CmpBrInst::CmpBrInst(CmpOp op, Value *lhs, Value *rhs,
     // assertValid();
 }
 
-void CmpBrInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
-}
+//void CmpBrInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
+//}
 
 CmpBrInst *CmpBrInst::create_cmpbr(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false, 
                         BasicBlock *bb, Module *m)
