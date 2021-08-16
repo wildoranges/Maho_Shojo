@@ -1304,15 +1304,24 @@
                 }
 
                 if(!temp_forwarding){//TODO: may break loop too
-                    for(auto map: data_graph){
-                        auto node = map.first;
-                        std::set<IR2asm::Location *> &succs = map.second;
-                        if(succs.find(temp_reg_node) != succs.end()){
-                            succs.erase(temp_reg_node);
-                            succs.insert(temp_reg_loc);
-                        }
-                    }
+                    need_restore_temp = true;
+                    // for(auto map: data_graph){
+                    //     auto node = map.first;
+                    //     std::set<IR2asm::Location *> &succs = map.second;
+                    //     if(succs.find(temp_reg_node) != succs.end()){
+                    //         succs.erase(temp_reg_node);
+                    //         succs.insert(temp_reg_loc);
+                    //     }
+                    // }
+
                     if(pred_locs.find(temp_reg_node) != pred_locs.end()){
+                        if(data_graph.find(pred_locs[temp_reg_node]) != data_graph.end()){
+                            data_graph[pred_locs[temp_reg_node]].erase(temp_reg_node);
+                            data_graph[pred_locs[temp_reg_node]].insert(temp_reg_loc);
+                        }
+                        else{
+                            data_graph[pred_locs[temp_reg_node]].insert(temp_reg_loc);
+                        }
                         pred_locs.insert({temp_reg_loc, pred_locs[temp_reg_node]});
                         pred_locs.erase(temp_reg_node);
                     }
@@ -1351,7 +1360,7 @@
         int time = 0;
         while(!ready_queue.empty()){
             time++;
-            if(time > 2 * size + 1)exit(101);
+            if(time > 3 * size + 1)exit(101);
             auto target_loc = ready_queue.front();
             ready_queue.pop();
             if(pred_locs.find(target_loc) == pred_locs.end())continue;
