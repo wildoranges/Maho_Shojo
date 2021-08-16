@@ -983,7 +983,7 @@
                 new_code += caller_reg_restore(bb->get_parent(),call_inst);
                 code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 950){
+                if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -998,7 +998,7 @@
                 code += new_code;
 
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 950){
+                if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -1006,7 +1006,7 @@
                 new_code += instr_gen(inst);
                 code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 950){
+                if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
@@ -1017,7 +1017,7 @@
             new_code += push_tmp_instr_regs(br_inst);
             code += new_code;
             accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-            if(accumulate_line_num > 950){
+            if(accumulate_line_num > literal_pool_threshold){
                 code += make_lit_pool();
                 accumulate_line_num = 0;
             }
@@ -1302,6 +1302,11 @@
             if(data_graph[src_loc].size() == 0){
                 ready_queue.push(src_loc);
             }
+            accumulate_line_num+=2;
+            if(accumulate_line_num > literal_pool_threshold){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
+            }
         }
 
         if(need_temp && need_restore_temp && !temp_forwarding){
@@ -1315,7 +1320,7 @@
         if(dynamic_cast<ReturnInst *>(br_inst)){
             std::string code;
             accumulate_line_num += 1;
-            if(accumulate_line_num > 950){
+            if(accumulate_line_num > literal_pool_threshold){
                 code += make_lit_pool();
                 accumulate_line_num = 0;
             }
@@ -1359,7 +1364,12 @@
             succ_bb = dynamic_cast<BasicBlock*>(br_inst->get_operand(0));
             succ_br += cmpbr_inst[0] + IR2asm::endl;
         }
-
+        std::string lit_pool;
+        accumulate_line_num += 1 + count(pop_code.begin(), pop_code.end(), IR2asm::endl[0]);//for possible cmp and pop code
+        if(accumulate_line_num > literal_pool_threshold){
+            lit_pool += make_lit_pool();
+            accumulate_line_num = 0;
+        }
         for(auto sux:bb->get_succ_basic_blocks()){
             std::string cmpop;
             if(sux == succ_bb){
@@ -1434,9 +1444,10 @@
             }
             *code += data_move(phi_src, phi_target, cmpop);
         }
-        std::string ret_code = cmp + pop_code + succ_code + succ_br + fail_code + fail_br;
-        accumulate_line_num += std::count(ret_code.begin(), ret_code.end(), IR2asm::endl[0]);
-        if(accumulate_line_num > 950){
+        accumulate_line_num += std::count(succ_br.begin(), succ_br.end(), IR2asm::endl[0]);
+        accumulate_line_num += std::count(fail_br.begin(), fail_br.end(), IR2asm::endl[0]);
+        std::string ret_code = cmp + pop_code + lit_pool + succ_code + succ_br + fail_code + fail_br;
+        if(accumulate_line_num > literal_pool_threshold){
             if(dynamic_cast<BranchInst *>(bb->get_terminator()) && bb->get_terminator()->get_num_operand() == 1){
                 ret_code += make_lit_pool(true);
             }
