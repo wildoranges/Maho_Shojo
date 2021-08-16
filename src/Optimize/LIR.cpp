@@ -3,6 +3,7 @@
 //
 
 #include "LIR.h"
+#include "ConstPropagation.h"
 #include <cmath>
 
 void LIR::execute() {
@@ -25,6 +26,8 @@ void LIR::execute() {
             for (auto bb : func->get_basic_blocks()){
                 remove_unused_op(bb);
             }
+            ConstPropagation const_prop(module);
+            const_prop.execute();
 //            for (auto bb : func->get_basic_blocks()){
 //                mov_const(bb);
 //            }
