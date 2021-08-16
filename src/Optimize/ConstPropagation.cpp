@@ -122,6 +122,13 @@ void ConstPropagation::reduce_redundant_cond_br() {
                                     if (instr->is_phi()) {
                                         for (int i = 1; i < instr->get_num_operand(); i+=2) {
                                             if (instr->get_operand(i) == bb) {
+                                                for (int j = i + 1; j < instr->get_num_operand(); j++) {
+                                                    for (auto &use : instr->get_operand(j)->get_use_list()) {
+                                                        if (use.val_ == instr && use.arg_no_ == j) {
+                                                            use.arg_no_ -= 2;
+                                                        }
+                                                    }
+                                                }
                                                 instr->remove_operands(i - 1, i);
                                             }
                                             if (instr->get_num_operand() == 2 && succBB->get_pre_basic_blocks().size() == 1) {
@@ -162,12 +169,23 @@ void ConstPropagation::const_propagation() {
             }
         }
         else if (instr->is_cmp()) {
-            auto value1 = dynamic_cast<ConstantInt*>(instr->get_operand(0));
-            auto value2 = dynamic_cast<ConstantInt*>(instr->get_operand(1));
-            if (value1 && value2) {
-                auto folder_const = folder->compute(dynamic_cast<CmpInst *>(instr)->get_cmp_op(), value1, value2);
-                instr->replace_all_use_with(folder_const); 
-                wait_delete.push_back(instr);
+            if (instr->get_operand(0) == instr->get_operand(1)) {
+                auto cmp_op = dynamic_cast<CmpInst *>(instr)->get_cmp_op();
+                if (cmp_op == CmpInst::EQ || cmp_op == CmpInst::GE || cmp_op == CmpInst::LE) {
+                    instr->replace_all_use_with(ConstantInt::get(1, module));
+                    wait_delete.push_back(instr);
+                } else if (cmp_op == CmpInst::NE || cmp_op == CmpInst::GT || cmp_op == CmpInst::LT) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    wait_delete.push_back(instr);
+                }
+            } else {
+                auto value1 = dynamic_cast<ConstantInt*>(instr->get_operand(0));
+                auto value2 = dynamic_cast<ConstantInt*>(instr->get_operand(1));
+                if (value1 && value2) {
+                    auto folder_const = folder->compute(dynamic_cast<CmpInst *>(instr)->get_cmp_op(), value1, value2);
+                    instr->replace_all_use_with(folder_const); 
+                    wait_delete.push_back(instr);
+                }
             }
         }
         else if (instr->is_zext()) {

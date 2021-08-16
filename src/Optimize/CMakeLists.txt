@@ -12,6 +12,9 @@ add_library(
         LoopInvariant.cpp
         AvailableExpr.cpp
         FuncInline.cpp
+        MovConst.cpp
         LoopExpansion.cpp
+        Global2Local.cpp
+        SideEffectAnalysis.cpp
 )
 

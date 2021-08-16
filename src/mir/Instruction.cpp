@@ -164,7 +164,7 @@ void MulAddInst::assertValid()
 
 MulAddInst *MulAddInst::create_muladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
-    return new MulAddInst(v3->get_type(), Instruction::muladd, v1, v2, v3, bb);
+    return new MulAddInst(v3->get_type()->is_pointer_type() ? v3->get_type() : v1->get_type(), Instruction::muladd, v1, v2, v3, bb);
 }
 
 std::string MulAddInst::print()
@@ -278,17 +278,17 @@ void ShiftBinaryInst::assertValid()
 
 ShiftBinaryInst *ShiftBinaryInst::create_asradd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
-    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::asradd, v1, v2, v3, bb);
+    return new ShiftBinaryInst(v1->get_type()->is_pointer_type() ? v1->get_type() : v2->get_type(), Instruction::asradd, v1, v2, v3, bb);
 }
 
 ShiftBinaryInst *ShiftBinaryInst::create_lsladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
-    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsladd, v1, v2, v3, bb);
+    return new ShiftBinaryInst(v1->get_type()->is_pointer_type() ? v1->get_type() : v2->get_type(), Instruction::lsladd, v1, v2, v3, bb);
 }
 
 ShiftBinaryInst *ShiftBinaryInst::create_lsradd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
-    return new ShiftBinaryInst(Type::get_int32_type(m), Instruction::lsradd, v1, v2, v3, bb);
+    return new ShiftBinaryInst(v1->get_type()->is_pointer_type() ? v1->get_type() : v2->get_type(), Instruction::lsradd, v1, v2, v3, bb);
 }
 
 ShiftBinaryInst *ShiftBinaryInst::create_asrsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
@@ -358,7 +358,7 @@ void CmpInst::assertValid()
 CmpInst *CmpInst::create_cmp(CmpOp op, Value *lhs, Value *rhs, 
                         BasicBlock *bb, Module *m)
 {
-    return new CmpInst(m->get_int32_type(), op, lhs, rhs, bb);
+    return new CmpInst(m->get_int1_type(), op, lhs, rhs, bb);
 }
 
 std::string CmpInst::print()

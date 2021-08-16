@@ -3,6 +3,7 @@
 //
 
 #include "LIR.h"
+#include "ConstPropagation.h"
 #include <cmath>
 
 void LIR::execute() {
@@ -20,18 +21,22 @@ void LIR::execute() {
                 div_const2mul(bb);
             }
             for (auto bb : func->get_basic_blocks()){
-                remove_unused_op(bb);
+                mul_const2shift(bb);
             }
             for (auto bb : func->get_basic_blocks()){
                 remove_unused_op(bb);
             }
-            for (auto bb : func->get_basic_blocks()){
-                mov_const(bb);
-            }
+            ConstPropagation const_prop(module);
+            const_prop.execute();
+//            for (auto bb : func->get_basic_blocks()){
+//                mov_const(bb);
+//            }
             for (auto bb : func->get_basic_blocks()){
                 // merge instr (when all optimization finished)
-                //merge_mul_add(bb);
-                //merge_mul_sub(bb);
+                merge_shift_add(bb);
+                merge_shift_sub(bb);
+                merge_mul_add(bb);
+                merge_mul_sub(bb);
                 merge_cmp_br(bb);
             }
         }
@@ -132,104 +137,104 @@ void LIR::store_offset(BasicBlock *bb) {
     }
 }
 
-void LIR::mov_const(BasicBlock *bb) {
-    // TODO: need support other LIR instructions
-    auto &instructions = bb->get_instructions();
-    for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
-        auto instr = *iter;
-        if (instr->is_asr() || instr->is_lsl() || instr->is_lsr() || instr->is_store() || instr->is_store_offset()) {
-            auto op1 = instr->get_operand(0);
-            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
-            if (const_op1) {
-                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
-                instructions.pop_back();
-                bb->add_instruction(iter, mov_const_instr);
-                instr->set_operand(0, mov_const_instr);
-            }
-        }
-        if (instr->is_store_offset()) {
-            auto offset = instr->get_operand(2);
-            auto const_offset = dynamic_cast<ConstantInt*>(offset);
-            if (const_offset) {
-                auto const_offset_val = const_offset->get_value();
-                if (const_offset_val >= (1<<7) || const_offset_val < -(1<<7)) {
-                    auto mov_const_instr = MovConstInst::create_mov_const(const_offset, bb);
-                    instructions.pop_back();
-                    bb->add_instruction(iter, mov_const_instr);
-                    instr->set_operand(2, mov_const_instr);
-                }
-            }
-        }
-        if (instr->is_load_offset()) {
-            auto offset = instr->get_operand(1);
-            auto const_offset = dynamic_cast<ConstantInt*>(offset);
-            if (const_offset) {
-                auto const_offset_val = const_offset->get_value();
-                if (const_offset_val >= (1<<7) || const_offset_val < -(1<<7)) {
-                    auto mov_const_instr = MovConstInst::create_mov_const(const_offset, bb);
-                    instructions.pop_back();
-                    bb->add_instruction(iter, mov_const_instr);
-                    instr->set_operand(1, mov_const_instr);
-                }
-            }
-        }
-        if (instr->is_add()) {
-            auto op2 = instr->get_operand(1);
-            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
-            if (const_op2) {
-                auto const_op2_val = const_op2->get_value();
-                if (const_op2_val >= (1<<7) || const_op2_val < -(1<<7)) {
-                    auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
-                    instructions.pop_back();
-                    bb->add_instruction(iter, mov_const_instr);
-                    instr->set_operand(1, mov_const_instr);
-                }
-            }
-        }
-        if (instr->is_sub()) {
-            auto op1 = instr->get_operand(0);
-            auto op2 = instr->get_operand(1);
-            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
-            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
-            if (const_op1) {
-                auto const_op1_val = const_op1->get_value();
-                if (const_op1_val >= (1<<7) || const_op1_val < -(1<<7)) {
-                    auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
-                    instructions.pop_back();
-                    bb->add_instruction(iter, mov_const_instr);
-                    instr->set_operand(0, mov_const_instr);
-                }
-            }
-            if (const_op2) {
-                auto const_op2_val = const_op2->get_value();
-                if (const_op2_val >= (1<<7) || const_op2_val < -(1<<7)) {
-                    auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
-                    instructions.pop_back();
-                    bb->add_instruction(iter, mov_const_instr);
-                    instr->set_operand(1, mov_const_instr);
-                }
-            }
-        }
-        if (instr->is_add() || instr->is_sub() || instr->is_and() || instr->is_or() || instr->is_xor() || instr->is_cmp() || instr->is_cmpbr() || instr->is_mul() || instr->is_div() || instr->is_rem() || instr->is_smmul() || instr->is_smul_lo() || instr->is_smul_hi()) {
-            auto op1 = instr->get_operand(0);
-            auto op2 = instr->get_operand(1);
-            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
-            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
-            if (const_op1) {
-                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
-                instructions.pop_back();
-                bb->add_instruction(iter, mov_const_instr);
-                instr->set_operand(0, mov_const_instr);
-            }
-            if (const_op2) {
-                auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
-                instructions.pop_back();
-                bb->add_instruction(iter, mov_const_instr);
-                instr->set_operand(1, mov_const_instr);
-            }
-        }
-    }
-}
+//void LIR::mov_const(BasicBlock *bb) {
+//    // TODO: need support other LIR instructions
+//    auto &instructions = bb->get_instructions();
+//    for (auto iter = instructions.begin(); iter != instructions.end(); iter++){
+//        auto instr = *iter;
+//        if (instr->is_asr() || instr->is_lsl() || instr->is_lsr() || instr->is_store() || instr->is_store_offset()) {
+//            auto op1 = instr->get_operand(0);
+//            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+//            if (const_op1) {
+//                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+//                instructions.pop_back();
+//                bb->add_instruction(iter, mov_const_instr);
+//                instr->set_operand(0, mov_const_instr);
+//            }
+//        }
+//        if (instr->is_store_offset()) {
+//            auto offset = instr->get_operand(2);
+//            auto const_offset = dynamic_cast<ConstantInt*>(offset);
+//            if (const_offset) {
+//                auto const_offset_val = const_offset->get_value();
+//                if (const_offset_val >= (1<<7) || const_offset_val < -(1<<7)) {
+//                    auto mov_const_instr = MovConstInst::create_mov_const(const_offset, bb);
+//                    instructions.pop_back();
+//                    bb->add_instruction(iter, mov_const_instr);
+//                    instr->set_operand(2, mov_const_instr);
+//                }
+//            }
+//        }
+//        if (instr->is_load_offset()) {
+//            auto offset = instr->get_operand(1);
+//            auto const_offset = dynamic_cast<ConstantInt*>(offset);
+//            if (const_offset) {
+//                auto const_offset_val = const_offset->get_value();
+//                if (const_offset_val >= (1<<7) || const_offset_val < -(1<<7)) {
+//                    auto mov_const_instr = MovConstInst::create_mov_const(const_offset, bb);
+//                    instructions.pop_back();
+//                    bb->add_instruction(iter, mov_const_instr);
+//                    instr->set_operand(1, mov_const_instr);
+//                }
+//            }
+//        }
+//        if (instr->is_add()) {
+//            auto op2 = instr->get_operand(1);
+//            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+//            if (const_op2) {
+//                auto const_op2_val = const_op2->get_value();
+//                if (const_op2_val >= (1<<7) || const_op2_val < -(1<<7)) {
+//                    auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+//                    instructions.pop_back();
+//                    bb->add_instruction(iter, mov_const_instr);
+//                    instr->set_operand(1, mov_const_instr);
+//                }
+//            }
+//        }
+//        if (instr->is_sub()) {
+//            auto op1 = instr->get_operand(0);
+//            auto op2 = instr->get_operand(1);
+//            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+//            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+//            if (const_op1) {
+//                auto const_op1_val = const_op1->get_value();
+//                if (const_op1_val >= (1<<7) || const_op1_val < -(1<<7)) {
+//                    auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+//                    instructions.pop_back();
+//                    bb->add_instruction(iter, mov_const_instr);
+//                    instr->set_operand(0, mov_const_instr);
+//                }
+//            }
+//            if (const_op2) {
+//                auto const_op2_val = const_op2->get_value();
+//                if (const_op2_val >= (1<<7) || const_op2_val < -(1<<7)) {
+//                    auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+//                    instructions.pop_back();
+//                    bb->add_instruction(iter, mov_const_instr);
+//                    instr->set_operand(1, mov_const_instr);
+//                }
+//            }
+//        }
+//        if (instr->is_add() || instr->is_sub() || instr->is_and() || instr->is_or() || instr->is_xor() || instr->is_cmp() || instr->is_cmpbr() || instr->is_mul() || instr->is_div() || instr->is_rem() || instr->is_smmul() || instr->is_smul_lo() || instr->is_smul_hi()) {
+//            auto op1 = instr->get_operand(0);
+//            auto op2 = instr->get_operand(1);
+//            auto const_op1 = dynamic_cast<ConstantInt*>(op1);
+//            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+//            if (const_op1) {
+//                auto mov_const_instr = MovConstInst::create_mov_const(const_op1, bb);
+//                instructions.pop_back();
+//                bb->add_instruction(iter, mov_const_instr);
+//                instr->set_operand(0, mov_const_instr);
+//            }
+//            if (const_op2) {
+//                auto mov_const_instr = MovConstInst::create_mov_const(const_op2, bb);
+//                instructions.pop_back();
+//                bb->add_instruction(iter, mov_const_instr);
+//                instr->set_operand(1, mov_const_instr);
+//            }
+//        }
+//    }
+//}
 
 void LIR::merge_cmp_br(BasicBlock* bb) { // FIXME: may have bugs
     auto terminator = bb->get_terminator();
@@ -319,6 +324,88 @@ void LIR::merge_mul_sub(BasicBlock* bb) {
     }
 }
 
+void LIR::merge_shift_add(BasicBlock* bb) {
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin();iter != instructions.end();iter++){
+        auto inst_add = *iter;
+        if (inst_add->is_add()){
+            auto op1 = inst_add->get_operand(0);
+            auto op_ins1 = dynamic_cast<Instruction *>(op1);
+            auto op2 = inst_add->get_operand(1);
+            auto op_ins2 = dynamic_cast<Instruction *>(op2);
+            if (op_ins1!=nullptr){
+                if ((op_ins1->is_lsl() || op_ins1->is_lsr() || op_ins1->is_asr()) && op_ins1->get_parent() == bb && op_ins1->get_use_list().size() == 1){
+                    Instruction *shift_add;
+                    if (op_ins1->is_lsl()) {
+                        shift_add = ShiftBinaryInst::create_lsladd(op2,op_ins1->get_operand(0),op_ins1->get_operand(1),bb,module);
+                    } else if (op_ins1->is_lsr()) {
+                        shift_add = ShiftBinaryInst::create_lsradd(op2,op_ins1->get_operand(0),op_ins1->get_operand(1),bb,module);
+                    } else if (op_ins1->is_asr()) {
+                        shift_add = ShiftBinaryInst::create_asradd(op2,op_ins1->get_operand(0),op_ins1->get_operand(1),bb,module);
+                    }
+                    instructions.pop_back();
+                    bb->add_instruction(iter,shift_add);
+                    bb->delete_instr(op_ins1);
+                    iter--;
+                    inst_add->replace_all_use_with(shift_add);
+                    bb->delete_instr(inst_add);
+                    continue;
+                }
+            }
+            if (op_ins2!=nullptr){
+                if ((op_ins2->is_lsl() || op_ins2->is_lsr() || op_ins2->is_asr()) && op_ins2->get_parent() == bb && op_ins2->get_use_list().size() == 1){
+                    Instruction *shift_add;
+                    if (op_ins2->is_lsl()) {
+                        shift_add = ShiftBinaryInst::create_lsladd(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    } else if (op_ins2->is_lsr()) {
+                        shift_add = ShiftBinaryInst::create_lsradd(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    } else if (op_ins2->is_asr()) {
+                        shift_add = ShiftBinaryInst::create_asradd(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    }
+                    instructions.pop_back();
+                    bb->add_instruction(iter,shift_add);
+                    bb->delete_instr(op_ins2);
+                    iter--;
+                    inst_add->replace_all_use_with(shift_add);
+                    bb->delete_instr(inst_add);
+                    continue;
+                }
+            }
+        }
+    }
+}
+
+void LIR::merge_shift_sub(BasicBlock* bb) {
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin();iter != instructions.end();iter++){
+        auto inst_sub = *iter;
+        if (inst_sub->is_sub()){
+            auto op1 = inst_sub->get_operand(0);
+            auto op2 = inst_sub->get_operand(1);
+            auto op_ins2 = dynamic_cast<Instruction *>(op2);
+            if (op_ins2!=nullptr){
+                if ((op_ins2->is_lsl() || op_ins2->is_lsr() || op_ins2->is_asr()) && op_ins2->get_parent() == bb && op_ins2->get_use_list().size() == 1){
+                    Instruction *shift_sub;
+                    if (op_ins2->is_lsl()) {
+                        shift_sub = ShiftBinaryInst::create_lslsub(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    } else if (op_ins2->is_lsr()) {
+                        shift_sub = ShiftBinaryInst::create_lsrsub(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    } else if (op_ins2->is_asr()) {
+                        shift_sub = ShiftBinaryInst::create_asrsub(op1,op_ins2->get_operand(0),op_ins2->get_operand(1),bb,module);
+                    }
+                    instructions.pop_back();
+                    bb->add_instruction(iter,shift_sub);
+                    bb->delete_instr(op_ins2);
+                    iter--;
+                    inst_sub->replace_all_use_with(shift_sub);
+                    bb->delete_instr(inst_sub);
+                    continue;
+                }
+            }
+        }
+    }
+}
+
 void LIR::split_gep(BasicBlock* bb) {
     auto &instructions = bb->get_instructions();
     for (auto iter = instructions.begin(); iter != instructions.end(); iter++) {
@@ -371,13 +458,34 @@ void LIR::split_srem(BasicBlock* bb) {
     }
 }
 
-void LIR::mul_const2shift(BasicBlock* bb) {
-    
-}
-
 bool is_power_of_two(int x) {
     // First x in the below expression is for the case when x is 0
     return x && (!(x & (x - 1)));
+}
+
+void LIR::mul_const2shift(BasicBlock* bb) {
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin(); iter != instructions.end(); iter++) {
+        auto instruction = *iter;
+        if (instruction->is_mul()) {
+            auto op1 = instruction->get_operand(0);
+            auto op2 = instruction->get_operand(1);
+            auto op_const2 = dynamic_cast<ConstantInt*>(op2);
+            if (op_const2 != nullptr) {
+                if (is_power_of_two(op_const2->get_value())) {
+                    if (op_const2->get_value() == 0 || op_const2->get_value() == 1) continue;
+                    int k = (int)(ceil(std::log2(op_const2->get_value())))%32;
+                    iter++;
+                    auto lsl = BinaryInst::create_lsl(op1, ConstantInt::get(k, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    instruction->replace_all_use_with(lsl);
+                    bb->delete_instr(instruction);
+                    iter--;
+                }
+            }
+        }
+    }
 }
 
 void LIR::div_const2mul(BasicBlock* bb) {
@@ -394,8 +502,24 @@ void LIR::div_const2mul(BasicBlock* bb) {
                 if (divisor == 0) {
                     std::cerr<<"divided by zero!"<<std::endl;
                     exit(-1);
+                } else if (op_const2->get_value() == 1) {
+                    continue;
+                } else if (op_const2->get_value() == 2) {
+                    iter++;
+                    auto lsr = BinaryInst::create_lsr(op1, ConstantInt::get(31, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    auto add = BinaryInst::create_add(op1, lsr, bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    auto asr = BinaryInst::create_asr(add, ConstantInt::get(1, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    instruction->replace_all_use_with(asr);
+                    bb->delete_instr(instruction);
+                    iter--;
                 } else if (is_power_of_two(op_const2->get_value())) {
-                    int k = ceil(std::log2(op_const2->get_value()));
+                    int k = (int)(ceil(std::log2(op_const2->get_value())))%32;
                     iter++;
                     auto asr_1 = BinaryInst::create_asr(op1, ConstantInt::get(31, module), bb, module);
                     bb->add_instruction(iter, instructions.back());
@@ -617,7 +741,7 @@ void LIR::remove_unused_op(BasicBlock* bb) {
                     unused_instr_list.push_back(instr);
                 }
             } else if (const_op2) {
-                if (const_op2->get_value() == 0) {
+                if (const_op2->get_value()%32 == 0) {
                     instr->replace_all_use_with(op1);
                     unused_instr_list.push_back(instr);
                 }
@@ -635,7 +759,7 @@ void LIR::remove_unused_op(BasicBlock* bb) {
                     unused_instr_list.push_back(instr);
                 }
             } else if (const_op2) {
-                if (const_op2->get_value() == 0) {
+                if (const_op2->get_value()%32 == 0) {
                     instr->replace_all_use_with(op1);
                     unused_instr_list.push_back(instr);
                 }
@@ -653,7 +777,7 @@ void LIR::remove_unused_op(BasicBlock* bb) {
                     unused_instr_list.push_back(instr);
                 }
             } else if (const_op2) {
-                if (const_op2->get_value() == 0) {
+                if (const_op2->get_value()%32 == 0) {
                     instr->replace_all_use_with(op1);
                     unused_instr_list.push_back(instr);
                 }
