@@ -127,6 +127,7 @@ int main(int argc, char *argv[])
             //passmgr.addPass<CFGSimplifier>();
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
+            passmgr.addPass<Global2Local>();
             if(!print_mir){
                 //passmgr.addPass<ConstPropagation>();
                 passmgr.addPass<LIR>();
