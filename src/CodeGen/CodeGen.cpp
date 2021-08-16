@@ -1228,7 +1228,7 @@
         int time = 0;
         while(!ready_queue.empty()){
             time++;
-            if(time > 2 * size + 1)exit(101);
+            if(time > 3 * size + 1)exit(101);
             auto target_loc = ready_queue.front();
             ready_queue.pop();
             if(pred_locs.find(target_loc) == pred_locs.end())continue;
