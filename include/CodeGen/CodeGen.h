@@ -27,8 +27,8 @@ class CodeGen{
     int max_arg_size = 0;
     int pool_number = 0;
     int accumulate_line_num = 0;
-    int temp_reg_store_num = 3;
-    const std::set<int> all_free_tmp_pos = {0,1,2};//TODO:TOGETHER WITH temp_reg_store_num;
+    int temp_reg_store_num = 4;
+    const std::set<int> all_free_tmp_pos = {0,1,2,3};//TODO:TOGETHER WITH temp_reg_store_num;
     int caller_saved_reg_num = 5;
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
@@ -43,7 +43,7 @@ class CodeGen{
     std::vector<int> store_list;
     std::set<Value*> to_store_set;
     std::set<Interval*> interval_set;
-    std::set<int> free_tmp_pos = {0,1,2};//FIXME:4 TMP REG
+    std::set<int> free_tmp_pos = {0,1,2,3};//FIXME:4 TMP REG
     std::set<int> cur_tmp_regs;
     std::map<int, IR2asm::Regbase*> tmp_regs_loc;
 public:
