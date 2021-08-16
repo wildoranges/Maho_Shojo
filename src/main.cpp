@@ -218,6 +218,9 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
+            if(!no_loop_expand)
+                passmgr.addPass<LoopExpansion>();
+
             if(!no_func_inline)
                 passmgr.addPass<FuncInline>();
 
@@ -227,13 +230,8 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
-
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
-
-
-            if(!no_loop_expand)
-                passmgr.addPass<LoopExpansion>();
 
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
