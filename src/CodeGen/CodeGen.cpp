@@ -1095,7 +1095,8 @@
             if(pred_locs.find(srcloc) != pred_locs.end()){
                 auto iter = pred_locs[srcloc];
                 bool find_circ = false;
-
+                
+                int time = 0;
                 while(pred_locs.find(iter) != pred_locs.end()){
                     if(iter == srcloc){
                         find_circ = true;
@@ -1104,7 +1105,9 @@
                     if(loops.find(iter) != loops.end()){
                         break;
                     }
+                    if(time > 2 * size + 1) exit(99);
                     iter = pred_locs[iter];
+                    time++;
                 }
 
                 if(find_circ){
@@ -1131,7 +1134,10 @@
                 else min_cost += stack_cost;
             }
             IR2asm::Location* min_cost_loc = looploc;
+            int time = 0;
             while(iter != looploc){
+                time++;
+                if(time > 2 * size + 1) exit(100);
                 int cost = 0;
                 if(dynamic_cast<IR2asm::RegLoc*>(iter)){reg_cost = 3 + 5 - 1; stack_cost = 3 + 8 - 3;}
                 else{reg_cost = 8; stack_cost = 8;}
@@ -1219,7 +1225,10 @@
             }
         }
 
+        int time = 0;
         while(!ready_queue.empty()){
+            time++;
+            if(time > 2 * size + 1)exit(101);
             auto target_loc = ready_queue.front();
             ready_queue.pop();
             if(pred_locs.find(target_loc) == pred_locs.end())continue;
