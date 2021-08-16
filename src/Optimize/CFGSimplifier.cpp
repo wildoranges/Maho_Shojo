@@ -274,6 +274,7 @@ void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
 
 bool CFGSimplifier::one_pass() {
     std::vector<BasicBlock*> wait_delete_bb;
+    std::vector<BasicBlock*> wait_remove_bb;
     bool changed = false;
     for (auto bb : postorder_bb_list) {
         if (is_self_loop(bb)) {
@@ -315,7 +316,7 @@ bool CFGSimplifier::one_pass() {
             }
             if (succ_bb->get_pre_basic_blocks().size() == 1) {  // succ_bb only has one predecessor, combine them
                 combine_bb(bb, succ_bb);
-                wait_delete_bb.push_back(succ_bb);
+                wait_remove_bb.push_back(succ_bb);
                 changed = true;
             }
             if (succ_bb->get_num_of_instr() == 1 && succ_bb_terminator->is_br() && succ_bb_terminator->is_cmpbr() && succ_bb_terminator->get_num_operand() > 1) {
@@ -337,6 +338,9 @@ bool CFGSimplifier::one_pass() {
             delete_bb->delete_instr(instr);
         }
         func_->remove(delete_bb);
+    }
+    for (auto remove_bb : wait_remove_bb) {
+        func_->remove(remove_bb);
     }
     return changed;
 }
