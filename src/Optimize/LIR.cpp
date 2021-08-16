@@ -471,7 +471,7 @@ void LIR::mul_const2shift(BasicBlock* bb) {
             if (op_const2 != nullptr) {
                 if (is_power_of_two(op_const2->get_value())) {
                     if (op_const2->get_value() == 0 || op_const2->get_value() == 1) continue;
-                    int k = ceil(std::log2(op_const2->get_value()));
+                    int k = (int)(ceil(std::log2(op_const2->get_value())))%32;
                     iter++;
                     auto lsl = BinaryInst::create_lsl(op1, ConstantInt::get(k, module), bb, module);
                     bb->add_instruction(iter, instructions.back());
@@ -516,7 +516,7 @@ void LIR::div_const2mul(BasicBlock* bb) {
                     bb->delete_instr(instruction);
                     iter--;
                 } else if (is_power_of_two(op_const2->get_value())) {
-                    int k = ceil(std::log2(op_const2->get_value()));
+                    int k = (int)(ceil(std::log2(op_const2->get_value())))%32;
                     iter++;
                     auto asr_1 = BinaryInst::create_asr(op1, ConstantInt::get(31, module), bb, module);
                     bb->add_instruction(iter, instructions.back());
@@ -738,7 +738,7 @@ void LIR::remove_unused_op(BasicBlock* bb) {
                     unused_instr_list.push_back(instr);
                 }
             } else if (const_op2) {
-                if (const_op2->get_value() == 0) {
+                if (const_op2->get_value()%32 == 0) {
                     instr->replace_all_use_with(op1);
                     unused_instr_list.push_back(instr);
                 }
@@ -756,7 +756,7 @@ void LIR::remove_unused_op(BasicBlock* bb) {
                     unused_instr_list.push_back(instr);
                 }
             } else if (const_op2) {
-                if (const_op2->get_value() == 0) {
+                if (const_op2->get_value()%32 == 0) {
                     instr->replace_all_use_with(op1);
                     unused_instr_list.push_back(instr);
                 }
@@ -774,7 +774,7 @@ void LIR::remove_unused_op(BasicBlock* bb) {
                     unused_instr_list.push_back(instr);
                 }
             } else if (const_op2) {
-                if (const_op2->get_value() == 0) {
+                if (const_op2->get_value()%32 == 0) {
                     instr->replace_all_use_with(op1);
                     unused_instr_list.push_back(instr);
                 }
