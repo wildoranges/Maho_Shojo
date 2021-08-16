@@ -2096,21 +2096,103 @@
                     }
                 }
                 break;
-            case Instruction::muladd:
+            case Instruction::muladd: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                code += IR2asm::muladd(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2), get_asm_reg(op3));
+            }
                 break;
-            case Instruction::mulsub:
+            case Instruction::mulsub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                code += IR2asm::mulsub(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2), get_asm_reg(op3));
+            }
                 break;
-            case Instruction::asradd:
+            case Instruction::asradd: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::ASR, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::ASR, *get_asm_reg(op3));
+                }
+                code += IR2asm::add(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::lsladd:
+            case Instruction::lsladd: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSL, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSL, *get_asm_reg(op3));
+                }
+                code += IR2asm::add(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::lsradd:
+            case Instruction::lsradd: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSR, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSR, *get_asm_reg(op3));
+                }
+                code += IR2asm::add(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::asrsub:
+            case Instruction::asrsub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::ASR, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::ASR, *get_asm_reg(op3));
+                }
+                code += IR2asm::sub(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::lslsub:
+            case Instruction::lslsub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSL, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSL, *get_asm_reg(op3));
+                }
+                code += IR2asm::sub(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::lsrsub:
+            case Instruction::lsrsub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSR, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSR, *get_asm_reg(op3));
+                }
+                code += IR2asm::sub(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
             case Instruction::smul_lo:
                 break;

@@ -122,6 +122,13 @@ void ConstPropagation::reduce_redundant_cond_br() {
                                     if (instr->is_phi()) {
                                         for (int i = 1; i < instr->get_num_operand(); i+=2) {
                                             if (instr->get_operand(i) == bb) {
+                                                for (int j = i + 1; j < instr->get_num_operand(); j++) {
+                                                    for (auto &use : instr->get_operand(j)->get_use_list()) {
+                                                        if (use.val_ == instr && use.arg_no_ == j) {
+                                                            use.arg_no_ -= 2;
+                                                        }
+                                                    }
+                                                }
                                                 instr->remove_operands(i - 1, i);
                                             }
                                             if (instr->get_num_operand() == 2 && succBB->get_pre_basic_blocks().size() == 1) {

@@ -19,6 +19,7 @@
 #include "AvailableExpr.h"
 #include "FuncInline.h"
 #include "LoopExpansion.h"
+#include "Global2Local.h"
 #include "MovConst.h"
 
 void print_help(const std::string& exe_name) {
@@ -155,6 +156,8 @@ int main(int argc, char *argv[])
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
 
+            passmgr.addPass<Global2Local>();
+
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
@@ -252,7 +255,7 @@ int main(int argc, char *argv[])
 
             if(!print_mir){
                 passmgr.addPass<LIR>();
-                passmgr.addPass<MovConst>();
+                // passmgr.addPass<MovConst>();
             }
 
             if(!no_dead_code_eli)
@@ -268,6 +271,13 @@ int main(int argc, char *argv[])
                 passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<MovConst>();
+
+            if(!no_ava_expr)
+                passmgr.addPass<AvailableExpr>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
 

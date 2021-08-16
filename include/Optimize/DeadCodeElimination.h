@@ -4,6 +4,7 @@
 #include "Pass.h"
 #include "Module.h"
 #include "DominateTree.h"
+#include "SideEffectAnalysis.h"
 
 class DeadCodeElimination : public Pass
 {
@@ -14,6 +15,10 @@ public:
     void sweep();
     void remove_unmarked_bb();
     bool is_critical(Instruction *);
+    bool has_side_effect(Instruction *);
+    bool has_side_effect_to_cur_bb(Instruction *, BasicBlock *);
+    bool has_side_effect_to_path(Instruction *, BasicBlock *);
+    bool has_side_effect_to_caller(Instruction *, Function *);
     BasicBlock* get_nearest_marked_postdominator(Instruction *);
     const std::string get_name() const override {return name;}
 private:

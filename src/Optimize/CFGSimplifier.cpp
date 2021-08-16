@@ -52,14 +52,13 @@ bool CFGSimplifier::delete_redundant_phi() {
                             }
                         }
                     } else {
-                        can_replace = false;
-                        break;
-                        for (int i = 2; i < instr->get_num_operand(); i+=2) {
-                            auto cur_val = instr->get_operand(i);
-                            if (dynamic_cast<ConstantInt*>(cur_val)) {
-                                can_replace = false;
-                                break;
-                            } else {
+                        auto val_to_instr = dynamic_cast<Instruction*>(val);
+                        if (val_to_instr && val_to_instr->is_phi() && val_to_instr->get_parent() == instr->get_parent()) {
+                            can_replace = false;
+                            break;
+                        } else {
+                            for (int i = 2; i < instr->get_num_operand(); i+=2) {
+                                auto cur_val = instr->get_operand(i);
                                 if (cur_val != val) {
                                     can_replace = false;
                                     break;
@@ -100,6 +99,13 @@ bool CFGSimplifier::delete_unreachable_bb() {
                 if (instr->is_phi()) {
                     for (int i = 1; i < instr->get_num_operand(); i+=2) {
                         if (instr->get_operand(i) == unreachable_bb) {
+                            for (int j = i + 1; j < instr->get_num_operand(); j++) {
+                                for (auto &use : instr->get_operand(j)->get_use_list()) {
+                                    if (use.val_ == instr && use.arg_no_ == j) {
+                                        use.arg_no_ -= 2;
+                                    }
+                                }
+                            }
                             instr->remove_operands(i - 1, i);
                         }
                     }
@@ -232,6 +238,13 @@ void CFGSimplifier::combine_bb(BasicBlock *bb, BasicBlock *succ_bb) {
                         instr->replace_all_use_with(instr->get_operand(0));
                         wait_delete_instr.push_back(instr);
                     } else {
+                        for (int j = i + 1; j < instr->get_num_operand(); j++) {
+                            for (auto &use : instr->get_operand(j)->get_use_list()) {
+                                if (use.val_ == instr && use.arg_no_ == j) {
+                                    use.arg_no_ -= 2;
+                                }
+                            }
+                        }
                         instr->remove_operands(i - 1, i);
                         i -= 2;
                         if (instr->get_num_operand() == 2  && succ_bb->get_pre_basic_blocks().size() == 0) {

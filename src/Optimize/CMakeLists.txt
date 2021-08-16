@@ -14,5 +14,7 @@ add_library(
         FuncInline.cpp
         MovConst.cpp
         LoopExpansion.cpp
+        Global2Local.cpp
+        SideEffectAnalysis.cpp
 )
 
