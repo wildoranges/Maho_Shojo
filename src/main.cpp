@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
     if (print_LIR||codegen||print_mir) {
         root->accept(builder);
         auto m = builder.getModule();
+        m->set_file_name(filename);
         if(!optimize){
             PassMgr passmgr(m.get());
             //passmgr.addPass<CFGSimplifier>();
@@ -218,6 +219,9 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
+            if(!no_loop_expand)
+                passmgr.addPass<LoopExpansion>();
+
             if(!no_func_inline)
                 passmgr.addPass<FuncInline>();
 
@@ -227,13 +231,8 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
-
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
-
-
-            if(!no_loop_expand)
-                passmgr.addPass<LoopExpansion>();
 
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
