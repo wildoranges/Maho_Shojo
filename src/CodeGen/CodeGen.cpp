@@ -1159,6 +1159,64 @@
         return;
     }
 
+    std::string CodeGen::single_data_move(IR2asm::Location* src_loc,
+                                 IR2asm::Location* target_loc,
+                                 IR2asm::Reg *reg_tmp,
+                                 std::string cmpop){
+        std::string code;
+        if(dynamic_cast<IR2asm::RegLoc *>(src_loc)){
+                    auto regloc = dynamic_cast<IR2asm::RegLoc *>(src_loc);
+                    if(regloc->is_constant()){
+                        if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+                            auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+                            code += IR2asm::space;
+                            code += "Ldr" + cmpop + " ";
+                            code += target_reg_loc->get_code();
+                            code += ", =";
+                            code += std::to_string(regloc->get_constant());
+                            code += IR2asm::endl;
+                        }
+                        else{
+                            code += IR2asm::space;
+                            code += "Ldr" + cmpop + " ";
+                            code += reg_tmp->get_code();
+                            code += ", =";
+                            code += std::to_string(regloc->get_constant());
+                            code += IR2asm::endl;
+                            code += IR2asm::safe_store(reg_tmp, target_loc, sp_extra_ofst, long_func, cmpop);
+                        }
+                    }
+                    else{
+                        if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+                            auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+                            code += IR2asm::space;
+                            code += "Mov" + cmpop + " ";
+                            code += target_reg_loc->get_code();
+                            code += ", ";
+                            code += regloc->get_code();
+                            code += IR2asm::endl;
+                        }
+                        else{
+                            code += IR2asm::safe_store(new IR2asm::Reg(regloc->get_reg_id()),
+                                                        target_loc, sp_extra_ofst, long_func, cmpop);
+                        }
+                    }
+                }
+                else{
+                    auto stackloc = dynamic_cast<IR2asm::Regbase *>(src_loc);
+                    if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+                        auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+                        code += IR2asm::safe_load(new IR2asm::Reg(target_reg_loc->get_reg_id()),
+                                                    stackloc, sp_extra_ofst, long_func, cmpop);
+                    }
+                    else{
+                        code += IR2asm::safe_load(reg_tmp, stackloc, sp_extra_ofst, long_func, cmpop);
+                        code += IR2asm::safe_store(reg_tmp, target_loc, sp_extra_ofst, long_func, cmpop);
+                    }
+                }
+        return code;
+    }
+
     std::string CodeGen::data_move(std::vector<IR2asm::Location*> &src,
                                    std::vector<IR2asm::Location*> &dst,
                                    std::string cmpop){
@@ -1234,6 +1292,7 @@
                 }
 
                 if(find_circ){
+                    need_temp = true;
                     loops.insert(srcloc);
                 }
             }
@@ -1246,41 +1305,42 @@
             temp_forwarding = true;
         }
 
-        for(auto looploc: loops){
-            auto iter = pred_locs[looploc];
-            int reg_cost, stack_cost;
-            if(dynamic_cast<IR2asm::RegLoc*>(looploc)){reg_cost = 3 + 5 - 1; stack_cost = 3 + 8 - 3;}
-            else{reg_cost = 8; stack_cost = 8;}
-            int min_cost = 0;
-            for(auto loc: data_graph[looploc]){
-                if(dynamic_cast<IR2asm::RegLoc*>(loc)){min_cost += reg_cost;}
-                else min_cost += stack_cost;
-            }
-            IR2asm::Location* min_cost_loc = looploc;
-            int time = 0;
-            while(iter != looploc){
-                time++;
-                if(time > 2 * size + 1) exit(100);
-                int cost = 0;
-                if(dynamic_cast<IR2asm::RegLoc*>(iter)){reg_cost = 3 + 5 - 1; stack_cost = 3 + 8 - 3;}
-                else{reg_cost = 8; stack_cost = 8;}
-                for(auto loc: data_graph[iter]){
-                    if(dynamic_cast<IR2asm::RegLoc*>(loc)){cost += reg_cost;}
-                    else cost += stack_cost;
-                }
-                if(cost < min_cost){
-                    min_cost = cost;
-                    min_cost_loc = iter;
-                }
-                iter = pred_locs[iter];
-            }
+        // for(auto looploc: loops){
+        //     auto iter = pred_locs[looploc];
+        //     int reg_cost, stack_cost;
+        //     if(dynamic_cast<IR2asm::RegLoc*>(looploc)){reg_cost = 3 + 5 - 1; stack_cost = 3 + 8 - 3;}
+        //     else{reg_cost = 8; stack_cost = 8;}
+        //     int min_cost = 0;
+        //     for(auto loc: data_graph[looploc]){
+        //         if(dynamic_cast<IR2asm::RegLoc*>(loc)){min_cost += reg_cost;}
+        //         else min_cost += stack_cost;
+        //     }
+        //     IR2asm::Location* min_cost_loc = looploc;
+        //     int time = 0;
+        //     while(iter != looploc){
+        //         time++;
+        //         if(time > 2 * size + 1) exit(100);
+        //         int cost = 0;
+        //         if(dynamic_cast<IR2asm::RegLoc*>(iter)){reg_cost = 3 + 5 - 1; stack_cost = 3 + 8 - 3;}
+        //         else{reg_cost = 8; stack_cost = 8;}
+        //         for(auto loc: data_graph[iter]){
+        //             if(dynamic_cast<IR2asm::RegLoc*>(loc)){cost += reg_cost;}
+        //             else cost += stack_cost;
+        //         }
+        //         if(cost < min_cost){
+        //             min_cost = cost;
+        //             min_cost_loc = iter;
+        //         }
+        //         iter = pred_locs[iter];
+        //     }
             
-            loop_breaker.insert(min_cost_loc);
-            if(dynamic_cast<IR2asm::Regbase*>(min_cost_loc))need_temp = true;
-        }
+        //     loop_breaker.insert(min_cost_loc);
+        //     if(dynamic_cast<IR2asm::Regbase*>(min_cost_loc))need_temp = true;
+        // }
 
 
         auto temp_reg_loc = new IR2asm::Regbase(IR2asm::sp, 0);
+        IR2asm::Location* temp_src = nullptr;
         if(need_temp){
             //TODO: not always meed store temp reg
             code += IR2asm::store(new IR2asm::Reg(temp_reg), temp_reg_loc, cmpop);
@@ -1304,6 +1364,7 @@
                 }
 
                 if(!temp_forwarding){//TODO: may break loop too
+                    need_restore_temp = true;
                     for(auto map: data_graph){
                         auto node = map.first;
                         std::set<IR2asm::Location *> &succs = map.second;
@@ -1317,106 +1378,154 @@
                         pred_locs.erase(temp_reg_node);
                     }
                 }
+                else{
+                    if(pred_locs.find(temp_reg_node) != pred_locs.end()){
+                        temp_src = pred_locs[temp_reg_node];
+                        if(data_graph.find(temp_src) != data_graph.end()){
+                            data_graph[temp_src].erase(temp_reg_node);
+                        }
+                        pred_locs.erase(temp_reg_node);
+                    }
+                }
             }
         }
 
         auto reg_tmp = new IR2asm::Reg(temp_reg);
-        int temp_sp_ofst = -reg_size;
-        for(auto breaker: loop_breaker){
-            IR2asm::Location* temp_loc = new IR2asm::Regbase(IR2asm::sp, temp_sp_ofst);
-            temp_sp_ofst -= reg_size;
-            if(dynamic_cast<IR2asm::RegLoc *>(breaker)){
-                auto regloc = dynamic_cast<IR2asm::RegLoc *>(breaker);
-                code += IR2asm::store(new IR2asm::Reg(regloc->get_reg_id()), temp_loc, cmpop);
-            }
-            else{
-                auto stackloc = dynamic_cast<IR2asm::Regbase *>(breaker);
-                code += IR2asm::safe_load(reg_tmp, breaker,sp_extra_ofst, long_func, cmpop);
-                code += IR2asm::store(reg_tmp, temp_loc, cmpop);
-            }
-            data_graph.insert({temp_loc, {}});
-            for(auto succ: data_graph[breaker]){
-                pred_locs[succ] = temp_loc;
-                data_graph.find(temp_loc)->second.insert(succ);
-            }
-            data_graph[breaker].clear();
-        }
+        // int temp_sp_ofst = -reg_size;
+        // for(auto breaker: loop_breaker){
+        //     IR2asm::Location* temp_loc = new IR2asm::Regbase(IR2asm::sp, temp_sp_ofst);
+        //     temp_sp_ofst -= reg_size;
+        //     if(dynamic_cast<IR2asm::RegLoc *>(breaker)){
+        //         auto regloc = dynamic_cast<IR2asm::RegLoc *>(breaker);
+        //         code += IR2asm::store(new IR2asm::Reg(regloc->get_reg_id()), temp_loc, cmpop);
+        //     }
+        //     else{
+        //         auto stackloc = dynamic_cast<IR2asm::Regbase *>(breaker);
+        //         code += IR2asm::safe_load(reg_tmp, breaker,sp_extra_ofst, long_func, cmpop);
+        //         code += IR2asm::store(reg_tmp, temp_loc, cmpop);
+        //     }
+        //     data_graph.insert({temp_loc, {}});
+        //     for(auto succ: data_graph[breaker]){
+        //         pred_locs[succ] = temp_loc;
+        //         data_graph.find(temp_loc)->second.insert(succ);
+        //     }
+        //     data_graph[breaker].clear();
+        // }
 
-        for(auto node: data_graph){
-            if(node.second.size() == 0){
-                ready_queue.push(node.first);
-            }
-        }
+        // for(auto node: data_graph){
+        //     if(node.second.size() == 0){
+        //         ready_queue.push(node.first);
+        //     }
+        // }
 
         int time = 0;
-        while(!ready_queue.empty()){
+        int edge_num = pred_locs.size();
+        while(!pred_locs.empty()){
             time++;
-            if(time > 3 * size + 1)exit(101);
-            auto target_loc = ready_queue.front();
-            ready_queue.pop();
-            if(pred_locs.find(target_loc) == pred_locs.end())continue;
-            if(temp_forwarding && target_loc == reg2loc[temp_reg] && !ready_queue.empty()){
-                ready_queue.push(target_loc);
-                continue;
-            }
-            auto src_loc = pred_locs[target_loc];
-            if(dynamic_cast<IR2asm::RegLoc *>(src_loc)){
-                auto regloc = dynamic_cast<IR2asm::RegLoc *>(src_loc);
-                if(regloc->is_constant()){
-                    if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
-                        auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
-                        code += IR2asm::space;
-                        code += "Ldr" + cmpop + " ";
-                        code += target_reg_loc->get_code();
-                        code += ", =";
-                        code += std::to_string(regloc->get_constant());
-                        code += IR2asm::endl;
-                    }
-                    else{
-                        code += IR2asm::space;
-                        code += "Ldr" + cmpop + " ";
-                        code += reg_tmp->get_code();
-                        code += ", =";
-                        code += std::to_string(regloc->get_constant());
-                        code += IR2asm::endl;
-                        code += IR2asm::safe_store(reg_tmp, target_loc, sp_extra_ofst, long_func, cmpop);
-                    }
-                }
-                else{
-                    if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
-                        auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
-                        code += IR2asm::space;
-                        code += "Mov" + cmpop + " ";
-                        code += target_reg_loc->get_code();
-                        code += ", ";
-                        code += regloc->get_code();
-                        code += IR2asm::endl;
-                    }
-                    else{
-                        code += IR2asm::safe_store(new IR2asm::Reg(regloc->get_reg_id()),
-                                                     target_loc, sp_extra_ofst, long_func, cmpop);
-                    }
-                }
-            }
-            else{
-                auto stackloc = dynamic_cast<IR2asm::Regbase *>(src_loc);
-                if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
-                    auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
-                    code += IR2asm::safe_load(new IR2asm::Reg(target_reg_loc->get_reg_id()),
-                                                stackloc, sp_extra_ofst, long_func, cmpop);
-                }
-                else{
-                    code += IR2asm::safe_load(reg_tmp, stackloc, sp_extra_ofst, long_func, cmpop);
-                    code += IR2asm::safe_store(reg_tmp, target_loc, sp_extra_ofst, long_func, cmpop);
-                }
+            if(time > edge_num + 1)exit(101);
+            bool changed = false;
+            std::set<IR2asm::Location*> delete_list;
+            for(auto map: pred_locs){
+                auto target_loc = map.first;
+                auto src_loc = map.second;
+                if(data_graph.find(target_loc) != data_graph.end() 
+                    && !data_graph[target_loc].empty())continue;
+                
+                code += single_data_move(src_loc, target_loc, reg_tmp, cmpop);
+
+                changed = true;
+                delete_list.insert(target_loc);
+                data_graph[src_loc].erase(target_loc);
             }
 
-            pred_locs.erase(target_loc);
-            data_graph[src_loc].erase(target_loc);
-            if(data_graph[src_loc].size() == 0){
-                ready_queue.push(src_loc);
+            for(auto item: delete_list){
+                pred_locs.erase(item);
+            }
+
+            if(!changed){
+                auto target_loc = pred_locs.begin()->first;
+                auto src_loc = pred_locs.begin()->second;
+                auto temp_loc = new IR2asm::RegLoc(temp_reg);
+                code += single_data_move(src_loc, temp_loc, reg_tmp, cmpop);
+                pred_locs[target_loc] = temp_loc;
+                data_graph.insert({temp_loc, {target_loc}});
+                if(data_graph.find(src_loc) != data_graph.end())data_graph[src_loc].erase(target_loc);
             }
         }
+
+        if(temp_forwarding && temp_src){
+            code += single_data_move(temp_src, new IR2asm::RegLoc(reg_tmp->get_id()), reg_tmp, cmpop);
+        }
+
+        // int time = 0;
+        // while(!ready_queue.empty()){
+        //     time++;
+        //     if(time > 3 * size + 1)exit(101);
+        //     auto target_loc = ready_queue.front();
+        //     ready_queue.pop();
+        //     if(pred_locs.find(target_loc) == pred_locs.end())continue;
+        //     if(temp_forwarding && target_loc == reg2loc[temp_reg] && !ready_queue.empty()){
+        //         ready_queue.push(target_loc);
+        //         continue;
+        //     }
+        //     auto src_loc = pred_locs[target_loc];
+        //     if(dynamic_cast<IR2asm::RegLoc *>(src_loc)){
+        //         auto regloc = dynamic_cast<IR2asm::RegLoc *>(src_loc);
+        //         if(regloc->is_constant()){
+        //             if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+        //                 auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+        //                 code += IR2asm::space;
+        //                 code += "Ldr" + cmpop + " ";
+        //                 code += target_reg_loc->get_code();
+        //                 code += ", =";
+        //                 code += std::to_string(regloc->get_constant());
+        //                 code += IR2asm::endl;
+        //             }
+        //             else{
+        //                 code += IR2asm::space;
+        //                 code += "Ldr" + cmpop + " ";
+        //                 code += reg_tmp->get_code();
+        //                 code += ", =";
+        //                 code += std::to_string(regloc->get_constant());
+        //                 code += IR2asm::endl;
+        //                 code += IR2asm::safe_store(reg_tmp, target_loc, sp_extra_ofst, long_func, cmpop);
+        //             }
+        //         }
+        //         else{
+        //             if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+        //                 auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+        //                 code += IR2asm::space;
+        //                 code += "Mov" + cmpop + " ";
+        //                 code += target_reg_loc->get_code();
+        //                 code += ", ";
+        //                 code += regloc->get_code();
+        //                 code += IR2asm::endl;
+        //             }
+        //             else{
+        //                 code += IR2asm::safe_store(new IR2asm::Reg(regloc->get_reg_id()),
+        //                                              target_loc, sp_extra_ofst, long_func, cmpop);
+        //             }
+        //         }
+        //     }
+        //     else{
+        //         auto stackloc = dynamic_cast<IR2asm::Regbase *>(src_loc);
+        //         if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+        //             auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+        //             code += IR2asm::safe_load(new IR2asm::Reg(target_reg_loc->get_reg_id()),
+        //                                         stackloc, sp_extra_ofst, long_func, cmpop);
+        //         }
+        //         else{
+        //             code += IR2asm::safe_load(reg_tmp, stackloc, sp_extra_ofst, long_func, cmpop);
+        //             code += IR2asm::safe_store(reg_tmp, target_loc, sp_extra_ofst, long_func, cmpop);
+        //         }
+        //     }
+
+        //     pred_locs.erase(target_loc);
+        //     data_graph[src_loc].erase(target_loc);
+        //     if(data_graph[src_loc].size() == 0){
+        //         ready_queue.push(src_loc);
+        //     }
+        // }
 
         if(need_temp && need_restore_temp && !temp_forwarding){
             code += IR2asm::safe_load(reg_tmp, temp_reg_loc, sp_extra_ofst, long_func, cmpop);

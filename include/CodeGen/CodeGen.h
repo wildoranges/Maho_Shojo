@@ -76,6 +76,7 @@ public:
     std::string bb_gen(BasicBlock* bb);
     std::string instr_gen(Instruction * inst);
     std::string phi_union(BasicBlock* bb, Instruction* br_inst);
+    std::string single_data_move(IR2asm::Location* src_loc, IR2asm::Location* target_loc, IR2asm::Reg *reg_tmp, std::string cmpop = "");
     std::string data_move(std::vector<IR2asm::Location*> &src, std::vector<IR2asm::Location*> &dst, std::string cmpop = "");
     IR2asm::Reg *get_asm_reg(Value *val){
         if ((reg_map).find(val) != reg_map.end())
