@@ -17,7 +17,7 @@ void Mem2Reg::execute(){
 #ifdef DEBUG
         module->set_print_name();
 #endif
-        phiStatistic();
+        //phiStatistic();
 #ifdef DEBUG
         for(auto set: func_->get_vreg_set()){
             for(auto reg: set){
@@ -40,18 +40,18 @@ void Mem2Reg::insideBlockForwarding(){
             if(inst->get_instr_type() == Instruction::OpID::store){
                 Value* lvalue = static_cast<StoreInst *>(inst)->get_lval();
                 Value* rvalue = static_cast<StoreInst *>(inst)->get_rval();
-                if(!dynamic_cast<LoadInst *>(rvalue)){
-                    if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
-                        lvalue_connection.insert({rvalue, lvalue});
-                    }
-                    else{
-                        auto old_lval = lvalue_connection[rvalue];
-                        if(old_lval != lvalue){
-                            no_union_set.insert(rvalue);
-                            // exit(-1);
-                        }
-                    }
-                }
+//                if(!dynamic_cast<LoadInst *>(rvalue)){
+//                    if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
+//                        lvalue_connection.insert({rvalue, lvalue});
+//                    }
+//                    else{
+//                        auto old_lval = lvalue_connection[rvalue];
+//                        if(old_lval != lvalue){
+//                            no_union_set.insert(rvalue);
+//                            // exit(-1);
+//                        }
+//                    }
+//                }
                 auto load_inst = dynamic_cast<Instruction*>(rvalue);
                 if(load_inst && forward_list.find(load_inst) != forward_list.end()){
                     rvalue = forward_list.find(load_inst)->second;
@@ -74,15 +74,15 @@ void Mem2Reg::insideBlockForwarding(){
             else if(inst->get_instr_type() == Instruction::OpID::load){
                 Value* lvalue = static_cast<LoadInst *>(inst)->get_lval();
                 Value* rvalue = dynamic_cast<Value *>(inst);
-                if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
-                    lvalue_connection.insert({rvalue, lvalue});
-                }
-                else{
-                    auto old_lval = lvalue_connection[rvalue];
-                    if(old_lval != lvalue){
-                        // exit(-1);
-                    }
-                }
+//                if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
+//                    lvalue_connection.insert({rvalue, lvalue});
+//                }
+//                else{
+//                    auto old_lval = lvalue_connection[rvalue];
+//                    if(old_lval != lvalue){
+//                        // exit(-1);
+//                    }
+//                }
                 if(defined_list.find(lvalue) == defined_list.end())continue;
                 Value* value = new_value.find(lvalue)->second;
                 forward_list.insert({inst, value});

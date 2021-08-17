@@ -2,14 +2,18 @@
 #include "BasicBlock.h"
 #include "Function.h"
 #include "IRprinter.h"
+#ifdef DEBUG
 #include <cassert>
+#endif
 #include <algorithm>
 
 BasicBlock::BasicBlock(Module *m, const std::string &name = "",
                       Function *parent = nullptr)
     : Value(Type::get_label_type(m), name), parent_(parent)
 {
+#ifdef DEBUG
     assert(parent && "currently parent should not be nullptr");
+#endif
     parent_->add_basic_block(this);
 }
 
