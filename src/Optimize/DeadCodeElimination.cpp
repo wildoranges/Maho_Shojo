@@ -334,7 +334,7 @@ void DeadCodeElimination::remove_unused_ret() {
                         func_flag = true;
                         break;
                     } else {
-                        if (ret_instr->get_function()->get_use_list().size() == 0) { // main
+                        if (ret_instr->get_function()->get_name() == "main") {
                             func_flag = true;
                             break;
                         }
@@ -366,6 +366,11 @@ void DeadCodeElimination::remove_unused_ret() {
             if (func_flag == false) {
                 if (use_ret[func] == true) {
                     use_ret[func] = false;
+                    changed = true;
+                }
+            } else {
+                if (use_ret[func] == false) {
+                    use_ret[func] = true;
                     changed = true;
                 }
             }
