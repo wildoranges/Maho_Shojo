@@ -5,7 +5,9 @@
 #include <list>
 #include <cstddef>
 #include <map>
+#ifdef DEBUG
 #include <cassert>
+#endif
 #include <set>
 
 #include "User.h"
@@ -108,7 +110,9 @@ public:
 
     /// For example in "void foo(int a, float b)" a is 0 and b is 1.
     unsigned get_arg_no() const {
+#ifdef DEBUG
         assert(parent_ && "can't get number of unparented arg");
+#endif
         return arg_no_;
     }
 

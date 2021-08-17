@@ -124,6 +124,7 @@ int main(int argc, char *argv[])
     if (print_LIR||codegen||print_mir) {
         root->accept(builder);
         auto m = builder.getModule();
+        m->set_file_name(filename);
         if(!optimize){
             PassMgr passmgr(m.get());
             //passmgr.addPass<CFGSimplifier>();
@@ -144,20 +145,23 @@ int main(int argc, char *argv[])
         else{
             PassMgr passmgr(m.get());
 
-            if(!no_cfg_simply)
-                passmgr.addPass<CFGSimplifier>();
+//            if(!no_cfg_simply)
+//                passmgr.addPass<CFGSimplifier>();
+//
+//            if(!no_dead_code_eli)
+//                passmgr.addPass<DeadCodeElimination>();
 
-            if(!no_dead_code_eli)
-                passmgr.addPass<DeadCodeElimination>();
+//            if(!no_dead_code_eli)
+//                passmgr.addPass<DeadCodeElimination>();
 
-            if(!no_dead_code_eli)
-                passmgr.addPass<DeadCodeElimination>();
-
-            if(!no_cfg_simply)
-                passmgr.addPass<CFGSimplifier>();
+//            if(!no_cfg_simply)
+//                passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
 
             passmgr.addPass<Global2Local>();
 
@@ -185,8 +189,8 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
-            if(!no_cfg_simply)
-                passmgr.addPass<CFGSimplifier>();
+//            if(!no_cfg_simply)
+//                passmgr.addPass<CFGSimplifier>();
 
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();

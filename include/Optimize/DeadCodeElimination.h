@@ -12,6 +12,7 @@ public:
     DeadCodeElimination(Module *module) : Pass(module) {}
     void execute() final;
     void mark();
+    void remove_unused_ret();
     void sweep();
     void remove_unmarked_bb();
     bool is_critical(Instruction *);

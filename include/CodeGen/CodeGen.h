@@ -27,9 +27,10 @@ class CodeGen{
     int max_arg_size = 0;
     int pool_number = 0;
     int accumulate_line_num = 0;
-    int temp_reg_store_num = 3;
-    const std::set<int> all_free_tmp_pos = {0,1,2};//TODO:TOGETHER WITH temp_reg_store_num;
+    int temp_reg_store_num = 4;
+    const std::set<int> all_free_tmp_pos = {0,1,2,3};//TODO:TOGETHER WITH temp_reg_store_num;
     int caller_saved_reg_num = 5;
+    int literal_pool_threshold = 950;
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
@@ -43,7 +44,7 @@ class CodeGen{
     std::vector<int> store_list;
     std::set<Value*> to_store_set;
     std::set<Interval*> interval_set;
-    std::set<int> free_tmp_pos = {0,1,2};//FIXME:4 TMP REG
+    std::set<int> free_tmp_pos = {0,1,2,3};//FIXME:4 TMP REG
     std::set<int> cur_tmp_regs;
     std::map<int, IR2asm::Regbase*> tmp_regs_loc;
 public:
@@ -76,6 +77,7 @@ public:
     std::string bb_gen(BasicBlock* bb);
     std::string instr_gen(Instruction * inst);
     std::string phi_union(BasicBlock* bb, Instruction* br_inst);
+    std::string data_move(std::vector<IR2asm::Location*> &src, std::vector<IR2asm::Location*> &dst, std::string cmpop = "");
     IR2asm::Reg *get_asm_reg(Value *val){
         if ((reg_map).find(val) != reg_map.end())
             return new IR2asm::Reg((reg_map).find(val)->second->reg_num);

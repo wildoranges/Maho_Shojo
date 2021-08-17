@@ -137,7 +137,9 @@ enum ShiftOp{
         }
         bool is_constant() const{return is_const;}
         int get_constant() const{
+#ifdef DEBUG
             assert(is_const&&"not a const");
+#endif
             return const_value;
         }
         RegLoc(int id,bool is_const_val=false){
@@ -150,7 +152,9 @@ enum ShiftOp{
             }
         }
         int get_reg_id() const{
+#ifdef DEBUG
             assert(!is_const&&"not a reg");
+#endif
             return reg_id;
         }
     private:

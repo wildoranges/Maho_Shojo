@@ -1,7 +1,9 @@
 #include "Type.h"
 #include "Module.h"
 
+#ifdef DEBUG
 #include <cassert>
+#endif
 
 Type::Type(TypeID tid, Module *m)
 {
@@ -155,12 +157,16 @@ unsigned IntegerType::get_num_bits()
 FunctionType::FunctionType(Type *result, std::vector<Type *> params)
     : Type(Type::FunctionTyID, nullptr)
 {
+#ifdef DEBUG
     assert(is_valid_return_type(result) && "Invalid return type for function!");
+#endif
     result_ = result;
 
     for (auto p : params) {
+#ifdef DEBUG
         assert(is_valid_argument_type(p) &&
             "Not a valid type for function argument!");
+#endif
         args_.push_back(p);
     }
 }
@@ -199,7 +205,9 @@ Type *FunctionType::get_return_type() const
 ArrayType::ArrayType(Type *contained, unsigned num_elements)
     : Type(Type::ArrayTyID, contained->get_module()), num_elements_(num_elements)
 {
+#ifdef DEBUG
     assert(is_valid_element_type(contained) && "Not a valid type for array element!");
+#endif
     contained_ = contained;
 }
 

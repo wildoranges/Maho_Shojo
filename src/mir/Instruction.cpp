@@ -4,7 +4,9 @@
 #include "BasicBlock.h"
 #include "Instruction.h"
 #include "IRprinter.h"
+#ifdef DEBUG
 #include <cassert>
+#endif
 #include <vector>
 #include <algorithm>
 
@@ -40,13 +42,14 @@ BinaryInst::BinaryInst(Type *ty, OpID id, Value *v1, Value *v2,
     // assertValid();
 }
 
-void BinaryInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
-}
+
+//void BinaryInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
+//}
 
 BinaryInst *BinaryInst::create_add(Value *v1, Value *v2, BasicBlock *bb, Module *m)
 {
@@ -151,16 +154,16 @@ MulAddInst::MulAddInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3,
     // assertValid();
 }
 
-void MulAddInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(get_operand(2)->get_type()->is_integer_type());
-    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
-        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
-}
+//void MulAddInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(get_operand(2)->get_type()->is_integer_type());
+//    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) &&
+//        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
+//}
 
 MulAddInst *MulAddInst::create_muladd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
@@ -209,16 +212,16 @@ MulSubInst::MulSubInst(Type *ty, OpID id, Value *v1, Value *v2, Value *v3,
     // assertValid();
 }
 
-void MulSubInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(get_operand(2)->get_type()->is_integer_type());
-    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
-        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
-}
+//void MulSubInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(get_operand(2)->get_type()->is_integer_type());
+//    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) &&
+//        (static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(2)->get_type())->get_num_bits()));
+//}
 
 MulSubInst *MulSubInst::create_mulsub(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
@@ -267,14 +270,14 @@ ShiftBinaryInst::ShiftBinaryInst(Type *ty, OpID id, Value *v1, Value *v2, Value 
     // assertValid();
 }
 
-void ShiftBinaryInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) && 
-        static_cast<Constant *>(get_operand(2)));
-}
+//void ShiftBinaryInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert((static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits()) &&
+//        static_cast<Constant *>(get_operand(2)));
+//}
 
 ShiftBinaryInst *ShiftBinaryInst::create_asradd(Value *v1, Value *v2, Value *v3, BasicBlock *bb, Module *m)
 {
@@ -347,13 +350,13 @@ CmpInst::CmpInst(Type *ty, CmpOp op, Value *lhs, Value *rhs,
     // assertValid();
 }
 
-void CmpInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
-}
+//void CmpInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
+//}
 
 CmpInst *CmpInst::create_cmp(CmpOp op, Value *lhs, Value *rhs, 
                         BasicBlock *bb, Module *m)
@@ -406,13 +409,13 @@ CmpBrInst::CmpBrInst(CmpOp op, Value *lhs, Value *rhs,
     // assertValid();
 }
 
-void CmpBrInst::assertValid()
-{
-    assert(get_operand(0)->get_type()->is_integer_type());
-    assert(get_operand(1)->get_type()->is_integer_type());
-    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
-        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
-}
+//void CmpBrInst::assertValid()
+//{
+//    assert(get_operand(0)->get_type()->is_integer_type());
+//    assert(get_operand(1)->get_type()->is_integer_type());
+//    assert(static_cast<IntegerType *>(get_operand(0)->get_type())->get_num_bits()
+//        == static_cast<IntegerType *>(get_operand(1)->get_type())->get_num_bits());
+//}
 
 CmpBrInst *CmpBrInst::create_cmpbr(CmpOp op, Value *lhs, Value *rhs, BasicBlock *if_true, BasicBlock *if_false, 
                         BasicBlock *bb, Module *m)
@@ -462,7 +465,9 @@ std::string CmpBrInst::print()
 CallInst::CallInst(Function *func, std::vector<Value *> args, BasicBlock *bb)
     : Instruction(func->get_return_type(), Instruction::call, args.size() + 1, bb)
 {
+#ifdef DEBUG
     assert(func->get_num_of_args() == args.size());
+#endif
     int num_ops = args.size() + 1; 
     set_operand(0, func);
     for (int i = 1; i < num_ops; i++) {
@@ -503,7 +508,9 @@ std::string CallInst::print()
     instr_ir += this->get_function_type()->get_return_type()->print();    
     
     instr_ir += " ";
+#ifdef DEBUG
     assert(dynamic_cast<Function *>(this->get_operand(0)) && "Wrong call operand function");
+#endif
     instr_ir += print_as_op(this->get_operand(0), false);
     instr_ir += "(";
     for (int i = 1; i < this->get_num_operand(); i++)
@@ -647,14 +654,18 @@ Type *GetElementPtrInst::get_element_type(Value *ptr, std::vector<Value *> idxs)
 {
 
     Type *ty = ptr->get_type()->get_pointer_element_type();
+#ifdef DEBUG
     assert( "GetElementPtrInst ptr is wrong type" && (ty->is_array_type()||ty->is_integer_type()) );
+#endif
     if (ty->is_array_type())
     {
         ArrayType *arr_ty = static_cast<ArrayType *>(ty);
         for (int i = 1; i < idxs.size(); i++) {
             ty = arr_ty->get_element_type();
             if (i < idxs.size() - 1) {
-                assert(ty->is_array_type() && "Index error!");    
+#ifdef DEBUG
+                assert(ty->is_array_type() && "Index error!");
+#endif
             }
             if (ty->is_array_type()) {
                 arr_ty = static_cast<ArrayType *>(ty);
@@ -682,7 +693,9 @@ std::string GetElementPtrInst::print()
     instr_ir += " = ";
     instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
     instr_ir += " ";
+#ifdef DEBUG
     assert(this->get_operand(0)->get_type()->is_pointer_type());
+#endif
     instr_ir += this->get_operand(0)->get_type()->get_pointer_element_type()->print();
     instr_ir += ", ";
     for (int i = 0; i < this->get_num_operand(); i++)
@@ -759,8 +772,10 @@ std::string StoreOffsetInst::print()
 LoadInst::LoadInst(Type *ty, Value *ptr, BasicBlock *bb)
     : Instruction(ty, Instruction::load, 1, bb)
 {
+#ifdef DEBUG
     assert(ptr->get_type()->is_pointer_type());
     assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
+#endif
     set_operand(0, ptr);
 }
 
@@ -782,7 +797,9 @@ std::string LoadInst::print()
     instr_ir += " = ";
     instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
     instr_ir += " ";
+#ifdef DEBUG
     assert(this->get_operand(0)->get_type()->is_pointer_type());
+#endif
     instr_ir += this->get_operand(0)->get_type()->get_pointer_element_type()->print();
     instr_ir += ",";
     instr_ir += " ";
@@ -793,8 +810,10 @@ std::string LoadInst::print()
 LoadOffsetInst::LoadOffsetInst(Type *ty, Value *ptr, Value *offset, BasicBlock *bb)
     : Instruction(ty, Instruction::load_offset, 2, bb)
 {
+#ifdef DEBUG
     assert(ptr->get_type()->is_pointer_type());
     assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
+#endif
     set_operand(0, ptr);
     set_operand(1, offset);
 }
@@ -802,8 +821,10 @@ LoadOffsetInst::LoadOffsetInst(Type *ty, Value *ptr, Value *offset, BasicBlock *
 LoadOffsetInst::LoadOffsetInst(Type *ty, Value *ptr, BasicBlock *bb)
     : Instruction(ty, Instruction::load_offset, 2, bb)
 {
+#ifdef DEBUG
     assert(ptr->get_type()->is_pointer_type());
     assert(ty == static_cast<PointerType *>(ptr->get_type())->get_element_type());
+#endif
     set_operand(0, ptr);
 }
 
@@ -825,7 +846,9 @@ std::string LoadOffsetInst::print()
     instr_ir += " = ";
     instr_ir += this->get_module()->get_instr_op_name( this->get_instr_type() );
     instr_ir += " ";
+#ifdef DEBUG
     assert(this->get_operand(0)->get_type()->is_pointer_type());
+#endif
     instr_ir += this->get_operand(0)->get_type()->get_pointer_element_type()->print();
     instr_ir += ",";
     instr_ir += " ";
