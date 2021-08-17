@@ -350,8 +350,13 @@ void SCCP::SSA_add(Instruction *y){
                 if (lattice_value_map[y] == bottom){
                     return;
                 }
+                
                 auto phi_val = phi->get_operand(i);
                 auto phi_val_inst = dynamic_cast<Instruction *>(phi_val);
+                auto phi_from_bb = dynamic_cast<BasicBlock *>(phi->get_operand(i+1));
+                if (CFGWorkList_mark[{phi_from_bb, y->get_parent()}] == unexecuted){
+                    continue;
+                }
                 if (phi_val_inst == nullptr){
                     //not a instruction
                     auto phi_val_const = dynamic_cast<ConstantInt *>(phi_val);
