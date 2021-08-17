@@ -334,7 +334,7 @@ void DeadCodeElimination::remove_unused_ret() {
                         func_flag = true;
                         break;
                     } else {
-                        if (ret_instr->get_function()->get_use_list().size() == 0) { // main
+                        if (ret_instr->get_function()->get_name() == "main") {
                             func_flag = true;
                             break;
                         }
@@ -362,9 +362,29 @@ void DeadCodeElimination::remove_unused_ret() {
                         break;
                     } else {
                         for (auto call_instr_use : call_instr->get_use_list()) {
+                            if (func_flag == true) break;
                             if (dynamic_cast<ReturnInst*>(call_instr_use.val_) == nullptr) {
                                 func_flag = true;
                                 break;
+                            } else {
+                                for (auto caller_use : caller->get_use_list()) {
+                                    if (func_flag == true) break;
+                                    auto caller_caller_instr = dynamic_cast<Instruction*>(caller_use.val_);
+                                    auto caller_caller = caller_caller_instr->get_function();
+                                    if (use_ret[caller_caller] == true) {
+                                        func_flag = true;
+                                        break;
+                                    }
+                                    for (auto use : caller_caller_instr->get_use_list()) {
+                                        if (dynamic_cast<ReturnInst*>(use.val_) == nullptr) {
+                                            func_flag = true;
+                                            break;
+                                        } else if (dynamic_cast<Instruction*>(use.val_)->get_function()->get_name() == "main") {
+                                            func_flag = true;
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -373,6 +393,11 @@ void DeadCodeElimination::remove_unused_ret() {
             if (func_flag == false) {
                 if (use_ret[func] == true) {
                     use_ret[func] = false;
+                    changed = true;
+                }
+            } else {
+                if (use_ret[func] == false) {
+                    use_ret[func] = true;
                     changed = true;
                 }
             }
