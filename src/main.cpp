@@ -22,6 +22,8 @@
 #include "Global2Local.h"
 #include "MovConst.h"
 
+#include "SCCP.h"
+
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
             << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-lir ] [ -emit-ast ] [-check] [-o <output-file> ] [ -O2 ] [ -S ]"
@@ -127,6 +129,7 @@ int main(int argc, char *argv[])
             //passmgr.addPass<CFGSimplifier>();
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
+            passmgr.addPass<SCCP>();
             if(!print_mir){
                 //passmgr.addPass<ConstPropagation>();
                 passmgr.addPass<LIR>();

@@ -16,5 +16,6 @@ add_library(
         LoopExpansion.cpp
         Global2Local.cpp
         SideEffectAnalysis.cpp
+        SCCP.cpp
 )
 
