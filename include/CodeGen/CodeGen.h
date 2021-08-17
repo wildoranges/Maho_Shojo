@@ -30,6 +30,7 @@ class CodeGen{
     int temp_reg_store_num = 4;
     const std::set<int> all_free_tmp_pos = {0,1,2,3};//TODO:TOGETHER WITH temp_reg_store_num;
     int caller_saved_reg_num = 5;
+    int literal_pool_threshold = 950;
     std::vector<BasicBlock*> linear_bb;
     std::map<BasicBlock*, IR2asm::label *> bb_label;
     bool have_func_call = true;
