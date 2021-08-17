@@ -322,6 +322,7 @@ void DeadCodeElimination::remove_unused_ret() {
     for (auto func : module->get_functions()) {
         bool func_flag = false;
         if (func->get_num_basic_blocks() == 0) continue;
+        if (func->get_use_list().size() == 0) continue;
         for (auto call : func->get_use_list()) {
             if (func_flag == true) break;
             auto call_instr = dynamic_cast<CallInst*>(call.val_);
@@ -350,6 +351,7 @@ void DeadCodeElimination::remove_unused_ret() {
         changed = false;
         for (auto func : module->get_functions()) {
             if (func->get_num_basic_blocks() == 0) continue;
+            if (func->get_use_list().size() == 0) continue;
             bool func_flag = false;
             for (auto call : func->get_use_list()) {
                 auto call_instr = dynamic_cast<Instruction*>(call.val_);
