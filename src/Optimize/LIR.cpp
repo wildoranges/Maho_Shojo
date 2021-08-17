@@ -17,6 +17,7 @@ void LIR::execute() {
                 store_offset(bb);
             }
             for (auto bb : func->get_basic_blocks()){
+                srem_const2and(bb);
                 split_srem(bb);
                 div_const2mul(bb);
             }
@@ -442,6 +443,8 @@ void LIR::split_srem(BasicBlock* bb) {
         if (inst_rem->is_rem()){
             auto op1 = inst_rem->get_operand(0);
             auto op2 = inst_rem->get_operand(1);
+            if (op1 == op2) continue;
+            if (dynamic_cast<ConstantInt*>(op2) && dynamic_cast<ConstantInt*>(op2)->get_value() == 1) continue;
             auto inst_div = BinaryInst::create_sdiv(op1,op2,bb,module);
             instructions.pop_back();
             auto inst_mul = BinaryInst::create_mul(inst_div,op2,bb,module);
@@ -480,6 +483,31 @@ void LIR::mul_const2shift(BasicBlock* bb) {
                     bb->add_instruction(iter, instructions.back());
                     instructions.pop_back();
                     instruction->replace_all_use_with(lsl);
+                    bb->delete_instr(instruction);
+                    iter--;
+                }
+            }
+        }
+    }
+}
+
+void LIR::srem_const2and(BasicBlock *bb) {
+    auto &instructions = bb->get_instructions();
+    for (auto iter = instructions.begin(); iter != instructions.end(); iter++) {
+        auto instruction = *iter;
+        if (instruction->is_rem()) {
+            auto op1 = instruction->get_operand(0);
+            auto op2 = instruction->get_operand(1);
+            auto op_const2 = dynamic_cast<ConstantInt*>(op2);
+            if (op_const2 != nullptr) {
+                if (is_power_of_two(op_const2->get_value())) {
+                    if (op_const2->get_value() == 1) continue;
+                    int k = op_const2->get_value() - 1;
+                    iter++;
+                    auto land = BinaryInst::create_and(op1, ConstantInt::get(k, module), bb, module);
+                    bb->add_instruction(iter, instructions.back());
+                    instructions.pop_back();
+                    instruction->replace_all_use_with(land);
                     bb->delete_instr(instruction);
                     iter--;
                 }
@@ -564,13 +592,28 @@ void LIR::div_const2mul(BasicBlock* bb) {
 }
 
 void LIR::remove_unused_op(BasicBlock* bb) {
-    // TODO: x+0; x-0, x-x; x*0, x*1; x/1, 0/x, x/x; x or x, x or 0; x and x, x and 0; x xor x, x xor 0;
+    // TODO: x%1, x%x; x+0; x-0, x-x; x*0, x*1; x/1, 0/x, x/x; x or x, x or 0; x and x, x and 0; x xor x, x xor 0;
     // TODO: x asr 0, 0 asr x; x lsl 0, 0 lsl x; x lsr 0, 0 lsr x; and so on
     std::vector<Instruction*> unused_instr_list;
     for (auto instr : bb->get_instructions()) {
         auto instr_type = instr->get_instr_type();
         switch (instr_type)
         {
+        case Instruction::srem: {
+            auto op1 = instr->get_operand(0);
+            auto op2 = instr->get_operand(1);
+            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+            if (op1 == op2) {
+                instr->replace_all_use_with(ConstantInt::get(0, module));
+                unused_instr_list.push_back(instr);
+            } else if (const_op2) {
+                if (const_op2->get_value() == 1) {
+                    instr->replace_all_use_with(ConstantInt::get(0, module));
+                    unused_instr_list.push_back(instr);
+                }
+            }
+        }
+            break;
         case Instruction::add: {
             auto op1 = instr->get_operand(0);
             auto op2 = instr->get_operand(1);

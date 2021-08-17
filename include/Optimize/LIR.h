@@ -26,6 +26,7 @@ public:
     void split_srem(BasicBlock* bb);
     void mul_const2shift(BasicBlock* bb);
     void div_const2mul(BasicBlock* bb);
+    void srem_const2and(BasicBlock* bb);
     void remove_unused_op(BasicBlock* bb);
     const std::string get_name() const override {return name;}
 private:
