@@ -7,6 +7,8 @@ std::map<Function *, std::map<int, std::set<Value *>>> func_array_args_to_params
 std::map<Function *, std::set<Function *>> func_caller_map;
 std::map<Function *, bool> visited_func;
 
+std::map<Function *, bool> use_ret;
+
 void build_func_array_args_to_params_map(Module *module) {
     func_array_args_to_params_map.clear();
     for (auto func : module->get_functions()) {
@@ -83,6 +85,7 @@ void DeadCodeElimination::execute() {
         r_dom_tree_new.execute();
         sweep();
     }
+    remove_unused_ret();
     return ;
 }
 
@@ -309,6 +312,78 @@ void DeadCodeElimination::remove_unmarked_bb() {
             delete_bb->delete_instr(instr);
         }
         func_->remove(delete_bb);
+    }
+}
+
+void DeadCodeElimination::remove_unused_ret() {
+    for (auto func : module->get_functions()) {
+        use_ret.insert({func, true});
+    }
+    for (auto func : module->get_functions()) {
+        bool func_flag = false;
+        if (func->get_num_basic_blocks() == 0) continue;
+        for (auto call : func->get_use_list()) {
+            if (func_flag == true) break;
+            auto call_instr = dynamic_cast<CallInst*>(call.val_);
+            if (call_instr) {
+                for (auto use : call_instr->get_use_list()) {
+                    auto ret_instr = dynamic_cast<ReturnInst*>(use.val_);
+                    auto phi_instr = dynamic_cast<PhiInst*>(use.val_);
+                    if (ret_instr == nullptr) {
+                        func_flag = true;
+                        break;
+                    } else {
+                        if (ret_instr->get_function()->get_use_list().size() == 0) { // main
+                            func_flag = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (func_flag == false) {
+            use_ret[func] = false;
+        }
+    }
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (auto func : module->get_functions()) {
+            if (func->get_num_basic_blocks() == 0) continue;
+            bool func_flag = false;
+            for (auto call : func->get_use_list()) {
+                auto call_instr = dynamic_cast<Instruction*>(call.val_);
+                if (call_instr) {
+                    auto caller = call_instr->get_function();
+                    if (use_ret[caller] == true) {
+                        func_flag = true;
+                        break;
+                    }
+                }
+            }
+            if (func_flag == false) {
+                if (use_ret[func] == true) {
+                    use_ret[func] = false;
+                    changed = true;
+                }
+            }
+        }
+    }
+    for (auto func : module->get_functions()) {
+        if (func->get_num_basic_blocks() == 0) continue;
+        if (func->get_return_type()->is_void_type()) continue;
+        if (use_ret[func] == false) {
+            Instruction *ret;
+            for (auto bb : func->get_basic_blocks()) {
+                auto terminator = bb->get_terminator();
+                if (terminator->is_ret()) {
+                    ret = terminator;
+                    break;
+                }
+            }
+            ret->remove_use_of_ops();
+            ret->set_operand(0, ConstantInt::get(0, module));
+        }
     }
 }
 
