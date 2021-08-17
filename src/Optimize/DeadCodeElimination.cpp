@@ -360,13 +360,6 @@ void DeadCodeElimination::remove_unused_ret() {
                     if (use_ret[caller] == true) {
                         func_flag = true;
                         break;
-                    } else {
-                        for (auto call_instr_use : call_instr->get_use_list()) {
-                            if (dynamic_cast<ReturnInst*>(call_instr_use.val_) == nullptr) {
-                                func_flag = true;
-                                break;
-                            }
-                        }
                     }
                 }
             }
