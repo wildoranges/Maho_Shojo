@@ -142,20 +142,23 @@ int main(int argc, char *argv[])
         else{
             PassMgr passmgr(m.get());
 
-            if(!no_cfg_simply)
-                passmgr.addPass<CFGSimplifier>();
-
-            if(!no_dead_code_eli)
-                passmgr.addPass<DeadCodeElimination>();
+//            if(!no_cfg_simply)
+//                passmgr.addPass<CFGSimplifier>();
+//
+//            if(!no_dead_code_eli)
+//                passmgr.addPass<DeadCodeElimination>();
 
 //            if(!no_dead_code_eli)
 //                passmgr.addPass<DeadCodeElimination>();
 
-            if(!no_cfg_simply)
-                passmgr.addPass<CFGSimplifier>();
+//            if(!no_cfg_simply)
+//                passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
 
             passmgr.addPass<Global2Local>();
 
