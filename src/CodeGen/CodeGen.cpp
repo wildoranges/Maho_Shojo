@@ -12,6 +12,189 @@
         return IR2asm::space + ".globl " + ".." + name + IR2asm::endl;
     }
 
+    std::string CodeGen::tmp_reg_restore(Instruction *inst) {
+        std::string code;
+        for(auto pair:tmp_regs_loc){
+            code += IR2asm::safe_load(new IR2asm::Reg(pair.first),
+                                      pair.second,
+                                      sp_extra_ofst,
+                                      long_func);
+        }
+        tmp_regs_loc.clear();
+        cur_tmp_regs.clear();
+        free_tmp_pos.clear();
+        free_tmp_pos = all_free_tmp_pos;
+        return code;
+    }
+
+    std::string CodeGen::push_tmp_instr_regs(Instruction *inst) {
+        std::string code;
+        store_list.clear();
+        to_store_set.clear();
+        interval_set.clear();
+        std::set<Value*> to_ld_set = {};
+        std::set<int> used_tmp_regs = {};
+        std::set<int> inst_reg_num_set = {};
+        std::set<int> opr_reg_num_set = {};
+        bool can_use_inst_reg = false;
+        for (auto opr : inst->get_operands()) {
+            if(dynamic_cast<Constant*>(opr) ||
+            dynamic_cast<BasicBlock *>(opr) ||
+            dynamic_cast<GlobalVariable *>(opr) ||
+            dynamic_cast<AllocaInst *>(opr)){
+                continue;
+            }
+            if (reg_map[opr]->reg_num >= 0) {
+                inst_reg_num_set.insert(reg_map[opr]->reg_num);
+                opr_reg_num_set.insert(reg_map[opr]->reg_num);
+            }
+        }
+        if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
+            auto reg_inter = reg_map[inst];
+            if(reg_inter->reg_num<0){
+                if(!cur_tmp_regs.empty()){
+                    reg_inter->reg_num = *cur_tmp_regs.begin();
+                    cur_tmp_regs.erase(reg_inter->reg_num);
+                    used_tmp_regs.insert(reg_inter->reg_num);
+                }
+                else{
+                    if(!opr_reg_num_set.empty()){
+                        for(int i = 0;i <= 12;i++){
+                            if(i == 11){
+                                continue;
+                            }
+                            if(opr_reg_num_set.find(i) == opr_reg_num_set.end()){
+                                reg_inter->reg_num = i;
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    else{
+                        reg_inter->reg_num = store_list.size();
+                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
+                        if(it==store_list.end()){
+                            store_list.push_back(reg_inter->reg_num);
+                        }
+                    }
+                }
+                interval_set.insert(reg_inter);
+                to_store_set.insert(inst);
+                can_use_inst_reg = true;
+            }
+            inst_reg_num_set.insert(reg_inter->reg_num);
+        }
+        for(auto opr:inst->get_operands()){
+            if(dynamic_cast<Constant*>(opr) ||
+            dynamic_cast<BasicBlock *>(opr) ||
+            dynamic_cast<GlobalVariable *>(opr) ||
+            dynamic_cast<AllocaInst *>(opr)){
+                continue;
+            }
+            auto reg_inter = reg_map[opr];
+            if(reg_inter->reg_num<0){
+                if(can_use_inst_reg){
+                    can_use_inst_reg = false;
+                    if(opr_reg_num_set.find(reg_map[inst]->reg_num)==opr_reg_num_set.end()){
+                        reg_inter->reg_num = reg_map[inst]->reg_num;
+                        inst_reg_num_set.insert(reg_inter->reg_num);
+                    }
+                    else{
+                        for(int i = 0;i <= 12;i++){
+                            if(i==11){
+                                continue;
+                            }
+                            if(inst_reg_num_set.find(i)==inst_reg_num_set.end()&&used_tmp_regs.find(i)==used_tmp_regs.end()){
+                                reg_inter->reg_num = i;
+                                inst_reg_num_set.insert(i);
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                else{
+                    if(!cur_tmp_regs.empty()){
+                        reg_inter->reg_num = *cur_tmp_regs.begin();
+                        cur_tmp_regs.erase(reg_inter->reg_num);
+                        used_tmp_regs.insert(reg_inter->reg_num);
+                        inst_reg_num_set.insert(reg_inter->reg_num);
+                    }
+                    else{
+                        for(int i = 0;i <= 12;i++){
+                            if(i==11){
+                                continue;
+                            }
+                            if(inst_reg_num_set.find(i)==inst_reg_num_set.end()&&used_tmp_regs.find(i)==used_tmp_regs.end()){
+                                reg_inter->reg_num = i;
+                                inst_reg_num_set.insert(i);
+                                auto it = std::find(store_list.begin(),store_list.end(),i);
+                                if(it==store_list.end()){
+                                    store_list.push_back(i);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                interval_set.insert(reg_inter);
+                to_ld_set.insert(opr);
+            }
+        }
+        int tmp_reg_base = have_func_call?20:0;
+        for(auto reg_id:store_list){
+            if(free_tmp_pos.empty()){
+                std::cerr << "free pos not empty, something was wrong with inst: "<< inst->print() << std::endl;
+                exit(15);
+            }
+            int free_pos = *free_tmp_pos.begin();
+            free_tmp_pos.erase(free_pos);
+            int cur_ofset = free_pos;//FIXME:offset
+            auto loc = new IR2asm::Regbase(IR2asm::Reg(13),cur_ofset*4+tmp_reg_base);
+            tmp_regs_loc[reg_id] = loc;
+            code += IR2asm::safe_store(new IR2asm::Reg(reg_id),
+                                       loc,
+                                       sp_extra_ofst,
+                                       long_func);
+            cur_tmp_regs.insert(reg_id);
+        }
+        for(auto tmp_reg:used_tmp_regs){
+            cur_tmp_regs.insert(tmp_reg);
+        }
+        for(auto opr:to_ld_set){
+            code += IR2asm::safe_load(new IR2asm::Reg(reg_map[opr]->reg_num),
+                                          stack_map[opr],
+                                          sp_extra_ofst,
+                                          long_func);
+        }
+        return code;
+    }
+
+
+    std::string CodeGen::pop_tmp_instr_regs(Instruction *inst) {
+        std::string code;
+        for(auto opr:to_store_set){
+            code += IR2asm::safe_store(new IR2asm::Reg(reg_map[opr]->reg_num),
+                                           stack_map[opr],
+                                           sp_extra_ofst,
+                                           long_func);
+        }
+
+        for(auto inter:interval_set){
+            inter->reg_num = -1;
+        }
+        to_store_set.clear();
+        store_list.clear();
+        interval_set.clear();
+        return code;
+    }
+
     bool CodeGen::iszeroinit(Constant * init){
         if(dynamic_cast<ConstantInt *>(init)){
             return (dynamic_cast<ConstantInt *>(init)->get_value() == 0);
@@ -25,6 +208,58 @@
             }
         }
         return true;
+    }
+
+    std::string CodeGen::ld_tmp_regs(Instruction *inst) {
+        std::string code;
+        if(!inst->is_alloca() && !inst->is_phi()){
+            std::set<int> to_del_set;
+            std::set<int> to_ld_set;
+            for(auto opr:inst->get_operands()){
+                if(dynamic_cast<Constant *>(opr) ||
+                dynamic_cast<BasicBlock *>(opr) ||
+                dynamic_cast<GlobalVariable *>(opr) ||
+                dynamic_cast<AllocaInst *>(opr) ||
+                dynamic_cast<Function* >(opr)){
+                    continue;
+                }
+                int opr_reg = reg_map[opr]->reg_num;
+                if(opr_reg >= 0){
+                    for(auto reg:cur_tmp_regs){
+                        if(reg==opr_reg){
+                            to_ld_set.insert(reg);
+                            to_del_set.insert(reg);
+                        }
+                    }
+                }
+            }
+            if(!inst->is_void()){
+                int inst_reg = reg_map[inst]->reg_num;
+                if(inst_reg >= 0){
+                    if(cur_tmp_regs.find(inst_reg)!=cur_tmp_regs.end()){
+                        to_del_set.insert(inst_reg);
+                    }
+                }
+            }
+            for(auto ld_reg:to_ld_set){
+                code += IR2asm::safe_load(new IR2asm::Reg(ld_reg),
+                                          tmp_regs_loc[ld_reg],
+                                          sp_extra_ofst,
+                                          long_func);
+            }
+            for(auto del_reg:to_del_set){
+                auto del_pos = tmp_regs_loc[del_reg];
+                int del_free_pos = del_pos->get_offset();
+                if(have_func_call){
+                    del_free_pos -= 20;
+                }
+                del_free_pos /= 4;
+                free_tmp_pos.insert(del_free_pos);
+                cur_tmp_regs.erase(del_reg);
+                tmp_regs_loc.erase(del_reg);//FIXME:CUR_OFFSET
+            }
+        }
+        return code;
     }
 
     std::string CodeGen::global_def_gen(Module* module){
@@ -115,101 +350,76 @@
                 if(arg->get_arg_no() < 4)continue;
                 int type_size = arg->get_type()->get_size();
                 arg_on_stack.push_back(new IR2asm::Regbase(IR2asm::sp, arg_size));
-                arg_size += type_size;
+                arg_size += ((type_size + 3) / 4) * 4;
                 stack_args.push_back(dynamic_cast<Value*>(arg));
             }
         }
-        if(have_func_call){
-            for(auto iter: reg_map){
-                Value* vreg = iter.first;
-                Interval* interval = iter.second;
-                if(interval->reg_num >= 0){
-                    if(interval->reg_num > 3){
-                        used_reg.second.insert(interval->reg_num);
-                    }
-                    else{
-                        used_reg.first.insert(interval->reg_num);
-                    }
-                    if(reg2val.find(interval->reg_num)!=reg2val.end()){
-                        reg2val.find(interval->reg_num)->second.push_back(vreg);
-                    }
-                    else{
-                        reg2val.insert({interval->reg_num, {vreg}});
-                    }
+        for(auto iter: reg_map){
+            Value* vreg = iter.first;
+            Interval* interval = iter.second;
+            if(interval->reg_num >= 0){
+                if(interval->reg_num > 3){
+                    used_reg.second.insert(interval->reg_num);
+                }
+                else{
+                    used_reg.first.insert(interval->reg_num);
+                }
+                if(reg2val.find(interval->reg_num)!=reg2val.end()){
+                    reg2val.find(interval->reg_num)->second.push_back(vreg);
+                }
+                else{
+                    reg2val.insert({interval->reg_num, {vreg}});
+                }
+                continue;
+            }
+            if(dynamic_cast<Argument*>(vreg)){
+                auto arg = dynamic_cast<Argument*>(vreg);
+                if(arg->get_arg_no() > 3){
+                    // stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
                     continue;
                 }
-                if(dynamic_cast<Argument*>(vreg)){
-                    auto arg = dynamic_cast<Argument*>(vreg);
-                    if(arg->get_arg_no() > 3){
-                        stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
-                        continue;
-                    }
-                }
-                int type_size = vreg->get_type()->get_size();
-                size += type_size;
+            }
+            int type_size = vreg->get_type()->get_size();
+            size += ((type_size + 3) / 4) * 4;
+            if(have_func_call){
                 stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
             }
-            used_reg.second.insert(IR2asm::frame_ptr);
-            // size += reg_size;
-            for(auto inst: fun->get_entry_block()->get_instructions()){
-                auto alloc = dynamic_cast<AllocaInst*>(inst);
-                if(!alloc)continue;
-                int type_size = alloc->get_alloca_type()->get_size();
-                size += type_size;
-                stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
-            }
-        }
-        else{
-            // stack alloc without frame pointer
-            for(auto iter: reg_map){
-                Value* vreg = iter.first;
-                Interval* interval = iter.second;
-                if(interval->reg_num >= 0){
-                    if(interval->reg_num > 3){
-                        used_reg.second.insert(interval->reg_num);
-                    }
-                    else{
-                        used_reg.first.insert(interval->reg_num);
-                    }
-                    if(reg2val.find(interval->reg_num)!=reg2val.end()){
-                        reg2val.find(interval->reg_num)->second.push_back(vreg);
-                    }
-                    else{
-                        reg2val.insert({interval->reg_num, {vreg}});
-                    }
-                    continue;
-                }
-                if(dynamic_cast<Argument*>(vreg)){
-                    auto arg = dynamic_cast<Argument*>(vreg);
-                    if(arg->get_arg_no() > 3){
-                        // stack_map.insert({vreg, arg_on_stack[arg->get_arg_no() - 4]});
-                        continue;
-                    }
-                }
-                int type_size = vreg->get_type()->get_size();
-                size += type_size;
+            else{
                 stack_map.insert({vreg, new IR2asm::Regbase(IR2asm::sp, -size)});
             }
-            for(auto inst: fun->get_entry_block()->get_instructions()){
-                auto alloc = dynamic_cast<AllocaInst*>(inst);
-                if(!alloc)continue;
-                int type_size = alloc->get_alloca_type()->get_size();
-                size += type_size;
+        }
+        if(have_func_call)used_reg.second.insert(IR2asm::frame_ptr);
+        for(auto inst: fun->get_entry_block()->get_instructions()){
+            auto alloc = dynamic_cast<AllocaInst*>(inst);
+            if(!alloc)continue;
+            int type_size = alloc->get_alloca_type()->get_size();
+            size += ((type_size + 3) / 4) * 4;
+            if(have_func_call){
+                stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::frame_ptr, -size)});
+            }
+            else{
                 stack_map.insert({dynamic_cast<Value *>(alloc), new IR2asm::Regbase(IR2asm::sp, -size)});
             }
+        }
+        size += ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                + ((have_func_call)?(caller_saved_reg_num * reg_size):0);
+        if(!have_func_call){
             for(auto map: stack_map){
                 int offset = map.second->get_offset();
                 map.second->set_offset(size + offset);
+                                        // + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                                        // + ((have_func_call)?20:0));
             }
         }
-        // int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
         /******always save lr for tmp use*******/
+        // int reg_store_size = reg_size * (used_reg.second.size() + ((have_func_call)? 1 : 0) );
         int reg_store_size = reg_size * (used_reg.second.size() + 1);
-//        int reg_store_size = reg_size * ((have_func_call)? 5 : 0);
         int i = 0;
         for(auto item: arg_on_stack){
             int offset = item->get_offset();
-            item->set_offset(offset + reg_store_size + size + ((have_func_call)?20:0));
+            item->set_offset(offset + reg_store_size + size);
+                            // + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                            // + ((have_func_call)?20:0));
             stack_map.insert({stack_args[i], item});
             i++;
         }
@@ -218,7 +428,7 @@
 
     std::string CodeGen::callee_reg_store(Function* fun){
         std::string code;
-        if(!used_reg.second.size())return IR2asm::space + "push {lr}" + IR2asm::endl;
+        if(used_reg.second.empty())return IR2asm::space + "push {lr}" + IR2asm::endl;
         code += IR2asm::space;
         code += "push {";
         for(auto reg: used_reg.second){
@@ -227,14 +437,7 @@
             if(reg == *used_reg.second.rbegin())break;
             code += ", ";
         }
-        // code += (IR2asm::frame_ptr).get_code();
-        // code += ", ";
-
         /******always save lr for temporary use********/
-        // if(have_func_call)code += ", lr}";
-        // else{
-        //     code += "}";
-        // }
         code += ", lr}";
         code += IR2asm::endl;
         return code;
@@ -251,20 +454,13 @@
             if(reg == *used_reg.second.rbegin())break;
             code += ", ";
         }
-        // code += (IR2asm::frame_ptr).get_code();
-        // code += ", ";
         /******always save lr for temporary use********/
-        // if(have_func_call)code += ", lr}";
-        // else{
-        //     code += "}";
-        // }
         code += ", lr}";
         code += IR2asm::endl;
         return code;
     }
 
     std::string CodeGen::callee_stack_operation_in(Function* fun, int stack_size){
-        //TODO: immediate overflow
         int remain_stack_size = stack_size;
         std::string code;
         code += IR2asm::space;
@@ -289,15 +485,6 @@
             code += "sub sp, sp, lr";
             code += IR2asm::endl;
         }
-        // while(remain_stack_size > 2000){
-        //     code += "sub sp, sp, #2000";
-        //     code += IR2asm::endl;
-        //     code += IR2asm::space;
-        //     remain_stack_size -= 2000;
-        // }
-        // code += "sub sp, sp, #";
-        // code += std::to_string(remain_stack_size);
-        // code += IR2asm::endl;
         return code;
     }
 
@@ -325,17 +512,6 @@
             code += "add sp, sp, lr";
             code += IR2asm::endl;
         }
-        // while(remain_stack_size > 2000){
-        //     code += "add sp, sp, #2000";
-        //     code += IR2asm::endl;
-        //     code += IR2asm::space;
-        //     remain_stack_size -= 2000;
-        // }
-        // code += "add sp, sp, #";
-        // // code += IR2asm::frame_ptr.get_code();
-        // // code += ", #";
-        // code += std::to_string(remain_stack_size);
-        // code += IR2asm::endl;
         return code;
     }
 
@@ -343,8 +519,6 @@
         std::string code;
         caller_saved_pos.clear();
         to_save_reg.clear();
-//        int arg_num = fun->get_num_of_args();
-//        if(arg_num > 4)
         int arg_num = 4;
         if(!used_reg.first.empty()){
             for(int i = 0;i < arg_num;i++){
@@ -354,11 +528,6 @@
                         not_to_save = not_to_save && !reg_map[val]->covers(call);
                     }
                     if(!not_to_save){
-//                        if(!call->is_void()){
-//                            if(reg_map[call]->reg_num==i){
-//                                continue;
-//                            }
-//                        }
                         caller_saved_pos[i] = to_save_reg.size() * 4;
                         to_save_reg.push_back(i);
                     }
@@ -455,13 +624,13 @@
             if(ret_id!=0){
                 if(ret_id > 0){
                     code += IR2asm::space;
-                    code += "MOV " + IR2asm::Reg(ret_id).get_code();
+                    code += "mov " + IR2asm::Reg(ret_id).get_code();
                     code += ", ";
                     code += IR2asm::Reg(0).get_code();
                     code += IR2asm::endl;
                 }else{
                     code += IR2asm::space;
-                    code += "STR ";
+                    code += "str ";
                     code += IR2asm::Reg(0).get_code();
                     code += ", ";
                     code += stack_map[call]->get_ofst_code(sp_extra_ofst);
@@ -471,24 +640,10 @@
 
             if(init_id && ret_id != 0){
                 code += IR2asm::space;
-                code += "LDR r0, [SP]";
+                code += "ldr r0, [SP]";
                 code += IR2asm::endl;
             }
         }
-//        if(arg_num > 4)arg_num = 4;
-//        if(!to_save_reg.empty()){
-//            code += IR2asm::space;
-//            code += "pop {";
-//            auto save_size = to_save_reg.size();
-//            for(int i = 0; i < save_size - 1; i++){
-//                code += IR2asm::Reg(to_save_reg[i]).get_code();
-//                code += ", ";
-//            }
-//            code += IR2asm::Reg(to_save_reg[save_size-1]).get_code();
-//            code += "}";
-//            code += IR2asm::endl;
-//            code += pop_regs(to_save_reg);
-//        }
         return code;
     }
 
@@ -529,15 +684,15 @@
         std::string globaldef;
         globaldef += global_def_gen(module);
         // std::cout << code;
-        RegAllocDriver driver = RegAllocDriver(module);
-        driver.compute_reg_alloc();
+        auto driver = new RegAllocDriver(module);
+        driver->compute_reg_alloc();
         make_global_table(module);
         func_no = 0;
         code += IR2asm::space + ".arch armv7ve " + IR2asm::endl;
         code += IR2asm::space + ".text " + IR2asm::endl;
         for(auto func_: module->get_functions()){
             if(func_->get_basic_blocks().empty())continue;
-            reg_map = driver.get_reg_alloc_in_func(func_);
+            reg_map = driver->get_reg_alloc_in_func(func_);
             code += function_gen(func_) + IR2asm::endl;
             func_no++;
         }
@@ -545,16 +700,23 @@
         return code + globaldef;
     }
 
-    void CodeGen::make_linear_bb(Function* fun){
+    void CodeGen::make_linear_bb(Function* fun,RegAllocDriver* driver){
         //sort bb and make bb label, put in CodeGen::bb_label
         //label gen, name mangling as bbx_y for yth bb in function no.x .
         bb_label.clear();
         linear_bb.clear();
         bb_no = -1;
+        std::list<BasicBlock *> linear_fun_bb;
+        if(driver){
+            linear_fun_bb = driver->get_bb_order_in_func(fun);
+        }
+        else{
+            linear_fun_bb = fun->get_basic_blocks();
+        }
         BasicBlock* ret_bb;
         IR2asm::label *newlabel;
         std::string label_str;
-        for(auto bb: fun->get_basic_blocks()){
+        for(auto bb: linear_fun_bb){
             if(bb != fun->get_entry_block() && !bb->get_terminator()->is_ret()){
                 label_str = "bb" + std::to_string(func_no) + "_" + std::to_string(bb_no);
                 newlabel = new IR2asm::label(label_str);
@@ -580,11 +742,13 @@
         newlabel = new IR2asm::label(label_str);
         bb_label.insert({ret_bb, newlabel});
         linear_bb.push_back(ret_bb);
+#ifdef DEBUG
         for(auto pair:bb_label){
             auto bb = pair.first;
             auto label = pair.second;
             std::cerr << bb->get_name() << ":" << label->get_label() << std::endl;
         }
+#endif
         return;
     }
 
@@ -678,35 +842,12 @@
                         regcode += IR2asm::safe_load(new IR2asm::Reg(i), 
                                                 new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),caller_saved_pos[reg]),
                                                 sp_extra_ofst, long_func);
-                        // int offset = caller_saved_pos[reg] + sp_extra_ofst;
-                        // if(abs(offset) > 4095){
-                        //     regcode += IR2asm::space;
-                        //     regcode += "ldr lr, =";
-                        //     regcode += std::to_string(offset);
-                        //     regcode += IR2asm::endl;
-                        //     regcode += IR2asm::space;
-                        //     regcode += "add lr, lr, sp";
-                        //     regcode += IR2asm::endl;
-                        //     regcode += IR2asm::space;
-                        //     regcode += "LDR ";
-                        //     regcode += IR2asm::Reg(i).get_code();
-                        //     regcode += ", [lr]";
-                        //     regcode += IR2asm::endl;
-                        // }
-                        // else{
-                        //     regcode += IR2asm::space;
-                        //     regcode += "LDR ";
-                        //     regcode += IR2asm::Reg(i).get_code();
-                        //     regcode += ", ";
-                        //     regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
-                        //     regcode += IR2asm::endl;
-                        // }
                         i++;
                         continue;
                     }
                     else if(reg!=12){
                         regcode += IR2asm::space;
-                        regcode += "MOV ";
+                        regcode += "mov ";
                         regcode += IR2asm::Reg(i).get_code();
                         regcode += ", ";
                         regcode += IR2asm::Reg(reg).get_code();
@@ -717,117 +858,15 @@
                         regcode += IR2asm::safe_load(new IR2asm::Reg(i), 
                                                 new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),caller_saved_pos[12]),
                                                 sp_extra_ofst, long_func);
-                        // int offset = caller_saved_pos[12] + sp_extra_ofst;
-                        // if(abs(offset) > 4095){
-                        //     regcode += IR2asm::space;
-                        //     regcode += "ldr lr, =";
-                        //     regcode += std::to_string(offset);
-                        //     regcode += IR2asm::endl;
-                        //     regcode += IR2asm::space;
-                        //     regcode += "add lr, lr, sp";
-                        //     regcode += IR2asm::endl;
-                        //     regcode += IR2asm::space;
-                        //     regcode += "LDR ";
-                        //     regcode += IR2asm::Reg(i).get_code();
-                        //     regcode += ", [lr]";
-                        //     regcode += IR2asm::endl;
-                        // }
-                        // else{
-                        //     regcode += IR2asm::space;
-                        //     regcode += "LDR ";
-                        //     regcode += IR2asm::Reg(i).get_code();
-                        //     regcode += ", ";
-                        //     regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
-                        //     regcode += IR2asm::endl;
-                        // }
                         i++;
                         continue;
                     }
-//                    if(reg == i){
-//                        if(caller_saved_pos.find(i)==caller_saved_pos.end()){//TODO:CHECK NOT END?
-//                            i++;
-//                            continue;
-//                        }else{//TODO:MAY BE SIMPLIFIED
-//                            regcode += IR2asm::space;
-//                            regcode += "LDR ";
-//                            regcode += IR2asm::Reg(i).get_code();
-//                            regcode += ", ";
-//                            regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[i]).get_ofst_code(sp_extra_ofst);
-//                            regcode += IR2asm::endl;
-//                            i++;
-//                            continue;
-//                        }
-//                    }
-//                    else if(reg!=12){
-//                        preg = new IR2asm::Reg(reg);
-//                        regcode += IR2asm::space;
-//                        regcode += "LDR ";
-//                        regcode += IR2asm::Reg(i).get_code();
-//                        regcode += ", ";
-//                        regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[i]).get_ofst_code(sp_extra_ofst);
-//                        regcode += IR2asm::endl;
-//                        i++;
-//                        continue;
-//                    }
-//                    else{
-//                        if(caller_saved_pos.find(12)==caller_saved_pos.end()){
-//                            preg = new IR2asm::Reg(reg);
-//                            regcode += IR2asm::space;
-//                            regcode += "mov ";
-//                            regcode += IR2asm::Reg(i).get_code();
-//                            regcode += ", ";
-//                            regcode += preg->get_code();
-//                            regcode += IR2asm::endl;
-//                            i++;
-//                            continue;
-//                        }else{
-//                            regcode += IR2asm::space;
-//                            regcode += "LDR ";
-//                            regcode += IR2asm::Reg(i).get_code();
-//                            regcode += ", ";
-//                            regcode += IR2asm::Regbase(IR2asm::Reg(13),caller_saved_pos[12]).get_ofst_code(sp_extra_ofst);
-//                            regcode += IR2asm::endl;
-//                            i++;
-//                            continue;
-//                        }
-//                    }
                 }
                 else{
                     regcode += IR2asm::safe_load(new IR2asm::Reg(i),
                                                  stack_map.find(arg)->second,
                                                  sp_extra_ofst,
                                                  long_func);
-                    // IR2asm::Regbase* regbase = stack_map.find(arg)->second;
-                    // int offset;
-                    // if(regbase->get_reg().get_id() == IR2asm::sp){
-                    //     offset = regbase->get_offset() + sp_extra_ofst;
-                    // }
-                    // else{
-                    //     offset = regbase->get_offset();
-                    // }
-                    // if(offset > 4095){
-                    //     regcode += IR2asm::space;
-                    //     regcode += "ldr lr, =";
-                    //     regcode += std::to_string(offset);
-                    //     regcode += IR2asm::endl;
-                    //     regcode += IR2asm::space;
-                    //     regcode += "add lr, lr, ";
-                    //     regcode += regbase->get_reg().get_code();
-                    //     regcode += IR2asm::endl;
-                    //     regcode += IR2asm::space;
-                    //     regcode += "ldr ";
-                    //     regcode += IR2asm::Reg(i).get_code();
-                    //     regcode += ", [lr]";
-                    //     regcode += IR2asm::endl;
-                    // }
-                    // else{
-                    //     regcode += IR2asm::space;
-                    //     regcode += "ldr ";
-                    //     regcode += IR2asm::Reg(i).get_code();
-                    //     regcode += ", ";
-                    //     regcode += regbase->get_ofst_code(sp_extra_ofst);
-                    //     regcode += IR2asm::endl;
-                    // }
                 }
             }
             else{
@@ -849,19 +888,13 @@
             func_param_extra_offset ++;
             if(dynamic_cast<ConstantInt *>(arg)){
                 memcode += IR2asm::space;
-                memcode += "LDR ";
+                memcode += "ldr ";
                 memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
                 memcode += " ,=";
                 memcode += std::to_string(dynamic_cast<ConstantInt *>(arg)->get_value());
                 memcode += IR2asm::endl;
                 to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                 remained_off_reg_num--;
-//                memcode += IR2asm::space;
-//                memcode += "str r0, ";
-//                memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp), offset).get_ofst_code(sp_extra_ofst);
-//                offset += arg->get_type()->get_size();
-//                memcode += IR2asm::endl;
-//                continue;
             }else{
                 auto reg = (reg_map).find(arg)->second->reg_num;
                 if(reg >= 0){
@@ -873,44 +906,10 @@
                                                      new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),caller_saved_pos[reg]),
                                                      sp_extra_ofst, 
                                                      long_func);
-                        // int offset = caller_saved_pos[reg] + sp_extra_ofst;
-                        // if(offset > 4095){
-                        //     memcode += IR2asm::space;
-                        //     memcode += "ldr lr, =";
-                        //     memcode += std::to_string(offset);
-                        //     memcode += IR2asm::endl;
-                        //     memcode += IR2asm::space;
-                        //     memcode += "add lr, lr, sp";
-                        //     memcode += IR2asm::endl;
-                        //     memcode += IR2asm::space;
-                        //     memcode += "LDR ";
-                        //     memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
-                        //     memcode += ", [lr]";
-                        //     memcode += IR2asm::endl;
-                        // }
-                        // else{
-                        //     memcode += IR2asm::space;
-                        //     memcode += "LDR ";
-                        //     memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
-                        //     memcode += ", ";
-                        //     memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),caller_saved_pos[reg]).get_ofst_code(sp_extra_ofst);
-                        //     memcode += IR2asm::endl;
-                        // }
                         to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                         remained_off_reg_num--;
                         //TODO:null ptr?segment fault?
                     }
-//                    if(reg==tmp_reg_id[ex_offset]){
-//                        push_regs.push_back(reg);
-//                    }else{
-//                        memcode += IR2asm::space;
-//                        memcode += "str ";
-//                        memcode += IR2asm::Reg(reg).get_code();
-//                        memcode += ", ";
-//                        memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp), offset).get_ofst_code(sp_extra_ofst);
-//                        offset += arg->get_type()->get_size();
-//                        memcode += IR2asm::endl;
-//                    }
                 }
                 else{
                     auto srcaddr = stack_map.find(arg)->second;
@@ -918,43 +917,8 @@
                                                  srcaddr,
                                                  sp_extra_ofst,
                                                  long_func);
-                    // int offset;
-                    // if(srcaddr->get_reg().get_id() == IR2asm::sp){
-                    //     offset = srcaddr->get_offset() + sp_extra_ofst;
-                    // }
-                    // else{
-                    //     offset = srcaddr->get_offset();
-                    // }
-                    // if(offset > 4095){
-                    //     memcode += IR2asm::space;
-                    //     memcode += "ldr lr, =";
-                    //     memcode += std::to_string(offset);
-                    //     memcode += IR2asm::endl;
-                    //     memcode += IR2asm::space;
-                    //     memcode += "add lr, lr, ";
-                    //     memcode += srcaddr->get_reg().get_code();
-                    //     memcode += IR2asm::endl;
-                    //     memcode += IR2asm::space;
-                    //     memcode += "LDR ";
-                    //     memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
-                    //     memcode += ", [lr]";
-                    //     memcode += IR2asm::endl;
-                    // }
-                    // else{
-                    //     memcode += IR2asm::space;
-                    //     memcode += "LDR ";
-                    //     memcode += IR2asm::Reg(tmp_reg_id[tmp_reg_size-remained_off_reg_num]).get_code();
-                    //     memcode += ", ";
-                    //     memcode += srcaddr->get_ofst_code(sp_extra_ofst);
-                    //     memcode += IR2asm::endl;
-                    // }
                     to_push_regs.push_back(tmp_reg_id[tmp_reg_size-remained_off_reg_num]);
                     remained_off_reg_num--;
-//                    memcode += IR2asm::space;
-//                    memcode += "str r0, ";
-//                    memcode += IR2asm::Regbase(IR2asm::Reg(IR2asm::sp), offset).get_ofst_code(sp_extra_ofst);
-//                    offset += arg->get_type()->get_size();
-//                    memcode += IR2asm::endl;
                 }
             }
             if(remained_off_reg_num==0){
@@ -970,78 +934,66 @@
     }
 
     std::string CodeGen::callee_arg_move(Function* fun){
+        std::string save_code;
         std::string code;
+        std::set<int> conflict_src_reg;
+        std::map<int, IR2asm::Regbase*> conflict_reg_loc;
+        int size = 0;
         int arg_num = fun->get_args().size();
         if(!arg_num)return code;
         if(arg_num > 4)arg_num = 4;
-        code += IR2asm::space + "STMDB SP, {";
-        for(int i = 0; i < arg_num - 1; i++){
-            code += IR2asm::Reg(i).get_code();
-            code += ", ";
+        for(auto arg: fun->get_args()){
+            if(reg_map.find(arg) != reg_map.end()){
+                int target = reg_map[arg]->reg_num;
+                if(target == arg->get_arg_no())continue;
+                if(target >= 0 && target < arg_num)conflict_src_reg.insert(target);
+            }
         }
-        code += IR2asm::Reg(arg_num - 1).get_code() + "}" + IR2asm::endl;
+        if(!conflict_src_reg.empty()){
+            save_code += IR2asm::space + "STMDB SP, {";
+            for(auto reg: conflict_src_reg){
+                if(reg == *(conflict_src_reg.rbegin()))break;
+                save_code += IR2asm::Reg(reg).get_code();
+                save_code += ", ";
+            }
+            save_code += IR2asm::Reg(*(conflict_src_reg.rbegin())).get_code() + "}" + IR2asm::endl;
+        }
+        int conflict_store_size = conflict_src_reg.size() * reg_size;
+        for(auto reg: conflict_src_reg){
+            conflict_reg_loc.insert({reg, new IR2asm::Regbase(IR2asm::sp, size - conflict_store_size)});
+            size += reg_size;
+        }
         for(auto arg: fun->get_args()){
             int reg;
-            if(reg_map.find(arg)!= reg_map.end()){
+            if(reg_map.find(arg) != reg_map.end()){
                 reg = reg_map[arg]->reg_num;
             }
-            else{
-//                reg = -1;
-                continue;
-            }
+            else continue;
             if(arg->get_arg_no() < 4){
                 if(arg->get_arg_no() == reg)continue;
                 if(reg >= 0){
-                    // code += IR2asm::space;
-                    // code += "mov ";
-                    // code += IR2asm::Reg(reg).get_code();
-                    // code += ", ";
-                    // code += IR2asm::Reg(arg->get_arg_no()).get_code();
-                    // code += IR2asm::endl;
-
-                    code += IR2asm::space;
-                    code += "Ldr ";
-                    code += IR2asm::Reg(reg).get_code();
-                    code += ", ";
-                    code += IR2asm::Regbase(IR2asm::sp, - int_size * (arg_num-arg->get_arg_no())).get_code();
-                    code += IR2asm::endl;
+                    if(conflict_src_reg.find(arg->get_arg_no()) == conflict_src_reg.end()){
+                        code += IR2asm::space;
+                        code += "Mov ";
+                        code += IR2asm::Reg(reg).get_code();
+                        code += ", ";
+                        code += IR2asm::Reg(arg->get_arg_no()).get_code();
+                        code += IR2asm::endl;
+                    }
+                    else{
+                        code += IR2asm::space;
+                        code += "Ldr ";
+                        code += IR2asm::Reg(reg).get_code();
+                        code += ", ";
+                        code += conflict_reg_loc[arg->get_arg_no()]->get_code();
+                        code += IR2asm::endl;
+                    }
                 }
                 else{
                     code += IR2asm::safe_store(new IR2asm::Reg(arg->get_arg_no()),
                                                stack_map[arg],
                                                sp_extra_ofst,
                                                long_func);
-                    // IR2asm::Regbase* regbase = stack_map[arg];
-                    // int offset;
-                    // if(regbase->get_reg().get_id() == IR2asm::sp){
-                    //     offset = regbase->get_offset() + sp_extra_ofst;
-                    // }
-                    // else{
-                    //     offset = regbase->get_offset();
-                    // }
-                    // if(offset > 4095){
-                    //     code += IR2asm::space;
-                    //     code += "ldr lr, =";
-                    //     code += offset;
-                    //     code += IR2asm::endl;
-                    //     code += IR2asm::space;
-                    //     code += "add lr, lr, ";
-                    //     code += regbase->get_reg().get_code();
-                    //     code += IR2asm::endl;
-                    //     code += IR2asm::space;
-                    //     code += "str ";
-                    //     code += IR2asm::Reg(arg->get_arg_no()).get_code();
-                    //     code += ", [lr]";
-                    //     code += IR2asm::endl;
-                    // }
-                    // else{
-                    //     code += IR2asm::space;
-                    //     code += "str ";
-                    //     code += IR2asm::Reg(arg->get_arg_no()).get_code();
-                    //     code += ", ";
-                    //     code += regbase->get_ofst_code(sp_extra_ofst);
-                    //     code += IR2asm::endl;
-                    // }
                 }
             }
             else{
@@ -1050,44 +1002,25 @@
                                           arg_on_stack[arg->get_arg_no() - 4],
                                           sp_extra_ofst,
                                           long_func);
-                // IR2asm::Regbase* regbase = arg_on_stack[arg->get_arg_no() - 4];
-                // int offset = regbase->get_offset() + ((regbase->get_reg().get_id() == IR2asm::sp)?sp_extra_ofst:0);
-                // if(offset > 4095){
-                //     code += IR2asm::space;
-                //     code += "ldr lr, =";
-                //     code += std::to_string(offset);
-                //     code += IR2asm::endl;
-                //     code += IR2asm::space;
-                //     code += "add lr, lr, ";
-                //     code += regbase->get_reg().get_code();
-                //     code += IR2asm::endl;
-                //     code += IR2asm::space;
-                //     code += "ldr ";
-                //     code += IR2asm::Reg(reg).get_code();
-                //     code += ", [lr]";
-                //     code += IR2asm::endl;
-                // }
-                // else{
-                //     code += IR2asm::space;
-                //     code += "ldr ";
-                //     code += IR2asm::Reg(reg).get_code();
-                //     code += ", ";
-                //     code += regbase->get_code();
-                //     code += IR2asm::endl;
-                // }
             }
         }
-        return code;
+        return save_code + code;
     }
 
-    std::string CodeGen::function_gen(Function* fun){
+    std::string CodeGen::function_gen(Function* fun,RegAllocDriver* driver){
         std::string code;
         sp_extra_ofst = 0;
         pool_number = 0;
+        cur_tmp_regs.clear();
+        tmp_regs_loc.clear();
+        free_tmp_pos.clear();
+        free_tmp_pos = all_free_tmp_pos;
         global_label_gen(fun);
-        make_linear_bb(fun);
+        make_linear_bb(fun, driver);
         func_call_check(fun);
-        int stack_size = stack_space_allocation(fun) + ((have_func_call)?20:0);
+        int stack_size = stack_space_allocation(fun);
+                        // + ((have_temp_reg)?(temp_reg_store_num * reg_size):0) 
+                        // + ((have_func_call)?20:0);
 //                + std::max(max_arg_size - 4 * reg_size, 0);
         code += IR2asm::space + ".globl " + fun->get_name() + IR2asm::endl;
         code += IR2asm::space + ".p2align " + std::to_string(int_p2align) + IR2asm::endl;
@@ -1162,233 +1095,58 @@
                 br_inst = inst;
                 break;
             }
+            new_code += ld_tmp_regs(inst);
             if(dynamic_cast<CallInst*>(inst)){
-                auto call_inst = dynamic_cast<CallInst*>(inst);        
+                auto call_inst = dynamic_cast<CallInst*>(inst);
                 new_code += caller_reg_store(bb->get_parent(),call_inst);
                 new_code += arg_move(call_inst);
                 new_code += instr_gen(call_inst);
                 new_code += caller_reg_restore(bb->get_parent(),call_inst);
-                code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 950){
+                if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
+                code += new_code;
             }else if(instr_may_need_push_stack(inst)){
-                std::vector<int> store_list = {};
-                std::set<Value*> to_store_set = {};
-                std::set<Value*> to_ld_set = {};
-                std::set<Interval*> interval_set = {};
-                bool use_target = false;
-                bool can_use_inst_reg = false;
-                if(!inst->is_void() && !dynamic_cast<AllocaInst *>(inst)){
-                    auto reg_inter = reg_map[inst];
-                    if(reg_inter->reg_num<0){
-                        reg_inter->reg_num = store_list.size();
-                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                        if(it==store_list.end()){
-                            store_list.push_back(reg_inter->reg_num);
-                        }
-                        interval_set.insert(reg_inter);
-                        to_store_set.insert(inst);
-                        use_target = true;
-                        can_use_inst_reg = true;
-                    }
-                }
-                std::set<int> inst_reg_num_set = {};
-                if (!inst->is_void() && !dynamic_cast<AllocaInst *>(inst) && reg_map[inst]->reg_num >= 0) {
-                    inst_reg_num_set.insert(reg_map[inst]->reg_num);
-                }
-                for (auto opr : inst->get_operands()) {
-                    if(dynamic_cast<Constant*>(opr) || 
-                        dynamic_cast<BasicBlock *>(opr) ||
-                        dynamic_cast<GlobalVariable *>(opr) ||
-                        dynamic_cast<AllocaInst *>(opr)){
-                            continue;
-                        }
-                    if (reg_map[opr]->reg_num >= 0) {
-                        inst_reg_num_set.insert(reg_map[opr]->reg_num);
-                    }
-                }
-                for(auto opr:inst->get_operands()){
-                    if(dynamic_cast<Constant*>(opr) || 
-                    dynamic_cast<BasicBlock *>(opr) ||
-                    dynamic_cast<GlobalVariable *>(opr) ||
-                    dynamic_cast<AllocaInst *>(opr)){
-                        continue;
-                    }
-                    auto reg_inter = reg_map[opr];
-                    if(reg_inter->reg_num<0){
-                        if(use_target){
-                            reg_inter->reg_num = store_list.size() - 1;
-                        }else{
-                            reg_inter->reg_num = store_list.size();
-                        }
-                        auto it = std::find(store_list.begin(),store_list.end(),reg_inter->reg_num);
-                        auto reg_it = inst_reg_num_set.find(reg_inter->reg_num);
-                        if(it==store_list.end() && reg_it == inst_reg_num_set.end()){
-                            store_list.push_back(reg_inter->reg_num);
-                        } else {
-                            if (can_use_inst_reg) {
-                                if (reg_it == inst_reg_num_set.end()) {
-                                    can_use_inst_reg = false;
-                                } else {
-                                    for (int i = 0; i <= 12; i++) {
-                                        if (i == 11) continue;
-                                        if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() && 
-                                            inst_reg_num_set.find(i) == inst_reg_num_set.end()) {
-                                            reg_inter->reg_num = i;
-                                            store_list.push_back(reg_inter->reg_num);
-                                            break;
-                                        }
-                                    }
-                                }
-                            } else {
-                                for (int i = 0; i <= 12; i++) {
-                                    if (i == 11) continue;
-                                    if (std::find(store_list.begin(),store_list.end(),i) == store_list.end() && 
-                                        inst_reg_num_set.find(i) == inst_reg_num_set.end()) {
-                                        reg_inter->reg_num = i;
-                                        store_list.push_back(reg_inter->reg_num);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        interval_set.insert(reg_inter);
-                        to_ld_set.insert(opr);
-                    }
-                }
-                if(!store_list.empty()){
-//                    code += IR2asm::space;
-//                    code += "push {";
-//                    int lst_size = store_list.size() - 1;
-//                    for(int i = 0;i < lst_size;i++){
-//                        code += IR2asm::Reg(store_list[i]).get_code();
-//                        code += ", ";
-//                    }
-//                    code += IR2asm::Reg(store_list[lst_size]).get_code();
-//                    code += "}";
-//                    code += IR2asm::endl;
-                    new_code += push_regs(store_list);
-                }
-                for(auto opr:to_ld_set){
-                    new_code += IR2asm::safe_load(new IR2asm::Reg(reg_map[opr]->reg_num),
-                                                  stack_map[opr],
-                                                  sp_extra_ofst,
-                                                  long_func);
-                    // new_code += IR2asm::space;
-                    // new_code += "ldr ";
-                    // new_code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
-                    //         stack_map[opr]->get_ofst_code(sp_extra_ofst);
-                    // new_code += IR2asm::endl;
-                }
+
+                new_code += push_tmp_instr_regs(inst);
 
                 new_code += instr_gen(inst);
 
-                for(auto opr:to_store_set){
-                    new_code += IR2asm::safe_store(new IR2asm::Reg(reg_map[opr]->reg_num),
-                                                   stack_map[opr],
-                                                   sp_extra_ofst,
-                                                   long_func);
-                    // new_code += IR2asm::space;
-                    // new_code += "str ";
-                    // new_code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
-                    //         stack_map[opr]->get_ofst_code(sp_extra_ofst);
-                    // new_code += IR2asm::endl;
-                }
-
-                if(!store_list.empty()){
-//                    code += IR2asm::space;
-//                    code += "pop {";
-//                    int lst_size = store_list.size() - 1;
-//                    for(int i = 0;i < lst_size;i++){
-//                        code += IR2asm::Reg(store_list[i]).get_code();
-//                        code += ", ";
-//                    }
-//                    code += IR2asm::Reg(store_list[lst_size]).get_code();
-//                    code += "}";
-//                    code += IR2asm::endl;
-                    new_code += pop_regs(store_list);
-                }
-
-                code += new_code;
+                new_code += pop_tmp_instr_regs(inst);
 
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 950){
+                if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
 
-                for(auto inter:interval_set){
-                    inter->reg_num = -1;
-                }
+                code += new_code;
             }else{
                 new_code += instr_gen(inst);
-                code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
-                if(accumulate_line_num > 950){
+                if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
+                code += new_code;
             }
         }
-
-        cmp_br_tmp_reg.clear();
-        cmp_br_tmp_inter.clear();
+        std::string new_code;
+        new_code += ld_tmp_regs(br_inst);
         if(br_inst->is_cmpbr()){
-            std::set<int> used_regs = {};
-            std::set<Value*> need_push_val;
-            for(auto opr:br_inst->get_operands()){
-                if(dynamic_cast<ConstantInt*>(opr)||dynamic_cast<BasicBlock*>(opr)){
-                    continue;
-                }
-                else{
-                    auto cur_inter = reg_map[opr];
-                    if(cur_inter->reg_num<0){
-                        need_push_val.insert(opr);
-                    }else{
-                        used_regs.insert(cur_inter->reg_num);
-                    }
-                }
+            new_code += ld_tmp_regs(br_inst);
+            new_code += push_tmp_instr_regs(br_inst);
+            accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
+            if(accumulate_line_num > literal_pool_threshold){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
             }
-            if(!need_push_val.empty()){
-                for(auto opr:need_push_val){
-                    for(int i = 0;i <= 12;i++){
-                        if(i == 11){
-                            continue;
-                        }
-                        //auto reg_it = std::find(cmp_br_tmp_reg.begin(),cmp_br_tmp_reg.end(),i);
-                        if(used_regs.find(i)==used_regs.end()){
-                            auto cur_inter = reg_map[opr];
-                            cur_inter->reg_num = i;
-                            used_regs.insert(i);
-                            cmp_br_tmp_inter.insert(cur_inter);
-                            cmp_br_tmp_reg.push_back(i);
-                            break;
-                        }
-                    }
-                }
-                code += push_regs(cmp_br_tmp_reg);
-                accumulate_line_num += 1;
-                for(auto opr:need_push_val){
-                    code += IR2asm::space;
-                    code += "ldr ";
-                    code += IR2asm::Reg(reg_map[opr]->reg_num).get_code() +", "+
-                            stack_map[opr]->get_ofst_code(sp_extra_ofst);
-                    code += IR2asm::endl;
-                    accumulate_line_num += 1;
-                }
-                if(accumulate_line_num > 950){
-                    code += make_lit_pool();
-                    accumulate_line_num = 0;
-                }
-            }
+            code += new_code;
         }
         code += phi_union(bb, br_inst);
-        // code += instr_gen(br_inst);
         return code;
-        //TODO:PHI INST CHECK
     }
 
     void spilt_str(const std::string& s, std::vector<std::string>& sv, const char delim = ' ') {
@@ -1401,12 +1159,281 @@
         return;
     }
 
+    std::string CodeGen::single_data_move(IR2asm::Location* src_loc,
+                                 IR2asm::Location* target_loc,
+                                 IR2asm::Reg *reg_tmp,
+                                 std::string cmpop){
+        std::string code;
+        if(dynamic_cast<IR2asm::RegLoc *>(src_loc)){
+                    auto regloc = dynamic_cast<IR2asm::RegLoc *>(src_loc);
+                    if(regloc->is_constant()){
+                        if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+                            auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+                            code += IR2asm::space;
+                            code += "Ldr" + cmpop + " ";
+                            code += target_reg_loc->get_code();
+                            code += ", =";
+                            code += std::to_string(regloc->get_constant());
+                            code += IR2asm::endl;
+                        }
+                        else{
+                            code += IR2asm::space;
+                            code += "Ldr" + cmpop + " ";
+                            code += reg_tmp->get_code();
+                            code += ", =";
+                            code += std::to_string(regloc->get_constant());
+                            code += IR2asm::endl;
+                            code += IR2asm::safe_store(reg_tmp, target_loc, sp_extra_ofst, long_func, cmpop);
+                        }
+                    }
+                    else{
+                        if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+                            auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+                            code += IR2asm::space;
+                            code += "Mov" + cmpop + " ";
+                            code += target_reg_loc->get_code();
+                            code += ", ";
+                            code += regloc->get_code();
+                            code += IR2asm::endl;
+                        }
+                        else{
+                            code += IR2asm::safe_store(new IR2asm::Reg(regloc->get_reg_id()),
+                                                        target_loc, sp_extra_ofst, long_func, cmpop);
+                        }
+                    }
+                }
+                else{
+                    auto stackloc = dynamic_cast<IR2asm::Regbase *>(src_loc);
+                    if(dynamic_cast<IR2asm::RegLoc*>(target_loc)){
+                        auto target_reg_loc = dynamic_cast<IR2asm::RegLoc*>(target_loc);
+                        code += IR2asm::safe_load(new IR2asm::Reg(target_reg_loc->get_reg_id()),
+                                                    stackloc, sp_extra_ofst, long_func, cmpop);
+                    }
+                    else{
+                        code += IR2asm::safe_load(reg_tmp, stackloc, sp_extra_ofst, long_func, cmpop);
+                        code += IR2asm::safe_store(reg_tmp, target_loc, sp_extra_ofst, long_func, cmpop);
+                    }
+                }
+        return code;
+    }
+
+    std::string CodeGen::data_move(std::vector<IR2asm::Location*> &src,
+                                   std::vector<IR2asm::Location*> &dst,
+                                   std::string cmpop){
+        std::string code;
+        std::map<IR2asm::Location*, IR2asm::Location*> pred_locs;
+        std::map<IR2asm::Location*, std::set<IR2asm::Location*>> data_graph;
+        std::map<int, IR2asm::Location *> reg2loc;
+        std::queue<IR2asm::Location*> ready_queue;
+        std::set<IR2asm::Location*> loops;
+        std::set<IR2asm::Location*> loop_breaker;
+        bool need_temp = false;
+        bool need_restore_temp = true;
+        bool temp_forwarding = false;
+        int temp_reg = 12;
+        int size = src.size();
+        for(int i = 0; i < size; i++){
+            IR2asm::Location* srcloc = src[i];
+            IR2asm::Location* dstloc = dst[i];
+            if(srcloc == dstloc)continue;
+            if(dynamic_cast<IR2asm::Regbase*>(srcloc)
+                && dynamic_cast<IR2asm::Regbase*>(dstloc))need_temp = true;
+            if(dynamic_cast<IR2asm::RegLoc *>(srcloc) 
+                && dynamic_cast<IR2asm::RegLoc *>(srcloc)->is_constant()
+                && dynamic_cast<IR2asm::Regbase *>(dstloc))need_temp = true;
+
+            IR2asm::RegLoc* srcreg = dynamic_cast<IR2asm::RegLoc *>(srcloc);
+            IR2asm::RegLoc* dstreg = dynamic_cast<IR2asm::RegLoc *>(dstloc);            
+            if(srcreg && !srcreg->is_constant()){
+                if(reg2loc.find(srcreg->get_reg_id()) != reg2loc.end()){
+                    srcloc = reg2loc[srcreg->get_reg_id()];
+                }
+                else{
+                    reg2loc.insert({srcreg->get_reg_id(), srcloc});
+                }
+            }
+            if(dstreg && !dstreg->is_constant()){
+                if(dstreg->get_reg_id() == temp_reg)need_restore_temp = false;
+                if(reg2loc.find(dstreg->get_reg_id()) != reg2loc.end()){
+                    dstloc = reg2loc[dstreg->get_reg_id()];
+                }
+                else{
+                    reg2loc.insert({dstreg->get_reg_id(), dstloc});
+                }
+            }
+
+            pred_locs.insert({dstloc, srcloc});
+            if(data_graph.find(srcloc) != data_graph.end()){
+                data_graph.find(srcloc)->second.insert(dstloc);
+            }
+            else{
+                data_graph.insert({srcloc, {dstloc}});
+            }
+            if(data_graph.find(dstloc) == data_graph.end()){
+                data_graph.insert({dstloc, {}});
+            }
+
+            if(pred_locs.find(srcloc) != pred_locs.end()){
+                auto iter = pred_locs[srcloc];
+                bool find_circ = false;
+                
+                int time = 0;
+                while(pred_locs.find(iter) != pred_locs.end()){
+                    if(iter == srcloc){
+                        find_circ = true;
+                        break;
+                    }
+                    if(loops.find(iter) != loops.end()){
+                        break;
+                    }
+                    if(time > 2 * size + 1) exit(99);
+                    iter = pred_locs[iter];
+                    time++;
+                }
+
+                if(find_circ){
+                    need_temp = true;
+                    loops.insert(srcloc);
+                }
+            }
+        }
+
+        //TODO: smarter temp forwarding strategy: no temp needed on the path end at temp reg
+        if(reg2loc.find(temp_reg) != reg2loc.end()
+            && pred_locs.find(reg2loc[temp_reg]) != pred_locs.end()
+            && pred_locs.find(pred_locs[reg2loc[temp_reg]]) == pred_locs.end()){
+            temp_forwarding = true;
+        }
+
+        auto temp_reg_loc = new IR2asm::Regbase(IR2asm::sp, 0);
+        IR2asm::Location* temp_src = nullptr;
+        if(need_temp){
+            //TODO: not always meed store temp reg
+            accumulate_line_num+=1;
+            if(accumulate_line_num > literal_pool_threshold){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
+            }
+            code += IR2asm::store(new IR2asm::Reg(temp_reg), temp_reg_loc, cmpop);
+            IR2asm::Location* temp_reg_node = nullptr;
+            if(reg2loc.find(temp_reg) != reg2loc.end()){
+                temp_reg_node = reg2loc[temp_reg];
+            }
+            if(temp_reg_node){
+                data_graph.insert({temp_reg_loc, {}});
+                if(data_graph.find(temp_reg_node) != data_graph.end()){
+                    auto succ_list = data_graph[temp_reg_node];
+                    for(auto item: succ_list){
+                        data_graph[temp_reg_loc].insert(item);
+                    }
+                    data_graph[temp_reg_node].clear();
+                }
+                for(auto succ: data_graph[temp_reg_loc]){
+                    if(pred_locs.find(succ) != pred_locs.end()){
+                        pred_locs[succ] = temp_reg_loc;
+                    }
+                }
+
+                if(!temp_forwarding){//TODO: may break loop too
+                    need_restore_temp = true;
+                    if(pred_locs.find(temp_reg_node) != pred_locs.end()){
+                        if(data_graph.find(pred_locs[temp_reg_node]) != data_graph.end()){
+                            data_graph[pred_locs[temp_reg_node]].erase(temp_reg_node);
+                            data_graph[pred_locs[temp_reg_node]].insert(temp_reg_loc);
+                        }
+                        else{
+                            data_graph[pred_locs[temp_reg_node]].insert(temp_reg_loc);
+                        }
+                        pred_locs.insert({temp_reg_loc, pred_locs[temp_reg_node]});
+                        pred_locs.erase(temp_reg_node);
+                    }
+                }
+                else{
+                    if(pred_locs.find(temp_reg_node) != pred_locs.end()){
+                        temp_src = pred_locs[temp_reg_node];
+                        if(data_graph.find(temp_src) != data_graph.end()){
+                            data_graph[temp_src].erase(temp_reg_node);
+                        }
+                        pred_locs.erase(temp_reg_node);
+                    }
+                }
+            }
+        }
+
+        auto reg_tmp = new IR2asm::Reg(temp_reg);
+
+        int time = 0;
+        int edge_num = pred_locs.size();
+        while(!pred_locs.empty()){
+            time++;
+            if(time > edge_num + 1)exit(101);
+            bool changed = false;
+            std::set<IR2asm::Location*> delete_list;
+            for(auto map: pred_locs){
+                auto target_loc = map.first;
+                auto src_loc = map.second;
+                if(data_graph.find(target_loc) != data_graph.end() 
+                    && !data_graph[target_loc].empty())continue;
+
+                accumulate_line_num+=4;
+                if(accumulate_line_num > literal_pool_threshold){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
+                }
+                
+                code += single_data_move(src_loc, target_loc, reg_tmp, cmpop);
+
+                changed = true;
+                delete_list.insert(target_loc);
+                data_graph[src_loc].erase(target_loc);
+            }
+
+            for(auto item: delete_list){
+                pred_locs.erase(item);
+            }
+
+            if(!changed){
+                auto target_loc = pred_locs.begin()->first;
+                auto src_loc = pred_locs.begin()->second;
+                auto temp_loc = new IR2asm::RegLoc(temp_reg);
+                accumulate_line_num+=4;
+                if(accumulate_line_num > literal_pool_threshold){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
+                }
+                code += single_data_move(src_loc, temp_loc, reg_tmp, cmpop);
+                pred_locs[target_loc] = temp_loc;
+                data_graph.insert({temp_loc, {target_loc}});
+                if(data_graph.find(src_loc) != data_graph.end())data_graph[src_loc].erase(target_loc);
+            }
+        }
+
+        if(temp_forwarding && temp_src){
+            accumulate_line_num+=4;
+            if(accumulate_line_num > literal_pool_threshold){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
+            }
+            code += single_data_move(temp_src, new IR2asm::RegLoc(reg_tmp->get_id()), reg_tmp, cmpop);
+        }        
+
+        if(need_temp && need_restore_temp && !temp_forwarding){
+            accumulate_line_num+=3;
+            if(accumulate_line_num > literal_pool_threshold){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
+            }
+            code += IR2asm::safe_load(reg_tmp, temp_reg_loc, sp_extra_ofst, long_func, cmpop);
+        }
+
+        return code;
+    }
+
     std::string CodeGen::phi_union(BasicBlock* bb, Instruction* br_inst){
-        //TODO:right?
         if(dynamic_cast<ReturnInst *>(br_inst)){
             std::string code;
             accumulate_line_num += 1;
-            if(accumulate_line_num > 950){
+            if(accumulate_line_num > literal_pool_threshold){
                 code += make_lit_pool();
                 accumulate_line_num = 0;
             }
@@ -1431,12 +1458,8 @@
         std::vector<std::string> cmpbr_inst;
         std::string cmpbr_code = instr_gen(br_inst);
         std::string pop_code;
-        if(!cmp_br_tmp_reg.empty()){
-            pop_code += pop_regs(cmp_br_tmp_reg);
-            for(auto inter:cmp_br_tmp_inter){
-                inter->reg_num = -1;
-            }
-        }
+        pop_code += pop_tmp_instr_regs(br_inst);
+        pop_code += tmp_reg_restore(br_inst);
         spilt_str(cmpbr_code, cmpbr_inst, IR2asm::endl[0]);
         std::vector<IR2asm::Location*> phi_target;
         std::vector<IR2asm::Location*> phi_src;
@@ -1455,7 +1478,12 @@
             succ_bb = dynamic_cast<BasicBlock*>(br_inst->get_operand(0));
             succ_br += cmpbr_inst[0] + IR2asm::endl;
         }
-
+        std::string lit_pool;
+        accumulate_line_num += 1 + count(pop_code.begin(), pop_code.end(), IR2asm::endl[0]);//for possible cmp and pop code
+        if(accumulate_line_num > literal_pool_threshold){
+            lit_pool += make_lit_pool();
+            accumulate_line_num = 0;
+        }
         for(auto sux:bb->get_succ_basic_blocks()){
             std::string cmpop;
             if(sux == succ_bb){
@@ -1516,14 +1544,6 @@
                                         src_stack = true;
                                     }
                                 }
-//                                sux_bb_phi.insert(lst_val);
-//                                if(opr2phi.find(lst_val)==opr2phi.end()){
-//                                    opr2phi[lst_val] = std::set<Value*>();
-//                                    opr2phi[lst_val].insert(inst);
-//                                }
-//                                else{
-//                                    opr2phi[lst_val].insert(inst);
-//                                }
                             }
                         }else{
                             lst_val = opr;
@@ -1536,460 +1556,12 @@
             if(phi_src.empty()){
                 continue;
             }
-            bool is_intersect = false;
-            for(auto loc:phi_src){
-                if(is_intersect){
-                    break;
-                }
-                auto stack_ptr = dynamic_cast<IR2asm::Regbase*>(loc);
-                auto reg_ptr = dynamic_cast<IR2asm::RegLoc*>(loc);
-                if(stack_ptr){
-                    for(auto tgt_ptr:phi_target){
-                        auto phi_stack_ptr = dynamic_cast<IR2asm::Regbase*>(tgt_ptr);
-                        if(!phi_stack_ptr){
-                            continue;
-                        }else{
-                            if(phi_stack_ptr==stack_ptr){
-                                is_intersect = true;
-                                break;
-                            }
-                        }
-                    }
-                }else if(!reg_ptr->is_constant()){
-                    for(auto tgt_ptr:phi_target){
-                        auto phi_reg_ptr = dynamic_cast<IR2asm::RegLoc*>(tgt_ptr);
-                        if(!phi_reg_ptr){
-                            continue;
-                        }else{
-                            if(reg_ptr->get_reg_id()==phi_reg_ptr->get_reg_id()){
-                                is_intersect = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if(!is_intersect&&target_reg&&!target_stack){
-                int size = phi_src.size();
-                for(int i = 0;i<size;i++){
-                    IR2asm::Location* tar = phi_target[i];
-                    auto tar_reg = dynamic_cast<IR2asm::RegLoc*>(tar);
-                    IR2asm::Location* src = phi_src[i];
-                    if(dynamic_cast<IR2asm::Regbase*>(src)){
-                         auto src_base = dynamic_cast<IR2asm::Regbase*>(src);
-                        *code += IR2asm::safe_load(new IR2asm::Reg(tar_reg->get_reg_id()),src_base,sp_extra_ofst,long_func,cmpop);
-                        // *code += IR2asm::space;
-                        // *code += "LDR";
-                        // *code += cmpop;
-                        // *code += " ";
-                        // *code += tar->get_code();
-                        // *code += ", ";
-                       
-                        // *code += src_base->get_ofst_code(sp_extra_ofst);
-                        // *code += IR2asm::endl;
-                    }else{
-                        auto reg_loc = dynamic_cast<IR2asm::RegLoc*>(src);
-                        if(!reg_loc->is_constant()){
-                            *code += IR2asm::space;
-                            *code += "MOV";
-                            *code += cmpop;
-                            *code += " ";
-                            *code += tar->get_code();
-                            *code += ", ";
-                            *code += src->get_code();
-                            *code += IR2asm::endl;
-                        }else{
-                            *code += IR2asm::space;
-                            *code += "LDR";
-                            *code += cmpop;
-                            *code += " ";
-                            *code += tar->get_code();
-                            *code += " ,=";
-                            *code += std::to_string(reg_loc->get_constant());
-                            *code += IR2asm::endl;
-                        }
-                    }
-                }
-            }
-            else if(!src_const&&!src_stack&&!is_intersect){
-                int size = phi_src.size();
-                for(int i = 0;i<size;i++){
-                    IR2asm::Location* tar = phi_target[i];
-                    IR2asm::Location* src = phi_src[i];
-                    if(dynamic_cast<IR2asm::Regbase*>(tar)){
-                        *code += IR2asm::safe_store(new IR2asm::Reg(dynamic_cast<IR2asm::RegLoc*>(src)->get_reg_id()),
-                                                    tar,
-                                                    sp_extra_ofst,
-                                                    long_func,
-                                                    cmpop);
-                        // *code += IR2asm::space;
-                        // *code += "STR";
-                        // *code += cmpop;
-                        // *code += " ";
-                        // *code += src->get_code();
-                        // *code += ", ";
-                        // auto tar_base = dynamic_cast<IR2asm::Regbase*>(tar);
-                        // *code += tar_base->get_ofst_code(sp_extra_ofst);
-                        // *code += IR2asm::endl;
-                    }else{
-                        *code += IR2asm::space;
-                        *code += "MOV";
-                        *code += cmpop;
-                        *code += " ";
-                        *code += tar->get_code();
-                        *code += ", ";
-                        *code += src->get_code();
-                        *code += IR2asm::endl;
-                    }
-                }
-            }
-            else{
-                auto unused_reg = bb->get_parent()->get_unused_reg_num();
-                int tmp_reg_id;
-                bool need_to_save = true;
-                int tmp_tar_index = 0;
-                if(!unused_reg.empty()){
-                    tmp_reg_id = *unused_reg.begin();
-                }
-                else{
-                    tmp_reg_id = 12;
-                }
-                std::map<int,int> reg_offset = {};
-                std::map<IR2asm::Regbase*,int> stack_offset = {};
-                int cur_offset = -4;
-                reg_offset[tmp_reg_id] = cur_offset;
-                *code += IR2asm::safe_store(new IR2asm::Reg(tmp_reg_id),
-                                            new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),cur_offset),
-                                            0,
-                                            long_func,
-                                            cmpop);
-                // *code += IR2asm::space;
-                // *code += "STR";
-                // *code += cmpop;
-                // *code += " ";
-                // *code += IR2asm::Reg(tmp_reg_id).get_code();
-                // *code += ", ";
-                // *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
-                // *code += IR2asm::endl;
-                cur_offset -= 4;
-                int size = phi_src.size();
-                for(int i = 0;i < size;i++){
-                    auto src_ptr = phi_src[i];
-                    auto reg_src_ptr = dynamic_cast<IR2asm::RegLoc*>(src_ptr);
-                    auto stack_src_ptr = dynamic_cast<IR2asm::Regbase*>(src_ptr);
-                    if(reg_src_ptr){
-                        if(!reg_src_ptr->is_constant()){
-                            int reg_id = reg_src_ptr->get_reg_id();
-                            if(reg_offset.find(reg_id)==reg_offset.end()){
-                                reg_offset[reg_id] = cur_offset;
-                                *code += IR2asm::safe_store(new IR2asm::Reg(reg_id),
-                                                            new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),cur_offset),
-                                                            0,
-                                                            long_func,
-                                                            cmpop);
-                                // *code += IR2asm::space;
-                                // *code += "STR";
-                                // *code += cmpop;
-                                // *code += " ";
-                                // *code += IR2asm::Reg(reg_id).get_code();
-                                // *code += ", ";
-                                // *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
-                                // *code += IR2asm::endl;
-                                cur_offset -= 4;
-                            }
-                        }
-                    }
-                    else{
-                        if(stack_offset.find(stack_src_ptr)==stack_offset.end()){
-                            stack_offset[stack_src_ptr] = cur_offset;
-                            *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                       stack_src_ptr,
-                                                       sp_extra_ofst,
-                                                       long_func,
-                                                       cmpop);
-                            // *code += IR2asm::space;
-                            // *code += "LDR";
-                            // *code += cmpop;
-                            // *code += " ";
-                            // *code += IR2asm::Reg(tmp_reg_id).get_code();
-                            // *code += ", ";
-                            // *code += stack_src_ptr->get_ofst_code(sp_extra_ofst);
-                            // *code += IR2asm::endl;
-                            *code += IR2asm::safe_store(new IR2asm::Reg(tmp_reg_id),
-                                                        new IR2asm::Regbase(IR2asm::Reg(13),cur_offset),
-                                                        0,
-                                                        long_func,
-                                                        cmpop);
-                            // *code += IR2asm::space;
-                            // *code += "STR";
-                            // *code += cmpop;
-                            // *code += " ";
-                            // *code += IR2asm::Reg(tmp_reg_id).get_code();
-                            // *code += ", ";
-                            // *code += IR2asm::Regbase(IR2asm::Reg(13),cur_offset).get_ofst_code();
-                            // *code += IR2asm::endl;
-                            cur_offset -= 4;
-                        }
-                    }
-                }
-                for(int i = 0;i < size;i++){
-                    auto src_ptr = phi_src[i];
-                    auto tar_ptr = phi_target[i];
-                    auto reg_src_ptr = dynamic_cast<IR2asm::RegLoc*>(src_ptr);
-                    auto stack_src_ptr = dynamic_cast<IR2asm::Regbase*>(src_ptr);
-                    auto reg_tar_ptr = dynamic_cast<IR2asm::RegLoc*>(tar_ptr);
-                    auto stack_tar_ptr = dynamic_cast<IR2asm::Regbase*>(tar_ptr);
-                    if(reg_tar_ptr){
-                        if(reg_tar_ptr->get_reg_id()==tmp_reg_id){
-                            need_to_save = false;
-                            tmp_tar_index = i;
-                            continue;
-                        }
-                        if(reg_src_ptr){
-                            if(reg_src_ptr->is_constant()){
-                                *code += IR2asm::space;
-                                *code += "LDR";
-                                *code += cmpop;
-                                *code += " ";
-                                *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
-                                *code += " ,=";
-                                *code += std::to_string(reg_src_ptr->get_constant());
-                                *code += IR2asm::endl;
-                            }
-                            else{
-                                *code += IR2asm::safe_load(new IR2asm::Reg(reg_tar_ptr->get_reg_id()),
-                                                           new IR2asm::Regbase(IR2asm::Reg(13),
-                                                                reg_offset[reg_src_ptr->get_reg_id()]),
-                                                            0,
-                                                            long_func,
-                                                            cmpop);
-                                // *code += IR2asm::space;
-                                // *code += "LDR";
-                                // *code += cmpop;
-                                // *code += " ";
-                                // *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
-                                // *code += ", ";
-                                // *code += IR2asm::Regbase(IR2asm::Reg(13),
-                                //                          reg_offset[reg_src_ptr->get_reg_id()]).get_ofst_code();
-                                // *code += IR2asm::endl;
-                            }
-                        }
-                        else{
-                            *code += IR2asm::safe_load(new IR2asm::Reg(reg_tar_ptr->get_reg_id()),
-                                                       new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),
-                                                            stack_offset[stack_src_ptr]),
-                                                       0,
-                                                       long_func,
-                                                       cmpop);
-                            // *code += IR2asm::space;
-                            // *code += "LDR";
-                            // *code += cmpop;
-                            // *code += " ";
-                            // *code += IR2asm::Reg(reg_tar_ptr->get_reg_id()).get_code();
-                            // *code += ", ";
-                            // *code += IR2asm::Regbase(IR2asm::Reg(13),
-                            //                          stack_offset[stack_src_ptr]).get_ofst_code();
-                            // *code += IR2asm::endl;
-                        }
-                    }else{
-                        if(reg_src_ptr){
-                            if(reg_src_ptr->is_constant()){
-                                *code += IR2asm::space;
-                                *code += "LDR";
-                                *code += cmpop;
-                                *code += " ";
-                                *code += IR2asm::Reg(tmp_reg_id).get_code();
-                                *code += " ,=";
-                                *code += std::to_string(reg_src_ptr->get_constant());
-                                *code += IR2asm::endl;
-
-                            }
-                            else{
-                                *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                           new IR2asm::Regbase(IR2asm::Reg(IR2asm::sp),
-                                                                reg_offset[reg_src_ptr->get_reg_id()]),
-                                                           0,
-                                                           long_func,
-                                                           cmpop);
-                                // *code += IR2asm::space;
-                                // *code += "LDR";
-                                // *code += cmpop;
-                                // *code += " ";
-                                // *code += IR2asm::Reg(tmp_reg_id).get_code();
-                                // *code += ", ";
-                                // *code += IR2asm::Regbase(IR2asm::Reg(13),
-                                //                          reg_offset[reg_src_ptr->get_reg_id()]).get_ofst_code();
-                                // *code += IR2asm::endl;
-                            }
-                        }else{
-                            *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                       new IR2asm::Regbase(IR2asm::Reg(13),
-                                                                stack_offset[stack_src_ptr]),
-                                                       0,
-                                                       long_func,
-                                                       cmpop);
-                            // *code += IR2asm::space;
-                            // *code += "LDR";
-                            // *code += cmpop;
-                            // *code += " ";
-                            // *code += IR2asm::Reg(tmp_reg_id).get_code();
-                            // *code += ", ";
-                            // *code += IR2asm::Regbase(IR2asm::Reg(13),
-                            //                          stack_offset[stack_src_ptr]).get_ofst_code();
-                            // *code += IR2asm::endl;
-                        }
-                        *code += IR2asm::safe_store(new IR2asm::Reg(tmp_reg_id),
-                                                   stack_tar_ptr,
-                                                   sp_extra_ofst,
-                                                   long_func,
-                                                   cmpop);
-                        // *code += IR2asm::space;
-                        // *code += "STR";
-                        // *code += cmpop;
-                        // *code += " ";
-                        // *code += IR2asm::Reg(tmp_reg_id).get_code();
-                        // *code += ", ";
-                        // *code += stack_tar_ptr->get_ofst_code(sp_extra_ofst);
-                        // *code += IR2asm::endl;
-                    }
-                }
-                if(need_to_save){
-                    *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                               new IR2asm::Regbase(IR2asm::Reg(13),reg_offset[tmp_reg_id]),
-                                               0,
-                                               long_func,
-                                               cmpop);
-                    // *code += IR2asm::space;
-                    // *code += "LDR";
-                    // *code += cmpop;
-                    // *code += " ";
-                    // *code += IR2asm::Reg(tmp_reg_id).get_code();
-                    // *code += ", ";
-                    // *code += IR2asm::Regbase(IR2asm::Reg(13),reg_offset[tmp_reg_id]).get_ofst_code();
-                    // *code += IR2asm::endl;
-                }else{
-                    auto src_loc = phi_src[tmp_tar_index];
-                    auto src_reg = dynamic_cast<IR2asm::RegLoc*>(src_loc);
-                    auto src_stack = dynamic_cast<IR2asm::Regbase*>(src_loc);
-                    if(src_reg){
-                        if(src_reg->is_constant()){
-                            *code += IR2asm::space;
-                            *code += "ldr";
-                            *code += cmpop;
-                            *code += " ";
-                            *code += IR2asm::Reg(tmp_reg_id).get_code();
-                            *code += " ,=";
-                            *code += std::to_string(src_reg->get_constant());
-                            *code += IR2asm::endl;
-                        }
-                        else{
-                            *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                        new IR2asm::Regbase(IR2asm::Reg(13),reg_offset[src_reg->get_reg_id()]),
-                                                        0,
-                                                        long_func,
-                                                        cmpop);
-                        }
-                    }
-                    else{
-                        *code += IR2asm::safe_load(new IR2asm::Reg(tmp_reg_id),
-                                                   new IR2asm::Regbase(IR2asm::Reg(13),stack_offset[src_stack]),
-                                                   0,
-                                                   long_func,
-                                                   cmpop);
-                    }
-                }
-            }
-//            for(auto opr:sux_bb_phi){
-//                if(dynamic_cast<ConstantInt*>(opr)){
-//                    auto const_opr = dynamic_cast<ConstantInt*>(opr);
-//                    int const_val = const_opr->get_value();
-//                    for(auto target:opr2phi[opr]){
-//                        auto tar_inter = reg_map[target];
-//                        if(tar_inter->reg_num>=0){
-//                            *code += IR2asm::space;
-//                            *code += "LDR";
-//                            *code += cmpop;
-//                            *code += " ";
-//                            *code += IR2asm::Reg(tar_inter->reg_num).get_code();
-//                            *code += ",=";
-//                            *code += std::to_string(const_val);
-//                            *code += IR2asm::endl;
-//                        }else{
-//    //                        code += IR2asm::space+"push {r0}"+IR2asm::endl;
-//                            std::vector<int> save_reg = {0};
-//                            *code += push_regs(save_reg, cmpop);
-//                            *code += IR2asm::space;
-//                            *code += "LDR" + cmpop + " r0,=";
-//                            *code += std::to_string(const_val);
-//                            *code += IR2asm::endl;
-//                            *code += IR2asm::space;
-//                            *code += "str" + cmpop + " r0";
-//                            *code += ", ";
-//                            *code += stack_map[target]->get_ofst_code(sp_extra_ofst);
-//                            *code += IR2asm::endl;
-//    //                        code += IR2asm::space+"pop {r0}"+IR2asm::endl;
-//                            *code += pop_regs(save_reg, cmpop);
-//                        }
-//                    }
-//                }else{
-//                    if(reg_map[opr]->reg_num>=0){
-//                        for(auto target:opr2phi[opr]){
-//                            auto tar_inter = reg_map[target];
-//                            if(tar_inter->reg_num>=0){
-//                                if(tar_inter->reg_num!=reg_map[opr]->reg_num){
-//                                    *code += IR2asm::space;
-//                                    *code += "mov" + cmpop + " ";
-//                                    *code += IR2asm::Reg(tar_inter->reg_num).get_code();
-//                                    *code += ", ";
-//                                    *code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
-//                                    *code += IR2asm::endl;
-//                                }
-//                            }else{
-//                                *code += IR2asm::space;
-//                                *code += "str" + cmpop + " ";
-//                                *code += IR2asm::Reg(reg_map[opr]->reg_num).get_code();
-//                                *code += ", ";
-//                                *code += stack_map[target]->get_ofst_code(sp_extra_ofst);
-//                                *code += IR2asm::endl;
-//                            }
-//                        }
-//                    }else{
-//                        for(auto target:opr2phi[opr]){
-//                            auto tar_inter = reg_map[target];
-//                            if(tar_inter->reg_num>=0){
-//                                *code += IR2asm::space;
-//                                *code += "ldr" + cmpop + " ";
-//                                *code += IR2asm::Reg(tar_inter->reg_num).get_code();
-//                                *code += ", ";
-//                                *code += stack_map[opr]->get_ofst_code(sp_extra_ofst);
-//                                *code += IR2asm::endl;
-//                            }else{
-//    //                            code += IR2asm::space;
-//    //                            code += "push {lr}";
-//    //                            code += IR2asm::endl;
-//                                std::vector<int> save_reg = {0};
-//                                *code += push_regs(save_reg, cmpop);
-//                                *code += IR2asm::space;
-//                                *code += "ldr" + cmpop + " r0, ";
-//                                *code += stack_map[opr]->get_ofst_code(sp_extra_ofst);
-//                                *code += IR2asm::endl;
-//                                *code += IR2asm::space;
-//                                *code += "str" + cmpop + " lr, ";
-//                                *code += stack_map[target]->get_ofst_code(sp_extra_ofst);
-//                                *code += IR2asm::endl;
-//    //                            code += IR2asm::space;
-//    //                            code += "pop {lr}";
-//    //                            code += IR2asm::endl;
-//                                *code += pop_regs(save_reg, cmpop);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
+            *code += data_move(phi_src, phi_target, cmpop);
         }
-        std::string ret_code = cmp + pop_code + succ_code + succ_br + fail_code + fail_br;
-        accumulate_line_num += std::count(ret_code.begin(), ret_code.end(), IR2asm::endl[0]);
-        if(accumulate_line_num > 950){
+        accumulate_line_num += std::count(succ_br.begin(), succ_br.end(), IR2asm::endl[0]);
+        accumulate_line_num += std::count(fail_br.begin(), fail_br.end(), IR2asm::endl[0]);
+        std::string ret_code = cmp + pop_code + lit_pool + succ_code + succ_br + fail_code + fail_br;
+        if(accumulate_line_num > literal_pool_threshold){
             if(dynamic_cast<BranchInst *>(bb->get_terminator()) && bb->get_terminator()->get_num_operand() == 1){
                 ret_code += make_lit_pool(true);
             }
@@ -2543,21 +2115,103 @@
                     }
                 }
                 break;
-            case Instruction::muladd:
+            case Instruction::muladd: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                code += IR2asm::muladd(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2), get_asm_reg(op3));
+            }
                 break;
-            case Instruction::mulsub:
+            case Instruction::mulsub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                code += IR2asm::mulsub(get_asm_reg(inst), get_asm_reg(op1), get_asm_reg(op2), get_asm_reg(op3));
+            }
                 break;
-            case Instruction::asradd:
+            case Instruction::asradd: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::ASR, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::ASR, *get_asm_reg(op3));
+                }
+                code += IR2asm::add(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::lsladd:
+            case Instruction::lsladd: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSL, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSL, *get_asm_reg(op3));
+                }
+                code += IR2asm::add(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::lsradd:
+            case Instruction::lsradd: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSR, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSR, *get_asm_reg(op3));
+                }
+                code += IR2asm::add(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::asrsub:
+            case Instruction::asrsub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::ASR, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::ASR, *get_asm_reg(op3));
+                }
+                code += IR2asm::sub(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::lslsub:
+            case Instruction::lslsub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSL, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSL, *get_asm_reg(op3));
+                }
+                code += IR2asm::sub(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
-            case Instruction::lsrsub:
+            case Instruction::lsrsub: {
+                auto op1 = inst->get_operand(0);
+                auto op2 = inst->get_operand(1);
+                auto op3 = inst->get_operand(2);
+                auto const_op3 = dynamic_cast<ConstantInt*>(op3);
+                IR2asm::Operand2 *operand2;
+                if (const_op3) {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSR, get_asm_const(const_op3)->get_val());
+                } else {
+                    operand2 = new IR2asm::Operand2(*get_asm_reg(op2), IR2asm::LSR, *get_asm_reg(op3));
+                }
+                code += IR2asm::sub(get_asm_reg(inst), get_asm_reg(op1), operand2);
+            }
                 break;
             case Instruction::smul_lo:
                 break;

@@ -4,6 +4,7 @@
 
 #include "RegAlloc.h"
 #include <iostream>
+#include <cmath>
 #include <set>
 
 void Interval::add_range(int from, int to) {
@@ -99,19 +100,25 @@ void RegAllocDriver::compute_reg_alloc() {
         if(func->get_basic_blocks().empty()){
             continue;
         }else{
+#ifdef DEBUG
             std::cerr << "function " << func->get_name() << std::endl;
+#endif
             auto allocator = new RegAlloc(func);
             allocator->execute();
             reg_alloc[func] = allocator->get_reg_alloc();
+            bb_order[func] = allocator->get_block_order();
         }
     }
+#ifdef DEBUG
     std::cerr << "finish reg alloc\n";
+#endif
 }
 
 void RegAlloc::execute() {
     init();
     compute_block_order();
     number_operations();
+    compute_bonus_and_cost();
     build_intervals();
     //union_phi_val();
     walk_intervals();
@@ -163,6 +170,74 @@ void RegAlloc::get_dfs_order(BasicBlock *bb, std::set<BasicBlock *> &visited) {
         auto is_visited = visited.find(child);
         if(is_visited == visited.end()){
             get_dfs_order(child,visited);
+        }
+    }
+}
+
+void RegAlloc::compute_bonus_and_cost() {
+    int callee_arg_cnt = 0;
+    for(auto arg:func->get_args()){
+        if(callee_arg_cnt < 4){
+            callee_arg_bonus[arg][callee_arg_cnt] += mov_cost;
+            spill_cost[arg] += store_cost;
+        }//TODO:FOR ARG > 4?
+        callee_arg_cnt ++;
+    }
+    for(auto bb:block_order){
+        auto loop_depth = bb->get_loop_depth();
+        double scale_factor = pow(loop_scale, loop_depth);
+        for(auto inst:bb->get_instructions()){
+            auto ops = inst->get_operands();
+            if(inst->is_phi()){
+                for(auto op:ops){
+                    if(dynamic_cast<BasicBlock*>(op)||dynamic_cast<Constant*>(op)) continue;
+                    phi_bonus[inst][op] += mov_cost * scale_factor;
+                    phi_bonus[op][inst] += mov_cost * scale_factor;
+                }
+            }
+            if(inst->is_call()){
+                int caller_arg_cnt = -1;
+                for(auto op:ops){
+                    if(caller_arg_cnt >= 0){
+                        if(caller_arg_cnt < 4){
+                            caller_arg_bonus[op][caller_arg_cnt] += mov_cost * scale_factor;
+                        }
+                        caller_arg_cnt ++;
+                        continue;
+                    }
+                    else{
+                        caller_arg_cnt ++;
+                        continue;
+                    }
+                }
+                if(!inst->is_void()){
+                    call_bonus[inst] += mov_cost * scale_factor;
+                }
+            }
+            if(inst->is_ret()){
+                if(inst->get_num_operand()){
+                    ret_bonus[inst->get_operand(0)] += mov_cost;//TODO:whether to add scale_factor?
+                }
+            }
+            if(!inst->is_alloca()&&!inst->is_gep()){
+                for(auto op:ops){
+                    if(dynamic_cast<BasicBlock*>(op)||dynamic_cast<Constant*>(op)||dynamic_cast<GlobalVariable*>(op))
+                        continue;
+                    spill_cost[op] += load_cost * scale_factor;
+                }
+            }
+            if(inst->is_gep()){
+                for(auto op:ops){
+                    if(dynamic_cast<GlobalVariable*>(op)||dynamic_cast<AllocaInst*>(op)||dynamic_cast<Constant*>(op))
+                        continue;
+                    spill_cost[op] += load_cost * scale_factor;
+                }
+            }
+            if(!inst->is_void()){
+                if(!inst->is_alloca()){
+                    spill_cost[inst] += store_cost * scale_factor;
+                }
+            }
         }
     }
 }
@@ -253,16 +328,21 @@ void RegAlloc::build_intervals() {//TODO:CHECK EMPTY BLOCK
         }
     }
     for(auto pair:val2Inter){
+#ifdef DEBUG
         std::cerr << "op:" <<pair.first->get_name() << std::endl;
+#endif
         add_interval(pair.second);
+#ifdef DEBUG
         for(auto range:pair.second->range_list){
             std::cerr << "from: " << range->from << " to: " << range->to << std::endl;
         }
+#endif
     }
 }
 
 void RegAlloc::walk_intervals() {
-    active = {};
+    active.clear();
+    reg2ActInter.clear();
     //inactive = {};
     //handled = {};
     for(auto current_it=interval_list.begin();current_it!=interval_list.end();current_it++){
@@ -280,130 +360,201 @@ void RegAlloc::walk_intervals() {
                 delete_list.push_back(it);
             }
         }
+
         for(auto inter:delete_list){
             active.erase(inter);
+            reg2ActInter[inter->reg_num].erase(inter);
         }
-//        for(auto it = inactive.begin();it != inactive.end();it++){
-//            if((*((*it)->range_list.rbegin()))->to < position){
-//                handled.insert(*it);
-//                it = inactive.erase(it);
-//                it--;
-//            }else if((*it)->covers(position)){
-//                active.insert(*it);
-//                it = inactive.erase(it);
-//                it--;
-//            }
-//        }
 
-        if(try_alloc_free_reg()){//for debug
-            std::cerr << "alloc reg " << current->reg_num << " for val "<<current->val->get_name()<<std::endl;
-        }else{
-            std::cerr << "spill to stack for val "<<current->val->get_name()<<std::endl;
-        }
+        try_alloc_free_reg();
     }
 }
 
-bool RegAlloc::try_alloc_free_reg() {//TODO:FIX BUG:INTERVAL WITH HOLES
+bool RegAlloc::try_alloc_free_reg() {//TODO:spill by cost eval
     if(!remained_all_reg_id.empty()){
+        double bonus = -1;
         int assigned_id = *remained_all_reg_id.begin();
+        for(auto new_reg_id:remained_all_reg_id){
+            double new_bonus = 0;
+            for(auto pair:phi_bonus[current->val]){
+                auto phi_val = pair.first;
+                if(!val2Inter.count(phi_val))continue;
+                if(!val2Inter[phi_val]->intersects(current)){//TODO:CHECK must be true?;
+                    if(val2Inter[phi_val]->reg_num == new_reg_id){
+                        new_bonus += pair.second;
+                    }
+                }
+            }
+            new_bonus += caller_arg_bonus[current->val][new_reg_id];
+            new_bonus += callee_arg_bonus[current->val][new_reg_id];
+            if(new_reg_id == 0){
+                new_bonus += ret_bonus[current->val];
+                new_bonus += call_bonus[current->val];
+            }
+            if(new_bonus > bonus){
+                bonus = new_bonus;
+                assigned_id = new_reg_id;
+            }
+        }
         remained_all_reg_id.erase(assigned_id);
         current->reg_num = assigned_id;
         unused_reg_id.erase(assigned_id);
         active.insert(current);
         reg2ActInter[assigned_id].insert(current);
+#ifdef DEBUG
+        std::cerr << "alloc reg " << current->reg_num << " for val " << current->val->get_name() << std::endl;
+#endif
         return true;
     }
     else{
-        for(auto& pair:reg2ActInter){
+        std::set<int, cmp_reg> spare_reg_id = {};
+        for(const auto& pair:reg2ActInter){
             bool insert_in_hole = true;
-            int cur_reg_id = pair.first;
             for(auto inter:pair.second){
-                insert_in_hole = insert_in_hole & !inter->intersects(current);
+                insert_in_hole = insert_in_hole && (!inter->intersects(current));
             }
             if(insert_in_hole){
-                current->reg_num = cur_reg_id;
-                unused_reg_id.erase(cur_reg_id);
-                active.insert(current);
-                pair.second.insert(current);//TODO:CHECK STL
-                return true;
+                spare_reg_id.insert(pair.first);
             }
         }
-        auto spill_val = current;
-        int max_expire_pos = (*(current->range_list.rbegin()))->to;
-        for(auto it:active){
-            int cur_expire_pos = (*(it->range_list.rbegin()))->to;
-            if(cur_expire_pos > max_expire_pos){
-                max_expire_pos = cur_expire_pos;
-                spill_val = it;
+        if(!spare_reg_id.empty()){
+            int assigned_id = *spare_reg_id.begin();
+            double bonus = -1;
+            for(auto new_reg_id:spare_reg_id){
+                double new_bonus = 0;
+                for(auto pair:phi_bonus[current->val]){
+                    auto phi_val = pair.first;
+                    if(!val2Inter.count(phi_val))continue;
+                    if(!val2Inter[phi_val]->intersects(current)){
+                        if(val2Inter[phi_val]->reg_num == new_reg_id){
+                            new_bonus += pair.second;
+                        }
+                    }
+                }
+                new_bonus += caller_arg_bonus[current->val][new_reg_id];
+                new_bonus += callee_arg_bonus[current->val][new_reg_id];
+                if(new_reg_id == 0){
+                    new_bonus += ret_bonus[current->val];
+                    new_bonus += call_bonus[current->val];
+                }
+                if(new_bonus > bonus){
+                    bonus = new_bonus;
+                    assigned_id = new_reg_id;
+                }
             }
-//            if(!it->intersects(current)){
-//                current->reg_num = it->reg_num;
-//                unused_reg_id.erase(it->reg_num);
-//                active.insert(current);
-//                reg2ActInter[it->reg_num].insert(current);
-//                return true;
-//            }
+            current->reg_num = assigned_id;
+            unused_reg_id.erase(assigned_id);
+            active.insert(current);
+            reg2ActInter[assigned_id].insert(current);
+#ifdef DEBUG
+            std::cerr << "alloc reg " << current->reg_num << " for val " << current->val->get_name() << std::endl;
+#endif
+            return true;
+        }
+        auto spill_val = current;
+        auto min_expire_val = spill_cost[current->val];
+        int spilled_reg_id = -1;
+        for(const auto& pair:reg2ActInter){
+            double cur_expire_val = 0.0;
+            for(auto inter:pair.second){
+                if(inter->intersects(current)){
+                    cur_expire_val += spill_cost[inter->val];
+                }
+            }
+            if(cur_expire_val < min_expire_val){
+                spilled_reg_id = pair.first;
+                min_expire_val = cur_expire_val;
+                spill_val = nullptr;
+            }
         }
         if(spill_val==current){
             current->reg_num = -1;
             return false;
         }else{
-            current->reg_num = spill_val->reg_num;
-            spill_val->reg_num = -1;
-            unused_reg_id.erase(current->reg_num);
-            active.erase(spill_val);
-            for(auto val:reg2ActInter[current->reg_num]){
-                active.erase(val);
-                val->reg_num = -1;
-                std::cerr << "spill "<< val->val->get_name() <<" to stack" << std::endl;
+            if(spilled_reg_id < 0){
+                std::cerr << "spilled reg id is -1,something was wrong while register allocation" << std::endl;
+                exit(16);
             }
-            reg2ActInter[current->reg_num].clear();
-            reg2ActInter[current->reg_num].insert(current);
+            std::set<Interval *> to_spill_set;
+            current->reg_num = spilled_reg_id;
+            unused_reg_id.erase(spilled_reg_id);
+            for(auto inter:reg2ActInter.at(spilled_reg_id)){
+                if(inter->intersects(current)){
+#ifdef DEBUG
+                    std::cerr << "spill "<< inter->val->get_name() <<" to stack" << std::endl;
+#endif
+                    to_spill_set.insert(inter);
+                }
+            }
+            for(auto spill_inter:to_spill_set){
+                spill_inter->reg_num = -1;
+                active.erase(spill_inter);
+                reg2ActInter.at(spilled_reg_id).erase(spill_inter);
+            }
+            reg2ActInter.at(spilled_reg_id).insert(current);
             active.insert(current);
+#ifdef DEBUG
+            std::cerr << "alloc reg " << current->reg_num << " for val " << current->val->get_name() << std::endl;
+#endif
             return true;
         }
     }
 }
 
 void RegAlloc::add_reg_to_pool(Interval* inter) {//TODO:FIX BUG:INTERVAL WITH HOLES
-//    if(general_reg_id.find(reg_id)!=general_reg_id.end()){
-//        remained_general_reg_id.push(reg_id);
-//    }else if(func_reg_id.find(reg_id)!=func_reg_id.end()){
-//        remained_func_reg_id.push(reg_id);
-//    }
     int reg_id = inter->reg_num;
     if(reg_id<0||reg_id>12){
         return;
     }
     if(reg2ActInter[reg_id].size() <= 1){
+#ifdef DEBUG
         std::cerr << "add "<<reg_id <<" to pool" << std::endl;
+#endif
         remained_all_reg_id.insert(reg_id);
     }
     reg2ActInter[reg_id].erase(inter);
 }
 
 void RegAlloc::union_phi_val() {
-    auto vreg_sets = func->get_vreg_set();
-    for(const auto& set:vreg_sets){
-        Value* final_vreg = nullptr;
-        for(auto vreg:set){
-            if(val2Inter.find(vreg) == val2Inter.end())continue;
-            if(final_vreg == nullptr){
-                final_vreg = vreg;
-            }else{
-                auto vreg_ptr = val2Inter[vreg];
-                auto final_ptr = val2Inter[final_vreg];
-                interval_list.erase(vreg_ptr);
-                interval_list.erase(final_ptr);
-                std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
-                final_ptr->union_interval(vreg_ptr);
-                std::cerr << "after union:\n";
-                for(auto range:final_ptr->range_list){
-                    std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
+    bool change = true;
+    while(change){
+        change = false;
+        auto vreg_sets = func->get_vreg_set();
+        for(auto& set:vreg_sets){
+            std::set<Value*> to_del_set = {};
+            Value* final_vreg = nullptr;
+            for(auto vreg:set){
+                if(val2Inter.find(vreg) == val2Inter.end())continue;
+                if(final_vreg == nullptr){
+                    final_vreg = vreg;
+                }else{
+                    auto vreg_ptr = val2Inter[vreg];
+                    auto final_ptr = val2Inter[final_vreg];
+                    //TODO: smarter union strategy
+                    if(vreg_ptr->intersects(final_ptr))continue;
+                    interval_list.erase(vreg_ptr);
+                    interval_list.erase(final_ptr);
+#ifdef DEBUG
+                    std::cerr << "union "<<final_ptr->val->get_name()<<" with "<<vreg_ptr->val->get_name()<<std::endl;
+#endif
+                    final_ptr->union_interval(vreg_ptr);
+#ifdef DEBUG
+                    std::cerr << "after union:\n";
+
+                    for(auto range:final_ptr->range_list){
+                        std::cerr << "from: "<<range->from<<" to: "<<range->to<<std::endl;
+                    }
+#endif
+                    val2Inter.erase(vreg);
+                    val2Inter[vreg] = final_ptr;
+                    interval_list.insert(final_ptr);
+                    change = true;
+                    to_del_set.insert(final_vreg);
+                    to_del_set.insert(vreg);
                 }
-                val2Inter.erase(vreg);
-                val2Inter[vreg] = final_ptr;
-                interval_list.insert(final_ptr);
+            }
+            for(auto val:to_del_set){
+                set.erase(val);
             }
         }
     }

@@ -63,17 +63,17 @@ struct cmp_interval{
 };
 
 const int priority[] = {
-        12,//r0
-        11,//r1
-        10,//r2
-        9,//r3
-        8,//r4
-        7,//r5
-        6,//r6
-        5,//r7
-        4,//r8
-        3,//r9
-        2,//r10
+        5,//r0
+        4,//r1
+        3,//r2
+        2,//r3
+        12,//r4
+        11,//r5
+        10,//r6
+        9,//r7
+        8,//r8
+        7,//r9
+        6,//r10
         -1,//r11
         1//r12
 };
@@ -81,7 +81,9 @@ const int priority[] = {
 
 struct cmp_reg {
     bool operator()(const int reg1,const int reg2)const{
+#ifdef DEBUG
         assert(reg1>=0&&reg1<=12&&reg2<=12&&reg2>=0&&"invalid reg id");
+#endif
         return priority[reg1] > priority[reg2];
     }
 };
@@ -95,25 +97,31 @@ public:
     explicit RegAllocDriver(Module* m):module(m){}
     void compute_reg_alloc();
     std::map<Value*, Interval*>& get_reg_alloc_in_func(Function* f){return reg_alloc[f];}
+    std::list<BasicBlock*>& get_bb_order_in_func(Function* f){return bb_order[f];}
 private:
+    std::map<Function*, std::list<BasicBlock*>> bb_order;
     std::map<Function*,std::map<Value*,Interval*>> reg_alloc;
     Module* module;
 };
+
+/*****************Linear Scan Register Allocation*******************/
 
 class RegAlloc{
 public:
     explicit RegAlloc(Function* f):func(f){}
     //int get_reg(Value* value);
     void execute();
+    std::map<Value*,Interval*>& get_reg_alloc(){return val2Inter;}
+    std::list<BasicBlock*>& get_block_order(){return block_order;}
+private:
     void init();
     void compute_block_order();
+    void compute_bonus_and_cost();
     void number_operations();
     void build_intervals();
     void union_phi_val();
     void walk_intervals();
     void set_unused_reg_num();
-    std::map<Value*,Interval*>& get_reg_alloc(){return val2Inter;}
-private:
     void get_dfs_order(BasicBlock* bb,std::set<BasicBlock*>& visited);
     void add_interval(Interval* interval){interval_list.insert(interval);}
     void add_reg_to_pool(Interval* inter);
@@ -129,6 +137,16 @@ private:
     std::list<BasicBlock*> block_order={};
     std::set<Interval*,cmp_interval> interval_list;
     std::map<int,std::set<Interval*>> reg2ActInter;
+    const double load_cost = 5.0;
+    const double store_cost = 3.0;
+    const double loop_scale = 100.0;
+    const double mov_cost = 1.0;
+    std::map<Value* ,double> spill_cost;
+    std::map<Value* ,std::map<Value*, double>> phi_bonus;
+    std::map<Value* ,std::map<int, double>> caller_arg_bonus;
+    std::map<Value* ,std::map<int, double>> callee_arg_bonus;
+    std::map<Value* ,double> call_bonus;
+    std::map<Value* ,double> ret_bonus;
 };
 
 #endif //MHSJ_REG_ALLOC_H

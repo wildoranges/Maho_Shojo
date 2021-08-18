@@ -33,6 +33,8 @@ public:
     std::list<GlobalVariable *> &get_global_variable();
     std::string get_instr_op_name( Instruction::OpID instr ) { return instr_id2string_[instr]; }
     void set_print_name();
+    void set_file_name(std::string name){source_file_name_ = name;}
+    std::string get_file_name(){return source_file_name_;}
     virtual std::string print();
 private:
     std::list<GlobalVariable *> global_list_;   // The Global Variables in the module

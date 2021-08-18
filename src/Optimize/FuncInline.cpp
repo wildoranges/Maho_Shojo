@@ -34,7 +34,7 @@ void FuncInline::need_inline_call_find(){
             auto inst_val = use.val_;
             auto inst = dynamic_cast<Instruction *>(inst_val);
             auto depth = inst->get_parent()->get_loop_depth();
-            if (depth + 1 < exp(0.04 * (double)LOC)){
+            if (depth + 2 < exp(0.04 * (double)LOC)){
                 continue;
             }
             calling_pair.push_back({inst->get_parent()->get_parent(),{inst,func}});
@@ -47,7 +47,6 @@ void FuncInline::func_inline(){
         auto func = pair.first;
         auto inst_call = pair.second.first;
         auto call_func = pair.second.second;
-
         auto call_BB = inst_call->get_parent();
         auto split_BB = BasicBlock::create(module,"",func);
         bool need_move = false;
@@ -83,6 +82,17 @@ void FuncInline::func_inline(){
         //relation of split_BB has been maintained
         //call_BB have a call instruction as end
         //now I need to copy the BBs of call_func
+
+        //but before copying, there are some things that I have to do
+        //I need to move alloca to entry block
+        //so remove the terminator of entry block
+        auto func_entry = func->get_entry_block();
+        auto entry_insts = &func_entry->get_instructions();
+        auto entry_terminator = func_entry->get_terminator();
+        if (entry_terminator != nullptr){
+            entry_insts->pop_back();
+        }
+
         auto call_func_BBs = call_func->get_basic_blocks();
         BasicBlock *new_BB;
         Instruction *new_inst;
@@ -100,15 +110,24 @@ void FuncInline::func_inline(){
             old2new_BB[old_BB] = new_BB;
             new_BBs.push_back(new_BB);
             for (auto old_inst : old_BB->get_instructions()){
-                new_inst = old_inst->copy_inst(new_BB);
+                if (old_inst->is_alloca()){
+                    //if it's a alloca inst, it should be new in entry BB
+                    new_inst = old_inst->copy_inst(func_entry);
+                }
+                else{
+                    new_inst = old_inst->copy_inst(new_BB);
+                }
                 if (old_inst->is_phi()){
                     new_BB->add_instruction(new_inst);
                 }
                 old2new_inst[old_inst] = new_inst;
             }
         }
+        //these instructions are using old operands
+        //then I need to change the operand to the real operand
         for (auto BB : new_BBs){
             for (auto inst : BB->get_instructions()){
+                //sometimes operands are BB
                 if (inst->is_phi()){
                     for (auto i = 0; i < inst->get_num_operand(); i=i+2){
                         if(old2new_inst[inst->get_operand(i)]!=nullptr){
@@ -145,6 +164,7 @@ void FuncInline::func_inline(){
                     }
                 }
                 else if(inst->is_ret()){
+                    //ret value is recieved in split BB
                     if (inst->get_num_operand()>0){
                         split_phi_pair.push_back({inst->get_operand(0),BB});
                     }
@@ -162,6 +182,7 @@ void FuncInline::func_inline(){
                 }
             }
         }
+        //recieve the ret value and replace the use of inst_call
         //then remove the inst_call and new a br to new BB
         if (split_phi_pair.size()>1){
             auto ret_phi = PhiInst::create_phi(call_func->get_return_type(), split_BB);
@@ -189,5 +210,10 @@ void FuncInline::func_inline(){
         call_BB->delete_instr(inst_call);
         auto new_entry = old2new_BB[call_func->get_entry_block()];
         BranchInst::create_br(new_entry, call_BB);
-    }
+
+        //finally, it's time to add the terminator of entry block
+        if (entry_terminator != nullptr){
+            entry_insts->push_back(entry_terminator);
+        }
+    }//end of for calling pair
 }

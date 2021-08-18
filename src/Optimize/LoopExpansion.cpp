@@ -13,7 +13,7 @@ void LoopExpansion::find_try(){
             continue;
         }
         auto expand_time = loop_check(loop);
-        if (expand_time == 0){
+        if (expand_time == 0 || expand_time > 20){
             continue;
         }
         expand(expand_time, loop);
@@ -23,6 +23,9 @@ void LoopExpansion::find_try(){
 int LoopExpansion::loop_check(std::vector<BasicBlock*>* loop){
     auto entry_BB = *(*loop).rbegin();
     auto body_BB = *(*loop).begin();
+    if (entry_BB->get_pre_basic_blocks().size()>2){
+        return 0;
+    }
     if (body_BB->get_succ_basic_blocks().size()>1){
         return 0;
     }
@@ -231,8 +234,7 @@ void LoopExpansion::expand(int time, std::vector<BasicBlock *>* loop){
     auto next_BB = entry_terminator->get_operand(2);
     auto body_terminator = body_BB->get_terminator();
     entry_BB->get_instructions().pop_back();
-    body_BB->get_instructions().pop_back();
-    body_terminator->get_operand(0)->remove_use(body_terminator);
+    body_BB->delete_instr(body_terminator);
 
     //record phi information in entry BB
     std::map<Value*, Value*>old2new;
@@ -322,5 +324,9 @@ void LoopExpansion::expand(int time, std::vector<BasicBlock *>* loop){
     entry_terminator->remove_operands(0,2);
     entry_terminator->add_operand(next_BB);
     entry_BB->get_instructions().push_back(entry_terminator);
-    entry_BB->get_parent()->remove(body_BB);
+    auto body_insts = body_BB->get_instructions();
+    for (auto inst : body_insts){
+        body_BB->delete_instr(inst);
+    }
+    body_BB->get_parent()->remove(body_BB);
 }

@@ -32,8 +32,10 @@ public:
     CmpInst *create_icmp_le( Value *lhs, Value *rhs){ return CmpInst::create_cmp(CmpInst::LE, lhs, rhs, this->BB_, m_); }
 
     CallInst *create_call(Value *func, std::vector<Value *> args)
-    { 
-        assert( dynamic_cast<Function *>(func) && "func must be Function * type"); 
+    {
+#ifdef DEBUG
+        assert( dynamic_cast<Function *>(func) && "func must be Function * type");
+#endif
         return CallInst::create(static_cast<Function *>(func) ,args, this->BB_); 
     }
     
@@ -48,8 +50,10 @@ public:
     StoreInst *create_store(Value *val, Value *ptr) { return StoreInst::create_store(val, ptr, this->BB_ ); }
     LoadInst * create_load(Type *ty, Value *ptr) { return LoadInst::create_load(ty, ptr, this->BB_); }
     LoadInst * create_load(Value *ptr) 
-    { 
+    {
+#ifdef DEBUG
         assert( ptr->get_type()->is_pointer_type() && "ptr must be pointer type" );
+#endif
         return LoadInst::create_load(ptr->get_type()->get_pointer_element_type(), ptr, this->BB_); 
     }
 

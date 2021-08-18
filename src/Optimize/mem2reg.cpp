@@ -6,6 +6,7 @@ void Mem2Reg::execute(){
         if(fun->get_basic_blocks().size()==0)continue;
         func_ = fun;
         lvalue_connection.clear();
+        no_union_set.clear();
         insideBlockForwarding();
         genPhi();
         module->set_print_name();
@@ -16,7 +17,7 @@ void Mem2Reg::execute(){
 #ifdef DEBUG
         module->set_print_name();
 #endif
-        phiStatistic();
+        //phiStatistic();
 #ifdef DEBUG
         for(auto set: func_->get_vreg_set()){
             for(auto reg: set){
@@ -39,17 +40,18 @@ void Mem2Reg::insideBlockForwarding(){
             if(inst->get_instr_type() == Instruction::OpID::store){
                 Value* lvalue = static_cast<StoreInst *>(inst)->get_lval();
                 Value* rvalue = static_cast<StoreInst *>(inst)->get_rval();
-                if(!dynamic_cast<LoadInst *>(rvalue)){
-                    if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
-                        lvalue_connection.insert({rvalue, lvalue});
-                    }
-                    else{
-                        auto old_lval = lvalue_connection[rvalue];
-                        if(old_lval != lvalue){
-                            // exit(-1);
-                        }
-                    }
-                }
+//                if(!dynamic_cast<LoadInst *>(rvalue)){
+//                    if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
+//                        lvalue_connection.insert({rvalue, lvalue});
+//                    }
+//                    else{
+//                        auto old_lval = lvalue_connection[rvalue];
+//                        if(old_lval != lvalue){
+//                            no_union_set.insert(rvalue);
+//                            // exit(-1);
+//                        }
+//                    }
+//                }
                 auto load_inst = dynamic_cast<Instruction*>(rvalue);
                 if(load_inst && forward_list.find(load_inst) != forward_list.end()){
                     rvalue = forward_list.find(load_inst)->second;
@@ -72,15 +74,15 @@ void Mem2Reg::insideBlockForwarding(){
             else if(inst->get_instr_type() == Instruction::OpID::load){
                 Value* lvalue = static_cast<LoadInst *>(inst)->get_lval();
                 Value* rvalue = dynamic_cast<Value *>(inst);
-                if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
-                    lvalue_connection.insert({rvalue, lvalue});
-                }
-                else{
-                    auto old_lval = lvalue_connection[rvalue];
-                    if(old_lval != lvalue){
-                        // exit(-1);
-                    }
-                }
+//                if(lvalue_connection.find(rvalue) == lvalue_connection.end()){
+//                    lvalue_connection.insert({rvalue, lvalue});
+//                }
+//                else{
+//                    auto old_lval = lvalue_connection[rvalue];
+//                    if(old_lval != lvalue){
+//                        // exit(-1);
+//                    }
+//                }
                 if(defined_list.find(lvalue) == defined_list.end())continue;
                 Value* value = new_value.find(lvalue)->second;
                 forward_list.insert({inst, value});
@@ -297,6 +299,15 @@ void Mem2Reg::phiStatistic(){
         for(auto inst: bb->get_instructions()){
             if(!inst->is_phi())continue;
             auto phi_value = dynamic_cast<Value *>(inst);
+            if(value_map.find(phi_value) == value_map.end()){
+                value_map.insert({phi_value, dynamic_cast<PhiInst *>(inst)->get_lval()});
+            }
+        }
+    }
+    for(auto bb: func_->get_basic_blocks()){
+        for(auto inst: bb->get_instructions()){
+            if(!inst->is_phi())continue;
+            auto phi_value = dynamic_cast<Value *>(inst);
 #ifdef DEBUG
             std::cout << "phi find: " << phi_value->print() << "\n";
 #endif
@@ -311,6 +322,7 @@ void Mem2Reg::phiStatistic(){
             for(auto opr: inst->get_operands()){
                 if(dynamic_cast<BasicBlock *>(opr))continue;
                 if(dynamic_cast<Constant *>(opr))continue;
+                if(no_union_set.find(opr) != no_union_set.end())continue;
                 if(value_map.find(opr) != value_map.end()){
                     auto opr_reduced_value = value_map.find(opr)->second;
                     if(opr_reduced_value != reduced_value){

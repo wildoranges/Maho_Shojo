@@ -19,6 +19,8 @@
 #include "AvailableExpr.h"
 #include "FuncInline.h"
 #include "LoopExpansion.h"
+#include "Global2Local.h"
+#include "MovConst.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
@@ -120,15 +122,18 @@ int main(int argc, char *argv[])
     if (print_LIR||codegen||print_mir) {
         root->accept(builder);
         auto m = builder.getModule();
+        m->set_file_name(filename);
         if(!optimize){
             PassMgr passmgr(m.get());
             //passmgr.addPass<CFGSimplifier>();
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
+            passmgr.addPass<Global2Local>();
             if(!print_mir){
                 //passmgr.addPass<ConstPropagation>();
                 passmgr.addPass<LIR>();
                 passmgr.addPass<CFGSimplifier>();
+                passmgr.addPass<MovConst>();
                 passmgr.addPass<ActiveVar>();
                 passmgr.addPass<CFG_analyse>();
             }
@@ -138,20 +143,25 @@ int main(int argc, char *argv[])
         else{
             PassMgr passmgr(m.get());
 
-            if(!no_cfg_simply)
-                passmgr.addPass<CFGSimplifier>();
+//            if(!no_cfg_simply)
+//                passmgr.addPass<CFGSimplifier>();
+//
+//            if(!no_dead_code_eli)
+//                passmgr.addPass<DeadCodeElimination>();
 
-            if(!no_dead_code_eli)
-                passmgr.addPass<DeadCodeElimination>();
+//            if(!no_dead_code_eli)
+//                passmgr.addPass<DeadCodeElimination>();
 
-            if(!no_dead_code_eli)
-                passmgr.addPass<DeadCodeElimination>();
-
-            if(!no_cfg_simply)
-                passmgr.addPass<CFGSimplifier>();
+//            if(!no_cfg_simply)
+//                passmgr.addPass<CFGSimplifier>();
 
             passmgr.addPass<DominateTree>();
             passmgr.addPass<Mem2Reg>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
+
+            passmgr.addPass<Global2Local>();
 
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
@@ -177,8 +187,8 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
-            if(!no_cfg_simply)
-                passmgr.addPass<CFGSimplifier>();
+//            if(!no_cfg_simply)
+//                passmgr.addPass<CFGSimplifier>();
 
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
@@ -213,6 +223,9 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
+            if(!no_loop_expand)
+                passmgr.addPass<LoopExpansion>();
+
             if(!no_func_inline)
                 passmgr.addPass<FuncInline>();
 
@@ -222,13 +235,8 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
-
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
-
-
-            if(!no_loop_expand)
-                passmgr.addPass<LoopExpansion>();
 
             if(!no_const_prop)
                 passmgr.addPass<ConstPropagation>();
@@ -250,7 +258,14 @@ int main(int argc, char *argv[])
 
             if(!print_mir){
                 passmgr.addPass<LIR>();
+                // passmgr.addPass<MovConst>();
             }
+
+            if(!no_const_prop)
+                passmgr.addPass<ConstPropagation>();
+
+            if(!no_cfg_simply)
+                passmgr.addPass<CFGSimplifier>();
 
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
@@ -263,6 +278,14 @@ int main(int argc, char *argv[])
 
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
+
+            passmgr.addPass<MovConst>();
+
+            if(!no_ava_expr)
+                passmgr.addPass<AvailableExpr>();
+
+            if(!no_dead_code_eli)
+                passmgr.addPass<DeadCodeElimination>();
 
             passmgr.addPass<ActiveVar>();
             passmgr.addPass<CFG_analyse>();
