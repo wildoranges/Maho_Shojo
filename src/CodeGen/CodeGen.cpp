@@ -1102,12 +1102,12 @@
                 new_code += arg_move(call_inst);
                 new_code += instr_gen(call_inst);
                 new_code += caller_reg_restore(bb->get_parent(),call_inst);
-                code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
                 if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
+                code += new_code;
             }else if(instr_may_need_push_stack(inst)){
 
                 new_code += push_tmp_instr_regs(inst);
@@ -1116,21 +1116,21 @@
 
                 new_code += pop_tmp_instr_regs(inst);
 
-                code += new_code;
-
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
                 if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
+
+                code += new_code;
             }else{
                 new_code += instr_gen(inst);
-                code += new_code;
                 accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
                 if(accumulate_line_num > literal_pool_threshold){
                     code += make_lit_pool();
                     accumulate_line_num = 0;
                 }
+                code += new_code;
             }
         }
         std::string new_code;
@@ -1138,12 +1138,12 @@
         if(br_inst->is_cmpbr()){
             new_code += ld_tmp_regs(br_inst);
             new_code += push_tmp_instr_regs(br_inst);
-            code += new_code;
             accumulate_line_num += std::count(new_code.begin(), new_code.end(), IR2asm::endl[0]);
             if(accumulate_line_num > literal_pool_threshold){
                 code += make_lit_pool();
                 accumulate_line_num = 0;
             }
+            code += new_code;
         }
         code += phi_union(bb, br_inst);
         return code;
@@ -1309,6 +1309,11 @@
         IR2asm::Location* temp_src = nullptr;
         if(need_temp){
             //TODO: not always meed store temp reg
+            accumulate_line_num+=1;
+            if(accumulate_line_num > literal_pool_threshold){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
+            }
             code += IR2asm::store(new IR2asm::Reg(temp_reg), temp_reg_loc, cmpop);
             IR2asm::Location* temp_reg_node = nullptr;
             if(reg2loc.find(temp_reg) != reg2loc.end()){
@@ -1369,6 +1374,12 @@
                 auto src_loc = map.second;
                 if(data_graph.find(target_loc) != data_graph.end() 
                     && !data_graph[target_loc].empty())continue;
+
+                accumulate_line_num+=4;
+                if(accumulate_line_num > literal_pool_threshold){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
+                }
                 
                 code += single_data_move(src_loc, target_loc, reg_tmp, cmpop);
 
@@ -1385,23 +1396,33 @@
                 auto target_loc = pred_locs.begin()->first;
                 auto src_loc = pred_locs.begin()->second;
                 auto temp_loc = new IR2asm::RegLoc(temp_reg);
+                accumulate_line_num+=4;
+                if(accumulate_line_num > literal_pool_threshold){
+                    code += make_lit_pool();
+                    accumulate_line_num = 0;
+                }
                 code += single_data_move(src_loc, temp_loc, reg_tmp, cmpop);
                 pred_locs[target_loc] = temp_loc;
                 data_graph.insert({temp_loc, {target_loc}});
                 if(data_graph.find(src_loc) != data_graph.end())data_graph[src_loc].erase(target_loc);
             }
-            accumulate_line_num+=2;
+        }
+
+        if(temp_forwarding && temp_src){
+            accumulate_line_num+=4;
             if(accumulate_line_num > literal_pool_threshold){
                 code += make_lit_pool();
                 accumulate_line_num = 0;
             }
-        }
-
-        if(temp_forwarding && temp_src){
             code += single_data_move(temp_src, new IR2asm::RegLoc(reg_tmp->get_id()), reg_tmp, cmpop);
         }        
 
         if(need_temp && need_restore_temp && !temp_forwarding){
+            accumulate_line_num+=3;
+            if(accumulate_line_num > literal_pool_threshold){
+                code += make_lit_pool();
+                accumulate_line_num = 0;
+            }
             code += IR2asm::safe_load(reg_tmp, temp_reg_loc, sp_extra_ofst, long_func, cmpop);
         }
 
