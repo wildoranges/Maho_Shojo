@@ -18,7 +18,7 @@ void LIR::execute() {
             }
             for (auto bb : func->get_basic_blocks()){
                 srem_const2and(bb);
-                split_srem(bb);
+                //split_srem(bb);
                 div_const2mul(bb);
             }
             for (auto bb : func->get_basic_blocks()){
@@ -599,21 +599,21 @@ void LIR::remove_unused_op(BasicBlock* bb) {
         auto instr_type = instr->get_instr_type();
         switch (instr_type)
         {
-        case Instruction::srem: {
-            auto op1 = instr->get_operand(0);
-            auto op2 = instr->get_operand(1);
-            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
-            if (op1 == op2) {
-                instr->replace_all_use_with(ConstantInt::get(0, module));
-                unused_instr_list.push_back(instr);
-            } else if (const_op2) {
-                if (const_op2->get_value() == 1) {
-                    instr->replace_all_use_with(ConstantInt::get(0, module));
-                    unused_instr_list.push_back(instr);
-                }
-            }
-        }
-            break;
+//        case Instruction::srem: {
+//            auto op1 = instr->get_operand(0);
+//            auto op2 = instr->get_operand(1);
+//            auto const_op2 = dynamic_cast<ConstantInt*>(op2);
+//            if (op1 == op2) {
+//                instr->replace_all_use_with(ConstantInt::get(0, module));
+//                unused_instr_list.push_back(instr);
+//            } else if (const_op2) {
+//                if (const_op2->get_value() == 1) {
+//                    instr->replace_all_use_with(ConstantInt::get(0, module));
+//                    unused_instr_list.push_back(instr);
+//                }
+//            }
+//        }
+//            break;
         case Instruction::add: {
             auto op1 = instr->get_operand(0);
             auto op2 = instr->get_operand(1);
