@@ -17,8 +17,8 @@ void LIR::execute() {
                 store_offset(bb);
             }
             for (auto bb : func->get_basic_blocks()){
-                srem_const2and(bb);
-                //split_srem(bb);
+                //srem_const2and(bb);
+                split_srem(bb);
                 div_const2mul(bb);
             }
             for (auto bb : func->get_basic_blocks()){
