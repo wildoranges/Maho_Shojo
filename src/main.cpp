@@ -21,11 +21,12 @@
 #include "LoopExpansion.h"
 #include "Global2Local.h"
 #include "MovConst.h"
+#include "SCCP.h"
 
 void print_help(const std::string& exe_name) {
   std::cout << "Usage: " << exe_name
             << " [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-lir ] [ -emit-ast ] [-check] [-o <output-file> ] [ -O2 ] [ -S ]"
-            << " [-no-const-prop] [-no-ava-expr] [-no-cfg-simply] [-no-dead-code-eli] [-no-func-inline] [-no-loop-expand] [-no-loop-invar]"
+            << " [ -no-const-prop ] [ -no-ava-expr ] [ -no-cfg-simply ] [ -no-dead-code-eli ] [ -no-func-inline ] [ -no-loop-expand ] [ -no-loop-invar ] [ -no-sccp ]"
             << " <input-file>"
             << std::endl;
 }
@@ -103,6 +104,9 @@ int main(int argc, char *argv[])
         }
         else if (argv[i] == std::string("-no-loop-invar")){
             no_loop_invar = true;
+        }
+        else if (argv[i] == std::string("-no-sccp")){
+            no_sccp = true;
         }
         else {
             filename = argv[i];
@@ -229,6 +233,9 @@ int main(int argc, char *argv[])
             if(!no_func_inline)
                 passmgr.addPass<FuncInline>();
 
+            if(!no_sccp)
+                passmgr.addPass<SCCP>();
+
             if(!no_dead_code_eli)
                 passmgr.addPass<DeadCodeElimination>();
 
@@ -279,7 +286,9 @@ int main(int argc, char *argv[])
             if(!no_cfg_simply)
                 passmgr.addPass<CFGSimplifier>();
 
-            passmgr.addPass<MovConst>();
+            if(!print_mir){
+                passmgr.addPass<MovConst>();
+            }
 
             if(!no_ava_expr)
                 passmgr.addPass<AvailableExpr>();
@@ -294,7 +303,6 @@ int main(int argc, char *argv[])
             passmgr.execute();
         }
         m->set_print_name();
-        auto IR = m->print();
         if(codegen&&!(print_LIR||print_mir)){
             CodeGen coder = CodeGen();
             auto asmcode = coder.module_gen(m.get());
@@ -304,6 +312,7 @@ int main(int argc, char *argv[])
             output_stream.close();
         }
         else if(print_LIR||print_mir){
+            auto IR = m->print();
             std::ofstream output_stream;
             output_stream.open(out_ll_file, std::ios::out);
             output_stream << IR;

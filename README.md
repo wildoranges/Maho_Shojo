@@ -7,6 +7,7 @@ Maho_Shojo compiler 欢迎来到魔法少女的世界~
   - [魔法少女育成指南](#魔法少女育成指南)
   - [魔法少女使用指南](#魔法少女使用指南)
     - [flag说明:](#flag说明)
+    - [优化说明](#优化说明)
 
 ## References
 竞赛所需资料
@@ -22,18 +23,20 @@ https://gitlab.eduxiji.net/nscscc/compiler2021/-/tree/master
 
 > 08.08 基本完成Codegen功能测试
 
+> 08.18 完成答辩，开源
+
 ## 魔法少女育成指南
 ```shell
 $ mkdir build
 $ cd build
 $ cmake ..
-$ make
+$ make -j6
 ```
 
 ## 魔法少女使用指南
 ```shell
 $ cd build
-$ ./compiler [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-lir ] [ -emit-ast ] [-check] [-o <output-file> ] [ -O2 ] [ -S ] [-no-const-prop] [-no-ava-expr] [-no-cfg-simply] [-no-dead-code-eli] [-no-func-inline] [-no-loop-expand] [-no-loop-invar] <input-file>
+$ ./compiler [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] [ -emit-mir ] [ -emit-lir ] [ -emit-ast ] [-check] [-o <output-file> ] [ -O2 ] [ -S ] [ -no-const-prop ] [ -no-ava-expr ] [ -no-cfg-simply ] [ -no-dead-code-eli ] [ -no-func-inline ] [ -no-loop-expand ] [ -no-loop-invar ] [ -no-sccp ] <input-file>
 ```
 
 ### flag说明:
@@ -56,6 +59,20 @@ $ ./compiler [ -h | --help ] [ -p | --trace_parsing ] [ -s | --trace_scanning ] 
 
 `-O2`开启优化
 
-`-S`生成arm汇编
+`-S`生成armv7ve汇编
 
 `-no-x`不开启某项优化（只有`-O2`时这些flag才有作用）
+
+### 优化说明
+
+默认不开启优化。开启`-O2`后会执行的优化有
+
+1. 公共子表达式删除
+2. 控制流简化
+3. 常量传播
+4. 死代码删除
+5. 函数内联
+6. 全局变量局部化
+7. 循环展开
+8. 循环不变外提
+9. 稀疏有条件常量传播（SCCP）
