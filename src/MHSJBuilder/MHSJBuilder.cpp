@@ -1,8 +1,3 @@
-/*
- * 声明：本代码为 2020 秋 中国科大编译原理（李诚）课程实验参考实现。
- * 请不要以任何方式，将本代码上传到可以公开访问的站点或仓库
- */
-
 #include "MHSJBuilder.hpp"
 
 #define CONST_INT(num) ConstantInt::get(num, module.get())

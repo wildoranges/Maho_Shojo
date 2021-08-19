@@ -1,7 +1,3 @@
-//
-// Created by cqy on 2020/6/29.
-//
-
 #ifndef SYSY_CONSTANT_H
 #define SYSY_CONSTANT_H
 #include "User.h"

@@ -1,6 +1,3 @@
-//
-// Created by cqy on 2020/6/29.
-//
 #include "GlobalVariable.h"
 #include "IRprinter.h"
 
